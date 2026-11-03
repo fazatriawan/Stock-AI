@@ -47,8 +47,8 @@ httpx==0.28.0
 factory-boy==3.3.1
 freezegun==1.5.1
 
-# AI
-anthropic>=1.0.0
+# AI (OpenAI-compatible via httpx — tidak perlu SDK tambahan)
+openai>=1.0.0
 
 # Linting
 ruff==0.8.2
