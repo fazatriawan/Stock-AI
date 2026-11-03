@@ -567,6 +567,91 @@ export type PortfolioPerformance = {
 };
 
 // ---------------------------------------------------------------------------
+// Macro
+// ---------------------------------------------------------------------------
+
+export type MacroObservation = {
+  series_id: string;
+  label: string;
+  value: number | null;
+  observed_date: string;
+  released_at: string | null;
+};
+
+export type MacroSnapshot = {
+  observations: MacroObservation[];
+  total_series: number;
+  as_of: string;
+};
+
+export type PolicyEvent = {
+  id: string;
+  event_type: string;
+  title: string;
+  summary: string | null;
+  country: string | null;
+  affected_sectors: string[];
+  effective_date: string | null;
+  published_at: string | null;
+  policy_stage: string | null;
+  materiality: string | null;
+  company_impacts: Array<{
+    canonical_symbol: string;
+    company_name: string | null;
+    sign: string;
+    exposure: string | null;
+    mechanism: string | null;
+    confidence: string | null;
+  }>;
+};
+
+export type PolicyEventList = {
+  events: PolicyEvent[];
+  total: number;
+  as_of: string;
+};
+
+export type PolicyEventCreateRequest = {
+  event_type: string;
+  title: string;
+  summary?: string;
+  country?: string;
+  affected_sectors?: string[];
+  effective_date?: string;
+  published_at?: string;
+  policy_stage?: string;
+  materiality?: string;
+};
+
+// ---------------------------------------------------------------------------
+// Research Notebook
+// ---------------------------------------------------------------------------
+
+export type ResearchNote = {
+  id: string;
+  title: string;
+  body: string;
+  canonical_symbol: string | null;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type NoteCreateRequest = {
+  title: string;
+  body?: string;
+  canonical_symbol?: string;
+  tags?: string[];
+};
+
+export type NoteUpdateRequest = {
+  title?: string;
+  body?: string;
+  canonical_symbol?: string;
+  tags?: string[];
+};
+
+// ---------------------------------------------------------------------------
 // API functions
 // ---------------------------------------------------------------------------
 
@@ -676,6 +761,46 @@ export const api = {
   },
   performance: {
     get: (range = "6m") => apiFetch<PortfolioPerformance>(`/portfolio/performance?range=${range}`),
+  },
+  macro: {
+    snapshot: () => apiFetch<MacroSnapshot>("/macro/observations"),
+    events: (params?: { materiality?: string; country?: string; limit?: number }) => {
+      const qs = new URLSearchParams();
+      if (params?.materiality) qs.set("materiality", params.materiality);
+      if (params?.country) qs.set("country", params.country);
+      if (params?.limit) qs.set("limit", String(params.limit));
+      const q = qs.toString();
+      return apiFetch<PolicyEventList>(`/macro/events${q ? `?${q}` : ""}`);
+    },
+    createEvent: (body: PolicyEventCreateRequest) =>
+      apiFetch<PolicyEvent>("/macro/events", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+  },
+  notebook: {
+    list: (params?: { symbol?: string; tag?: string; search?: string; limit?: number }) => {
+      const qs = new URLSearchParams();
+      if (params?.symbol) qs.set("symbol", params.symbol);
+      if (params?.tag) qs.set("tag", params.tag);
+      if (params?.search) qs.set("search", params.search);
+      if (params?.limit) qs.set("limit", String(params.limit));
+      const q = qs.toString();
+      return apiFetch<ResearchNote[]>(`/notebook${q ? `?${q}` : ""}`);
+    },
+    get: (id: string) => apiFetch<ResearchNote>(`/notebook/${id}`),
+    create: (body: NoteCreateRequest) =>
+      apiFetch<ResearchNote>("/notebook", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    update: (id: string, body: NoteUpdateRequest) =>
+      apiFetch<ResearchNote>(`/notebook/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      }),
+    delete: (id: string) =>
+      apiFetch<void>(`/notebook/${id}`, { method: "DELETE" }),
   },
   admin: {
     bootstrap: (useMock = true) =>

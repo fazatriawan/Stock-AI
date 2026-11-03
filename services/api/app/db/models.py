@@ -482,3 +482,18 @@ class TradeJournal(Base, TimestampMixin):
     outcome: Mapped[Optional[str]] = mapped_column(String(20))   # CORRECT / INCORRECT / PENDING
     outcome_notes: Mapped[Optional[str]] = mapped_column(Text)
     reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+
+# ---------------------------------------------------------------------------
+# Research Notebook — freeform catatan riset per instrumen / tema
+# ---------------------------------------------------------------------------
+
+class ResearchNote(Base, TimestampMixin):
+    """Catatan riset bebas — bisa terkait instrumen tertentu atau tema umum."""
+    __tablename__ = "research_notes"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    canonical_symbol: Mapped[Optional[str]] = mapped_column(String(20), index=True)
+    tags: Mapped[Optional[list]] = mapped_column(JSON)  # list[str]

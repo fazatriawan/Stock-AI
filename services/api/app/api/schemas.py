@@ -751,3 +751,81 @@ class PerformanceResponse(BaseModel):
     best_position: Optional[PositionContribution] = None
     worst_position: Optional[PositionContribution] = None
     as_of: datetime
+
+
+# ---------------------------------------------------------------------------
+# Macro & Policy Events
+# ---------------------------------------------------------------------------
+
+class MacroObservationResponse(BaseModel):
+    series_id: str
+    label: str
+    value: Optional[float] = None
+    observed_date: date
+    released_at: Optional[datetime] = None
+
+
+class MacroSnapshotResponse(BaseModel):
+    observations: list[MacroObservationResponse]
+    total_series: int
+    as_of: datetime
+
+
+class PolicyEventResponse(BaseModel):
+    id: str
+    event_type: str
+    title: str
+    summary: Optional[str] = None
+    country: Optional[str] = None
+    affected_sectors: list[str] = []
+    effective_date: Optional[date] = None
+    published_at: Optional[datetime] = None
+    policy_stage: Optional[str] = None
+    materiality: Optional[str] = None
+    company_impacts: list[dict] = []
+
+
+class PolicyEventListResponse(BaseModel):
+    events: list[PolicyEventResponse]
+    total: int
+    as_of: datetime
+
+
+class PolicyEventCreateRequest(BaseModel):
+    event_type: str
+    title: str
+    summary: Optional[str] = None
+    country: Optional[str] = None
+    affected_sectors: list[str] = []
+    effective_date: Optional[date] = None
+    published_at: Optional[datetime] = None
+    policy_stage: Optional[str] = None
+    materiality: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Research Notebook
+# ---------------------------------------------------------------------------
+
+class NoteCreateRequest(BaseModel):
+    title: str
+    body: Optional[str] = None
+    canonical_symbol: Optional[str] = None
+    tags: Optional[list[str]] = None
+
+
+class NoteUpdateRequest(BaseModel):
+    title: Optional[str] = None
+    body: Optional[str] = None
+    canonical_symbol: Optional[str] = None
+    tags: Optional[list[str]] = None
+
+
+class NoteResponse(BaseModel):
+    id: str
+    title: str
+    body: str
+    canonical_symbol: Optional[str] = None
+    tags: list[str] = []
+    created_at: datetime
+    updated_at: datetime
