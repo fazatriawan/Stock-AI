@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Node
+node_modules/
+.next/
+.turbo/
+out/
+dist/
+
+# Env files - NEVER commit secrets
+.env
+.env.local
+.env.*.local
+
+# Docker volumes
+postgres_data/
+redis_data/
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# Data / logs
+data/raw/
+logs/
+*.log
+*.parquet
+
+# Alembic
+services/api/app/db/migrations/versions/*.pyc
