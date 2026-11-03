@@ -469,6 +469,104 @@ export interface ImportConfirmResponse {
 }
 
 // ---------------------------------------------------------------------------
+// Phase D types — Decisions / Screener / Performance
+// ---------------------------------------------------------------------------
+
+export type DecisionSummary = {
+  instrument_id: string;
+  canonical_symbol: string;
+  company_name: string | null;
+  sector: string | null;
+  action: string;
+  urgency: string;
+  composite_score: number;
+  evidence_confidence: string;
+  hard_gate_status: string;
+  hard_gate_reason: string | null;
+  owned: boolean;
+  portfolio_weight: number | null;
+  current_price: number | null;
+  bull_thesis: string[];
+  bear_case: string[];
+  data_gaps: string[];
+  factor_scores: Record<string, number | null>;
+};
+
+export type DecisionList = {
+  decisions: DecisionSummary[];
+  total: number;
+  action_counts: Record<string, number>;
+  generated_at: string;
+};
+
+export type ScreenerResult = {
+  instrument_id: string;
+  canonical_symbol: string;
+  company_name: string | null;
+  sector: string | null;
+  exchange: string | null;
+  current_price: number | null;
+  action: string;
+  composite_score: number;
+  evidence_confidence: string;
+  pe_ratio: number | null;
+  pb_ratio: number | null;
+  roe: number | null;
+  dividend_yield: number | null;
+  rsi_14: number | null;
+  above_sma_200: boolean | null;
+  return_20d: number | null;
+  data_freshness: string;
+};
+
+export type ScreenerList = {
+  results: ScreenerResult[];
+  total: number;
+  filters_applied: Record<string, unknown>;
+  as_of: string;
+};
+
+export type ScreenerFilters = {
+  sector?: string;
+  exchange?: string;
+  min_roe?: number;
+  max_pe?: number;
+  min_pe?: number;
+  min_composite?: number;
+  action?: string;
+  limit?: number;
+};
+
+export type EquityDataPoint = {
+  date: string;
+  portfolio_value: number;
+  invested: number;
+  pnl_pct: number;
+};
+
+export type PositionContribution = {
+  canonical_symbol: string;
+  company_name: string | null;
+  total_cost: number;
+  current_value: number;
+  unrealized_pnl: number;
+  unrealized_pnl_pct: number;
+  portfolio_weight: number;
+};
+
+export type PortfolioPerformance = {
+  equity_curve: EquityDataPoint[];
+  total_return_pct: number;
+  total_invested: number;
+  current_value: number;
+  unrealized_pnl: number;
+  position_contributions: PositionContribution[];
+  best_position: PositionContribution | null;
+  worst_position: PositionContribution | null;
+  as_of: string;
+};
+
+// ---------------------------------------------------------------------------
 // API functions
 // ---------------------------------------------------------------------------
 
@@ -553,6 +651,31 @@ export const api = {
       }),
     delete: (id: string) =>
       apiFetch<void>(`/journal/${id}`, { method: "DELETE" }),
+  },
+  decisions: {
+    list: (action?: string, includeWatchlist = true) => {
+      const params = new URLSearchParams();
+      if (action) params.set("action", action);
+      params.set("include_watchlist", String(includeWatchlist));
+      return apiFetch<DecisionList>(`/decisions?${params.toString()}`);
+    },
+  },
+  screener: {
+    screen: (filters: ScreenerFilters = {}) => {
+      const params = new URLSearchParams();
+      if (filters.sector) params.set("sector", filters.sector);
+      if (filters.exchange) params.set("exchange", filters.exchange);
+      if (filters.min_roe != null) params.set("min_roe", String(filters.min_roe));
+      if (filters.max_pe != null) params.set("max_pe", String(filters.max_pe));
+      if (filters.min_pe != null) params.set("min_pe", String(filters.min_pe));
+      if (filters.min_composite != null) params.set("min_composite", String(filters.min_composite));
+      if (filters.action) params.set("action", filters.action);
+      if (filters.limit) params.set("limit", String(filters.limit));
+      return apiFetch<ScreenerList>(`/screener?${params.toString()}`);
+    },
+  },
+  performance: {
+    get: (range = "6m") => apiFetch<PortfolioPerformance>(`/portfolio/performance?range=${range}`),
   },
   admin: {
     bootstrap: (useMock = true) =>

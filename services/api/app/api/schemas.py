@@ -656,3 +656,98 @@ class DailyIntelligenceResponse(BaseModel):
     positions: list[DailyPositionBrief]
     alerts: list[str]      # konsentrasi, posisi rugi besar, dll
     data_freshness: str    # "FRESH" / "STALE" / "PARTIAL"
+
+
+# ---------------------------------------------------------------------------
+# Phase D — Decisions
+# ---------------------------------------------------------------------------
+
+class DecisionSummaryResponse(BaseModel):
+    instrument_id: str
+    canonical_symbol: str
+    company_name: Optional[str] = None
+    sector: Optional[str] = None
+    action: str                     # BUY / WAIT / ADD_CANDIDATE / HOLD / TRIM_CANDIDATE / SELL / INSUFFICIENT_DATA
+    urgency: str                    # NORMAL / REVIEW_NOW
+    composite_score: float          # 0–100
+    evidence_confidence: str        # LOW / MEDIUM / HIGH
+    hard_gate_status: str
+    hard_gate_reason: Optional[str] = None
+    owned: bool
+    portfolio_weight: Optional[float] = None   # % jika dimiliki
+    current_price: Optional[float] = None
+    bull_thesis: list[str] = []
+    bear_case: list[str] = []
+    data_gaps: list[str] = []
+    factor_scores: dict[str, Optional[float]] = {}
+
+
+class DecisionListResponse(BaseModel):
+    decisions: list[DecisionSummaryResponse]
+    total: int
+    action_counts: dict[str, int]
+    generated_at: datetime
+
+
+# ---------------------------------------------------------------------------
+# Phase D — Screener
+# ---------------------------------------------------------------------------
+
+class ScreenerResultResponse(BaseModel):
+    instrument_id: str
+    canonical_symbol: str
+    company_name: Optional[str] = None
+    sector: Optional[str] = None
+    exchange: Optional[str] = None
+    current_price: Optional[float] = None
+    action: str
+    composite_score: float
+    evidence_confidence: str
+    pe_ratio: Optional[float] = None
+    pb_ratio: Optional[float] = None
+    roe: Optional[float] = None
+    dividend_yield: Optional[float] = None
+    rsi_14: Optional[float] = None
+    above_sma_200: Optional[bool] = None
+    return_20d: Optional[float] = None
+    data_freshness: str = "UNKNOWN"
+
+
+class ScreenerListResponse(BaseModel):
+    results: list[ScreenerResultResponse]
+    total: int
+    filters_applied: dict[str, Any]
+    as_of: datetime
+
+
+# ---------------------------------------------------------------------------
+# Phase D — Performance
+# ---------------------------------------------------------------------------
+
+class EquityDataPoint(BaseModel):
+    date: date
+    portfolio_value: float
+    invested: float
+    pnl_pct: float      # %
+
+
+class PositionContribution(BaseModel):
+    canonical_symbol: str
+    company_name: Optional[str] = None
+    total_cost: float
+    current_value: float
+    unrealized_pnl: float
+    unrealized_pnl_pct: float   # %
+    portfolio_weight: float      # %
+
+
+class PerformanceResponse(BaseModel):
+    equity_curve: list[EquityDataPoint]
+    total_return_pct: float
+    total_invested: float
+    current_value: float
+    unrealized_pnl: float
+    position_contributions: list[PositionContribution] = []
+    best_position: Optional[PositionContribution] = None
+    worst_position: Optional[PositionContribution] = None
+    as_of: datetime
