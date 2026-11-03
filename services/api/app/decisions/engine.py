@@ -14,10 +14,14 @@ from app.analytics.technical import TechnicalSnapshot
 
 
 class Action(str, Enum):
-    BUY = "BUY"
-    HOLD = "HOLD"
-    SELL = "SELL"
-    WAIT = "WAIT"
+    # Untuk posisi baru (tidak dimiliki)
+    BUY = "BUY"              # sinyal beli kuat, kondisi terpenuhi
+    WAIT = "WAIT"            # sinyal lemah / kondisi belum terpenuhi
+    # Untuk posisi yang dimiliki
+    ADD_CANDIDATE = "ADD_CANDIDATE"    # tambah posisi — tesis kuat, kapasitas ada
+    HOLD = "HOLD"            # pertahankan
+    TRIM_CANDIDATE = "TRIM_CANDIDATE"  # kurangi posisi — konsentrasi terlalu tinggi / tesis melemah
+    SELL = "SELL"            # keluar — tesis patah
     INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
 
 
@@ -413,22 +417,29 @@ def run_decision_engine(
     )
 
     if portfolio.owned:
-        # Posisi yang sudah dimiliki
+        # Posisi yang sudah dimiliki — tentukan ADD/HOLD/TRIM/SELL
         thesis_intact = composite >= 45.0
-        risk_ok = not (portfolio.portfolio_weight > portfolio.max_position_weight * 1.2)
+        overweight = portfolio.portfolio_weight > portfolio.max_position_weight
+        severely_overweight = portfolio.portfolio_weight > portfolio.max_position_weight * 1.2
+        sector_overweight = portfolio.sector_weight > portfolio.max_sector_weight
 
-        if portfolio.portfolio_weight > portfolio.max_position_weight:
+        if overweight:
             urgency = Urgency.REVIEW_NOW
 
         if not thesis_intact:
             action = Action.SELL
-        elif thesis_intact and risk_ok:
-            action = Action.HOLD
+        elif severely_overweight or sector_overweight:
+            action = Action.TRIM_CANDIDATE
+            urgency = Urgency.REVIEW_NOW
+        elif overweight:
+            action = Action.TRIM_CANDIDATE
+        elif thesis_intact and composite >= config.buy_score_threshold and not overweight:
+            # Tesis kuat DAN masih ada ruang — kandidat penambahan
+            action = Action.ADD_CANDIDATE
         else:
             action = Action.HOLD
-            urgency = Urgency.REVIEW_NOW
     else:
-        # Kandidat baru
+        # Kandidat baru — BUY atau WAIT
         quality_ok = (scores.fundamental or 0) >= 50 and (scores.valuation or 0) >= 45
         tech_ok = (scores.technical or 0) >= 45 if technical.sufficient_data else True
         score_ok = composite >= config.buy_score_threshold

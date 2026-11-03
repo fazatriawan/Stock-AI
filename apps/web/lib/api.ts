@@ -123,7 +123,7 @@ export interface Recommendation {
   instrument_id: string;
   canonical_symbol: string;
   as_of: string;
-  action: "BUY" | "HOLD" | "SELL" | "WAIT" | "INSUFFICIENT_DATA";
+  action: "BUY" | "ADD_CANDIDATE" | "HOLD" | "TRIM_CANDIDATE" | "SELL" | "WAIT" | "INSUFFICIENT_DATA";
   urgency: "NORMAL" | "REVIEW_NOW";
   horizon: string;
   hard_gate_status: string;
@@ -169,6 +169,306 @@ export interface MarketStatus {
 }
 
 // ---------------------------------------------------------------------------
+// Portfolio types (Phase 1)
+// ---------------------------------------------------------------------------
+
+export interface Trade {
+  id: string;
+  portfolio_id: string;
+  instrument_id: string;
+  canonical_symbol: string;
+  company_name: string | null;
+  trade_date: string;
+  side: "BUY" | "SELL";
+  shares: number;
+  lots: number;
+  price: number;
+  fee: number;
+  tax: number;
+  currency: string;
+  source_broker: string | null;
+  notes: string | null;
+  created_at: string | null;
+}
+
+export interface TradeCreateRequest {
+  canonical_symbol: string;
+  trade_date: string;
+  side: "BUY" | "SELL";
+  shares: number;
+  price: number;
+  fee?: number;
+  tax?: number;
+  currency?: string;
+  source_broker?: string;
+  notes?: string;
+}
+
+export interface Position {
+  instrument_id: string;
+  canonical_symbol: string;
+  company_name: string | null;
+  exchange: string;
+  currency: string;
+  sector: string | null;
+  shares: number;
+  lots: number;
+  avg_cost: number;
+  total_cost: number;
+  current_price: number | null;
+  current_price_date: string | null;
+  market_value: number | null;
+  unrealized_pnl: number | null;
+  unrealized_pnl_pct: number | null;
+  weight: number;
+  trade_count: number;
+  first_buy_date: string | null;
+  last_trade_date: string | null;
+}
+
+export interface PortfolioSummary {
+  portfolio_id: string;
+  portfolio_name: string;
+  base_currency: string;
+  as_of: string;
+  total_invested: number;
+  market_value: number;
+  unrealized_pnl: number;
+  unrealized_pnl_pct: number;
+  positions: Position[];
+  sector_weights: Record<string, number>;
+  concentration_warnings: string[];
+  trade_count: number;
+}
+
+export interface PortfolioSeedResult {
+  message: string;
+  portfolio_id: string;
+  created: number;
+  skipped: number;
+  errors: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Portfolio Intelligence types (Phase 3)
+// ---------------------------------------------------------------------------
+
+export interface ConcentrationRisk {
+  symbol: string;
+  weight: number;
+  severity: "NORMAL" | "OVERWEIGHT" | "SEVERELY_OVERWEIGHT";
+  message: string;
+}
+
+export interface SectorRisk {
+  sector: string;
+  weight: number;
+  severity: "NORMAL" | "CONCENTRATED";
+  message: string;
+}
+
+export interface PortfolioHealth {
+  health_score: number;
+  grade: "EXCELLENT" | "GOOD" | "FAIR" | "POOR";
+  position_count: number;
+  diversification_score: number;
+  concentration_risks: ConcentrationRisk[];
+  sector_risks: SectorRisk[];
+  largest_position_symbol: string | null;
+  largest_position_weight: number;
+  total_invested: number;
+  total_market_value: number;
+  unrealized_pnl: number;
+  unrealized_pnl_pct: number;
+  diversification_component: number;
+  concentration_component: number;
+  pnl_component: number;
+  warnings: string[];
+  recommendations: string[];
+}
+
+export interface LossScenario {
+  scenario: "CUT_LOSS" | "PARTIAL_CUT" | "HOLD_WAIT" | "AVERAGE_DOWN" | "STOP_LOSS";
+  label: string;
+  description: string;
+  projected_loss_idr: number;
+  projected_loss_pct: number;
+  remaining_exposure_idr: number;
+  breakeven_price: number | null;
+  pros: string[];
+  cons: string[];
+  risk_level: "LOW" | "MEDIUM" | "HIGH";
+}
+
+export interface LossPosition {
+  canonical_symbol: string;
+  company_name: string | null;
+  shares: number;
+  lots: number;
+  avg_cost: number;
+  current_price: number;
+  total_cost: number;
+  market_value: number;
+  unrealized_pnl: number;
+  unrealized_pnl_pct: number;
+  scenarios: LossScenario[];
+  suggested_scenario: string;
+  suggested_reason: string;
+}
+
+export interface LossAnalysis {
+  loss_positions: LossPosition[];
+  total_loss_positions: number;
+  total_unrealized_loss_idr: number;
+  as_of: string;
+}
+
+// ---------------------------------------------------------------------------
+// Daily Intelligence & Journal types (Phase 5)
+// ---------------------------------------------------------------------------
+
+export interface DailyPositionBrief {
+  canonical_symbol: string;
+  company_name: string | null;
+  lots: number;
+  avg_cost: number;
+  current_price: number | null;
+  unrealized_pnl_pct: number | null;
+  weight: number;
+  action: string | null;
+  urgency: string | null;
+  data_stale: boolean;
+}
+
+export interface DailyIntelligence {
+  as_of: string;
+  market_open: boolean;
+  total_positions: number;
+  total_market_value: number;
+  unrealized_pnl_pct: number;
+  positions: DailyPositionBrief[];
+  alerts: string[];
+  data_freshness: "FRESH" | "STALE" | "PARTIAL";
+}
+
+export interface JournalEntry {
+  id: string;
+  canonical_symbol: string;
+  decision_date: string;
+  action: "BUY" | "SELL" | "HOLD" | "WATCH";
+  rationale: string;
+  thesis: string | null;
+  invalidation: string | null;
+  price_at_decision: number | null;
+  outcome: "CORRECT" | "INCORRECT" | "PENDING" | null;
+  outcome_notes: string | null;
+  reviewed_at: string | null;
+  created_at: string | null;
+}
+
+export interface JournalCreateRequest {
+  canonical_symbol: string;
+  decision_date: string;
+  action: "BUY" | "SELL" | "HOLD" | "WATCH";
+  rationale: string;
+  thesis?: string;
+  invalidation?: string;
+  price_at_decision?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Rebalance simulator types (Phase 4)
+// ---------------------------------------------------------------------------
+
+export interface TargetAllocation {
+  canonical_symbol: string;
+  company_name: string | null;
+  sector: string | null;
+  current_lots: number;
+  current_weight: number;
+  target_weight: number;
+  current_market_value: number;
+  target_market_value: number;
+  delta_value: number;
+  delta_lots: number;
+  action: "BUY" | "SELL" | "HOLD";
+  note: string;
+}
+
+export interface RebalanceSimulation {
+  total_portfolio_value: number;
+  positions_count: number;
+  allocations: TargetAllocation[];
+  buy_actions: number;
+  sell_actions: number;
+  hold_actions: number;
+  total_buy_value: number;
+  total_sell_value: number;
+  net_cash_needed: number;
+  disclaimer: string;
+}
+
+export interface AllocationSuggestion {
+  canonical_symbol: string;
+  company_name: string | null;
+  sector: string | null;
+  current_weight: number;
+  suggested_new_amount: number;
+  suggested_lots: number;
+  rationale: string;
+  priority: number;
+}
+
+export interface CapitalAllocationPlan {
+  new_capital: number;
+  total_positions: number;
+  suggestions: AllocationSuggestion[];
+  undiversified_warning: string | null;
+  disclaimer: string;
+}
+
+// ---------------------------------------------------------------------------
+// Import pipeline types (Phase 2)
+// ---------------------------------------------------------------------------
+
+export interface ParsedTradePreview {
+  row_number: number;
+  canonical_symbol: string;
+  trade_date: string;
+  side: "BUY" | "SELL";
+  lots: number;
+  shares: number;
+  price: number;
+  fee: number;
+  tax: number;
+  currency: string;
+  source_broker: string;
+  fingerprint: string;
+  status: "OK" | "WARNING" | "ERROR";
+  warnings: string[];
+  errors: string[];
+}
+
+export interface ImportPreviewResponse {
+  broker_format: string;
+  total_rows: number;
+  valid_count: number;
+  error_count: number;
+  duplicate_count: number;
+  trades: ParsedTradePreview[];
+  parse_errors: string[];
+  warnings: string[];
+}
+
+export interface ImportConfirmResponse {
+  message: string;
+  created: number;
+  skipped_duplicates: number;
+  skipped_errors: number;
+  errors: string[];
+}
+
+// ---------------------------------------------------------------------------
 // API functions
 // ---------------------------------------------------------------------------
 
@@ -193,6 +493,66 @@ export const api = {
   },
   data: {
     health: () => apiFetch<DataHealth>("/data/health"),
+  },
+  portfolio: {
+    summary: () => apiFetch<PortfolioSummary>("/portfolio"),
+    trades: () => apiFetch<Trade[]>("/portfolio/trades"),
+    addTrade: (body: TradeCreateRequest) =>
+      apiFetch<Trade>("/portfolio/trades", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    deleteTrade: (id: string) =>
+      apiFetch<void>(`/portfolio/trades/${id}`, { method: "DELETE" }),
+    seed: () =>
+      apiFetch<PortfolioSeedResult>("/portfolio/seed", { method: "POST" }),
+    importPreview: (formData: FormData) =>
+      apiFetch<ImportPreviewResponse>("/portfolio/import/preview", {
+        method: "POST",
+        body: formData,
+        headers: {},  // biarkan browser set Content-Type dengan boundary
+      }),
+    importConfirm: (trades: ParsedTradePreview[], skipDuplicates = true) =>
+      apiFetch<ImportConfirmResponse>("/portfolio/import/confirm", {
+        method: "POST",
+        body: JSON.stringify({ trades, skip_duplicates: skipDuplicates }),
+      }),
+    health: () => apiFetch<PortfolioHealth>("/portfolio/health"),
+    lossAnalysis: () => apiFetch<LossAnalysis>("/portfolio/loss"),
+    simulateRebalance: (targetWeights: Record<string, number> = {}, newCapital = 0) =>
+      apiFetch<RebalanceSimulation>("/portfolio/simulate/rebalance", {
+        method: "POST",
+        body: JSON.stringify({ target_weights: targetWeights, new_capital: newCapital }),
+      }),
+    planAllocation: (newCapital: number) =>
+      apiFetch<CapitalAllocationPlan>("/portfolio/simulate/allocate", {
+        method: "POST",
+        body: JSON.stringify({ new_capital: newCapital }),
+      }),
+  },
+  daily: {
+    intelligence: () => apiFetch<DailyIntelligence>("/daily"),
+  },
+  journal: {
+    list: (symbol?: string, action?: string) => {
+      const params = new URLSearchParams();
+      if (symbol) params.set("symbol", symbol);
+      if (action) params.set("action", action);
+      const qs = params.toString();
+      return apiFetch<JournalEntry[]>(`/journal${qs ? `?${qs}` : ""}`);
+    },
+    create: (body: JournalCreateRequest) =>
+      apiFetch<JournalEntry>("/journal", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    review: (id: string, outcome: string, notes?: string) =>
+      apiFetch<JournalEntry>(`/journal/${id}/review`, {
+        method: "PATCH",
+        body: JSON.stringify({ outcome, outcome_notes: notes }),
+      }),
+    delete: (id: string) =>
+      apiFetch<void>(`/journal/${id}`, { method: "DELETE" }),
   },
   admin: {
     bootstrap: (useMock = true) =>

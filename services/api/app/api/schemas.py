@@ -280,16 +280,43 @@ class WatchlistResponse(BaseModel):
 # Portfolio / trades
 # ---------------------------------------------------------------------------
 
-class TradeRequest(BaseModel):
+
+class TradeResponse(BaseModel):
+    """Trade lengkap dengan info instrumen."""
+    id: str
+    portfolio_id: str
+    instrument_id: str
+    canonical_symbol: str
+    company_name: Optional[str] = None
+    trade_date: date
+    side: str
+    shares: float
+    lots: float
+    price: float
+    fee: float
+    tax: float
+    currency: str
+    source_broker: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
+
+
+# ---------------------------------------------------------------------------
+# Portfolio v1.1 — schemas lengkap
+# ---------------------------------------------------------------------------
+
+class TradeCreateRequest(BaseModel):
+    """Request untuk menambah trade manual."""
     canonical_symbol: str
     trade_date: date
     side: str  # BUY / SELL
-    shares: Decimal
-    price: Decimal
-    fee: Decimal = Decimal("0")
-    tax: Decimal = Decimal("0")
-    currency: str
-    fx_to_base: Optional[Decimal] = None
+    shares: float
+    price: float
+    fee: float = 0.0
+    tax: float = 0.0
+    currency: Optional[str] = None
     source_broker: Optional[str] = None
     notes: Optional[str] = None
 
@@ -300,17 +327,332 @@ class TradeRequest(BaseModel):
             raise ValueError("side harus BUY atau SELL")
         return v.upper()
 
+    @field_validator("shares", "price")
+    @classmethod
+    def must_be_positive(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("Nilai harus positif")
+        return v
 
-class TradeResponse(BaseModel):
-    id: str
+
+class PositionResponse(BaseModel):
+    """Posisi aktif per instrumen dengan P/L tidak terealisasi."""
+    instrument_id: str
+    canonical_symbol: str
+    company_name: Optional[str] = None
+    exchange: str
+    currency: str
+    sector: Optional[str] = None
+
+    shares: float
+    lots: float
+    avg_cost: float
+    total_cost: float
+
+    current_price: Optional[float] = None
+    current_price_date: Optional[date] = None
+    market_value: Optional[float] = None
+    unrealized_pnl: Optional[float] = None
+    unrealized_pnl_pct: Optional[float] = None
+
+    weight: float = 0.0
+    trade_count: int = 0
+    first_buy_date: Optional[date] = None
+    last_trade_date: Optional[date] = None
+
+
+class PortfolioSummaryResponse(BaseModel):
+    """Ringkasan portofolio lengkap."""
+    portfolio_id: str
+    portfolio_name: str
+    base_currency: str
+    as_of: datetime
+
+    total_invested: float
+    market_value: float
+    unrealized_pnl: float
+    unrealized_pnl_pct: float
+
+    positions: list[PositionResponse]
+    sector_weights: dict[str, float]
+    concentration_warnings: list[str]
+    trade_count: int
+
+
+class PortfolioSeedResponse(BaseModel):
+    """Hasil seed portofolio awal."""
+    message: str
+    portfolio_id: str
+    created: int
+    skipped: int
+    errors: list[str]
+
+
+# ---------------------------------------------------------------------------
+# Import pipeline (Phase 2)
+# ---------------------------------------------------------------------------
+
+class ParsedTradePreview(BaseModel):
+    """Satu baris transaksi yang diparsing — belum di-commit ke DB."""
+    row_number: int
     canonical_symbol: str
     trade_date: date
     side: str
+    lots: float
     shares: float
     price: float
     fee: float
     tax: float
     currency: str
-    import_fingerprint: Optional[str] = None
+    source_broker: str
+    fingerprint: str
+    status: str          # OK / WARNING / ERROR
+    warnings: list[str]
+    errors: list[str]
+
+
+class ImportPreviewResponse(BaseModel):
+    """Hasil parsing file sebelum commit — tampilkan ke user untuk verifikasi."""
+    broker_format: str
+    total_rows: int
+    valid_count: int
+    error_count: int
+    duplicate_count: int   # sudah ada di DB
+    trades: list[ParsedTradePreview]
+    parse_errors: list[str]
+    warnings: list[str]
+
+
+class ImportConfirmRequest(BaseModel):
+    """Request untuk commit trades yang sudah divalidasi user."""
+    trades: list[ParsedTradePreview]
+    skip_duplicates: bool = True   # abaikan yang sudah ada (default)
+
+
+class ImportConfirmResponse(BaseModel):
+    """Hasil commit import."""
+    message: str
+    created: int
+    skipped_duplicates: int
+    skipped_errors: int
+    errors: list[str]
+
+
+# ---------------------------------------------------------------------------
+# Portfolio Intelligence (Phase 3)
+# ---------------------------------------------------------------------------
+
+class ConcentrationRiskResponse(BaseModel):
+    symbol: str
+    weight: float
+    severity: str
+    message: str
+
+
+class SectorRiskResponse(BaseModel):
+    sector: str
+    weight: float
+    severity: str
+    message: str
+
+
+class PortfolioHealthResponse(BaseModel):
+    """Laporan kesehatan portofolio — skor, konsentrasi, diversifikasi."""
+    health_score: float
+    grade: str   # EXCELLENT / GOOD / FAIR / POOR
+    position_count: int
+    diversification_score: float
+    concentration_risks: list[ConcentrationRiskResponse]
+    sector_risks: list[SectorRiskResponse]
+    largest_position_symbol: Optional[str] = None
+    largest_position_weight: float
+    total_invested: float
+    total_market_value: float
+    unrealized_pnl: float
+    unrealized_pnl_pct: float
+    diversification_component: float
+    concentration_component: float
+    pnl_component: float
+    warnings: list[str]
+    recommendations: list[str]
+
+
+class LossScenarioResponse(BaseModel):
+    scenario: str
+    label: str
+    description: str
+    projected_loss_idr: float
+    projected_loss_pct: float
+    remaining_exposure_idr: float
+    breakeven_price: Optional[float] = None
+    pros: list[str]
+    cons: list[str]
+    risk_level: str
+
+
+class LossPositionResponse(BaseModel):
+    """Analisis posisi rugi dengan 5 skenario aksi."""
+    canonical_symbol: str
+    company_name: Optional[str] = None
+    shares: float
+    lots: float
+    avg_cost: float
+    current_price: float
+    total_cost: float
+    market_value: float
+    unrealized_pnl: float
+    unrealized_pnl_pct: float
+    scenarios: list[LossScenarioResponse]
+    suggested_scenario: str
+    suggested_reason: str
+
+
+class LossAnalyzerResponse(BaseModel):
+    """Semua posisi rugi dengan analisis skenario."""
+    loss_positions: list[LossPositionResponse]
+    total_loss_positions: int
+    total_unrealized_loss_idr: float
+    as_of: datetime
+
+
+# ---------------------------------------------------------------------------
+# Rebalance simulator (Phase 4)
+# ---------------------------------------------------------------------------
+
+class TargetAllocationResponse(BaseModel):
+    canonical_symbol: str
+    company_name: Optional[str] = None
+    sector: Optional[str] = None
+    current_lots: float
+    current_weight: float
+    target_weight: float
+    current_market_value: float
+    target_market_value: float
+    delta_value: float
+    delta_lots: float
+    action: str     # BUY / SELL / HOLD
+    note: str
+
+
+class RebalanceSimulationResponse(BaseModel):
+    """Hasil simulasi rebalancing ke target bobot."""
+    total_portfolio_value: float
+    positions_count: int
+    allocations: list[TargetAllocationResponse]
+    buy_actions: int
+    sell_actions: int
+    hold_actions: int
+    total_buy_value: float
+    total_sell_value: float
+    net_cash_needed: float
+    disclaimer: str
+
+
+class RebalanceRequest(BaseModel):
+    """Request simulasi rebalancing — target_weights opsional (default: equal weight)."""
+    target_weights: dict[str, float] = {}   # {canonical_symbol: weight (0–1)}
+    new_capital: float = 0.0
+
+
+class AllocationSuggestionResponse(BaseModel):
+    canonical_symbol: str
+    company_name: Optional[str] = None
+    sector: Optional[str] = None
+    current_weight: float
+    suggested_new_amount: float
+    suggested_lots: float
+    rationale: str
+    priority: int
+
+
+class CapitalAllocationResponse(BaseModel):
+    """Rencana alokasi modal baru."""
+    new_capital: float
+    total_positions: int
+    suggestions: list[AllocationSuggestionResponse]
+    undiversified_warning: Optional[str] = None
+    disclaimer: str
+
+
+class CapitalAllocationRequest(BaseModel):
+    new_capital: float
+
+
+# ---------------------------------------------------------------------------
+# Decision Journal (Phase 5)
+# ---------------------------------------------------------------------------
+
+class JournalEntryCreateRequest(BaseModel):
+    canonical_symbol: str
+    decision_date: date
+    action: str                      # BUY / SELL / HOLD / WATCH
+    rationale: str
+    thesis: Optional[str] = None
+    invalidation: Optional[str] = None
+    price_at_decision: Optional[float] = None
+
+    @field_validator("action")
+    @classmethod
+    def validate_action(cls, v: str) -> str:
+        allowed = {"BUY", "SELL", "HOLD", "WATCH"}
+        if v.upper() not in allowed:
+            raise ValueError(f"action harus salah satu dari: {allowed}")
+        return v.upper()
+
+
+class JournalReviewRequest(BaseModel):
+    outcome: str    # CORRECT / INCORRECT / PENDING
+    outcome_notes: Optional[str] = None
+
+    @field_validator("outcome")
+    @classmethod
+    def validate_outcome(cls, v: str) -> str:
+        allowed = {"CORRECT", "INCORRECT", "PENDING"}
+        if v.upper() not in allowed:
+            raise ValueError(f"outcome harus salah satu dari: {allowed}")
+        return v.upper()
+
+
+class JournalEntryResponse(BaseModel):
+    id: str
+    canonical_symbol: str
+    decision_date: date
+    action: str
+    rationale: str
+    thesis: Optional[str] = None
+    invalidation: Optional[str] = None
+    price_at_decision: Optional[float] = None
+    outcome: Optional[str] = None
+    outcome_notes: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
+
+
+# ---------------------------------------------------------------------------
+# Daily Intelligence (Phase 5)
+# ---------------------------------------------------------------------------
+
+class DailyPositionBrief(BaseModel):
+    canonical_symbol: str
+    company_name: Optional[str] = None
+    lots: float
+    avg_cost: float
+    current_price: Optional[float] = None
+    unrealized_pnl_pct: Optional[float] = None
+    weight: float
+    action: Optional[str] = None        # dari recommendation engine jika ada
+    urgency: Optional[str] = None
+    data_stale: bool = False
+
+
+class DailyIntelligenceResponse(BaseModel):
+    as_of: datetime
+    market_open: bool
+    total_positions: int
+    total_market_value: float
+    unrealized_pnl_pct: float
+    positions: list[DailyPositionBrief]
+    alerts: list[str]      # konsentrasi, posisi rugi besar, dll
+    data_freshness: str    # "FRESH" / "STALE" / "PARTIAL"

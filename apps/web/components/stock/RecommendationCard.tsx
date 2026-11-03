@@ -6,9 +6,11 @@ import { AlertTriangle, CheckCircle, XCircle, Clock } from "lucide-react";
 
 interface Props { recommendation: Recommendation }
 
-const ACTION_ICONS = {
+const ACTION_ICONS: Record<string, typeof CheckCircle> = {
   BUY: CheckCircle,
+  ADD_CANDIDATE: CheckCircle,
   SELL: XCircle,
+  TRIM_CANDIDATE: XCircle,
   HOLD: Clock,
   WAIT: Clock,
   INSUFFICIENT_DATA: AlertTriangle,

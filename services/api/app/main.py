@@ -45,13 +45,19 @@ app.add_middleware(
 app.add_exception_handler(StockIntelligenceError, stock_error_handler)  # type: ignore[arg-type]
 
 # Routes
-from app.api.routes import markets, instruments, stocks, data_health, ingestion
+from app.api.routes import markets, instruments, stocks, data_health, ingestion, portfolio, import_trades, portfolio_intelligence, rebalance, journal, daily
 
 app.include_router(markets.router, prefix="/api/v1")
 app.include_router(instruments.router, prefix="/api/v1")
 app.include_router(stocks.router, prefix="/api/v1")
 app.include_router(data_health.router, prefix="/api/v1")
 app.include_router(ingestion.router, prefix="/api/v1")
+app.include_router(portfolio.router, prefix="/api/v1")
+app.include_router(import_trades.router, prefix="/api/v1")
+app.include_router(portfolio_intelligence.router, prefix="/api/v1")
+app.include_router(rebalance.router, prefix="/api/v1")
+app.include_router(journal.router, prefix="/api/v1")
+app.include_router(daily.router, prefix="/api/v1")
 
 
 @app.get("/", include_in_schema=False)

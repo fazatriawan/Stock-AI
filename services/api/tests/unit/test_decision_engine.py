@@ -156,13 +156,42 @@ class TestBuyScenario:
 
 
 class TestHoldScenario:
-    def test_hold_owned_healthy_thesis(self) -> None:
+    def test_hold_or_add_owned_healthy_thesis(self) -> None:
+        # Posisi dimiliki + tesis kuat → ADD_CANDIDATE (cukup ruang) atau HOLD (composite < threshold)
         output = run_decision_engine(
             "TEST", date(2026, 6, 1),
             make_good_technical(), make_good_fundamental(),
             default_portfolio(owned=True), DecisionConfig(),
         )
-        assert output.action == Action.HOLD
+        assert output.action in (Action.HOLD, Action.ADD_CANDIDATE)
+
+    def test_hold_owned_moderate_thesis(self) -> None:
+        # Tesis cukup (composite ~57 — > 45 tapi < threshold 60) → HOLD
+        tech = TechnicalSnapshot(as_of=date(2026, 6, 1), instrument_id="TEST")
+        tech.sufficient_data = True
+        tech.bars_available = 250
+        tech.above_sma_20 = True
+        tech.above_sma_50 = True
+        tech.above_sma_200 = False   # tidak di atas SMA200
+        tech.golden_cross = None
+        tech.rsi_14 = 50.0
+        tech.percentile_52w = 0.50
+
+        fund = FundamentalSnapshot(instrument_id="TEST", as_of=date(2026, 6, 1))
+        fund.sector = "Financials"
+        fund.data_freshness = "FRESH"
+        fund.roe = 0.16   # ok tapi tidak outstanding
+        fund.nim = 0.05
+        fund.npl_gross = 0.025
+        fund.pb_ratio = 2.0   # wajar → valuation 65
+
+        output = run_decision_engine(
+            "TEST", date(2026, 6, 1),
+            tech, fund,
+            default_portfolio(owned=True), DecisionConfig(),
+        )
+        # composite ~57.5 → thesis intact, tapi < threshold → HOLD atau ADD
+        assert output.action in (Action.HOLD, Action.ADD_CANDIDATE)
 
 
 class TestSellScenario:

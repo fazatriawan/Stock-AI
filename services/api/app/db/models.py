@@ -457,3 +457,28 @@ class WatchlistItem(Base, TimestampMixin):
     notes: Mapped[Optional[str]] = mapped_column(Text)
 
     watchlist: Mapped["Watchlist"] = relationship(back_populates="items")
+
+
+# ---------------------------------------------------------------------------
+# Trade Journal — Phase 5
+# ---------------------------------------------------------------------------
+
+class TradeJournal(Base, TimestampMixin):
+    """Catatan alasan di balik keputusan investasi — standalone, tidak linked ke recommendation."""
+    __tablename__ = "trade_journal"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    canonical_symbol: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    decision_date: Mapped[date] = mapped_column(Date, nullable=False)
+    action: Mapped[str] = mapped_column(String(20), nullable=False)  # BUY/SELL/HOLD/WATCH
+    rationale: Mapped[str] = mapped_column(Text, nullable=False)
+    # Thesis — diisi saat beli, direvisi saat jual
+    thesis: Mapped[Optional[str]] = mapped_column(Text)
+    # Invalidation triggers — kapan kita harus keluar
+    invalidation: Mapped[Optional[str]] = mapped_column(Text)
+    # Harga referensi saat membuat catatan
+    price_at_decision: Mapped[Optional[float]] = mapped_column(Numeric(12, 4))
+    # Review — diisi belakangan untuk evaluasi keputusan
+    outcome: Mapped[Optional[str]] = mapped_column(String(20))   # CORRECT / INCORRECT / PENDING
+    outcome_notes: Mapped[Optional[str]] = mapped_column(Text)
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
