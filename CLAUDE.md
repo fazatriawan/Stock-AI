@@ -59,6 +59,28 @@ stock-intelligence/
 ## Milestone Saat Ini
 
 - [x] Milestone A: Foundation scaffold + data ingestion + provider adapters
-- [ ] Milestone B: Portfolio + recommendation engine
-- [ ] Milestone C: AI evidence reports + daily briefing
-- [ ] Milestone D: Fundamental depth + policy ownership
+- [x] Milestone B: Portfolio + recommendation engine
+- [x] Milestone C: AI evidence reports + daily briefing
+- [x] Milestone D: Decisions · Screener · Performance · Macro · Notebook · Settings
+
+## Halaman Frontend
+
+| Halaman | Route | Status |
+|---------|-------|--------|
+| Overview / Dashboard | `/` | ✅ |
+| Stock Explorer | `/explorer` | ✅ |
+| Screener | `/screener` | ✅ |
+| Decision Center | `/decisions` | ✅ |
+| My Portfolio | `/portfolio` | ✅ |
+| Import Transaksi | `/portfolio/import` | ✅ |
+| Broker Connections | `/portfolio/broker` | ✅ |
+| Portfolio Health | `/portfolio/health` | ✅ |
+| Position Intelligence | `/portfolio/positions` | ✅ |
+| Loss Analyzer | `/portfolio/loss` | ✅ |
+| Rebalance Simulator | `/portfolio/rebalance` | ✅ |
+| Daily Intelligence | `/daily` | ✅ |
+| Macro & Policy | `/macro` | ✅ |
+| Research Notebook | `/notebook` | ✅ |
+| Decision Journal | `/journal` | ✅ |
+| Performance Lab | `/performance` | ✅ |
+| Data & Settings | `/settings` | ✅ |
