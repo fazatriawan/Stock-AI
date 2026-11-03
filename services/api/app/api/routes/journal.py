@@ -13,7 +13,7 @@ import uuid
 from datetime import datetime, timezone
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -107,14 +107,15 @@ async def review_journal_entry(
     return JournalEntryResponse.model_validate(entry)
 
 
-@router.delete("/{entry_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{entry_id}", status_code=204, response_class=Response)
 async def delete_journal_entry(
     entry_id: str,
     db: AsyncSession = Depends(get_db),
-) -> None:
+) -> Response:
     result = await db.execute(select(TradeJournal).where(TradeJournal.id == entry_id))
     entry = result.scalar_one_or_none()
     if not entry:
         raise HTTPException(status_code=404, detail="Catatan tidak ditemukan")
     await db.delete(entry)
     log.info("journal.deleted", id=entry_id)
+    return Response(status_code=204)

@@ -9,7 +9,7 @@ from datetime import date, datetime, timezone
 from typing import Optional
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -316,11 +316,11 @@ async def add_trade(
     )
 
 
-@router.delete("/trades/{trade_id}", status_code=204)
+@router.delete("/trades/{trade_id}", status_code=204, response_class=Response)
 async def delete_trade(
     trade_id: str,
     db: AsyncSession = Depends(get_db),
-) -> None:
+) -> Response:
     """Hapus transaksi. Hanya trade MANUAL yang boleh dihapus (bukan SEED)."""
     portfolio = await get_or_create_default_portfolio(db)
 
@@ -343,6 +343,7 @@ async def delete_trade(
 
     await db.delete(trade)
     log.info("portfolio.trade.deleted", trade_id=trade_id)
+    return Response(status_code=204)
 
 
 @router.post("/seed", response_model=PortfolioSeedResponse)

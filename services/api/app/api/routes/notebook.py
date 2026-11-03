@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -131,10 +131,11 @@ async def update_note(
     return _to_response(note)
 
 
-@router.delete("/{note_id}", status_code=204)
-async def delete_note(note_id: str, db: AsyncSession = Depends(get_db)) -> None:
+@router.delete("/{note_id}", status_code=204, response_class=Response)
+async def delete_note(note_id: str, db: AsyncSession = Depends(get_db)) -> Response:
     note = await db.get(ResearchNote, note_id)
     if not note:
         raise HTTPException(status_code=404, detail="Catatan tidak ditemukan")
     await db.delete(note)
     await db.commit()
+    return Response(status_code=204)
