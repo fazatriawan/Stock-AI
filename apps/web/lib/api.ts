@@ -139,6 +139,10 @@ export interface Recommendation {
   data_gaps: string[];
   changed_from: string | null;
   human_approval_required: boolean;
+  ai_enriched: boolean;
+  ai_macro_context: string | null;
+  ai_identified_risks: string[];
+  ai_model: string | null;
   disclaimer: string;
 }
 

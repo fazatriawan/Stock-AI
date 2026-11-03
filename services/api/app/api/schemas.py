@@ -245,6 +245,11 @@ class RecommendationResponse(BaseModel):
     data_gaps: list[str] = []
     changed_from: Optional[str] = None
     human_approval_required: bool = True
+    # AI enrichment (opsional — hanya tersedia jika ANTHROPIC_API_KEY diset)
+    ai_enriched: bool = False
+    ai_macro_context: Optional[str] = None
+    ai_identified_risks: list[str] = []
+    ai_model: Optional[str] = None
     disclaimer: str = (
         "Ini adalah alat analisis dengan keterbatasan dan ketidakpastian, "
         "bukan nasihat investasi. Keputusan transaksi sepenuhnya menjadi tanggung jawab pengguna."

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai import AIEnrichment, EvidenceBundle, enrich_with_ai
 from app.analytics.fundamental import load_fundamental_snapshot
 from app.analytics.technical import compute_technical_snapshot
 from app.api.schemas import (
@@ -20,6 +21,7 @@ from app.api.schemas import (
 from app.core.exceptions import DataNotFoundError
 from app.db.models import Instrument, PriceBar
 from app.db.session import get_db
+from app.core.config import get_settings
 from app.decisions.engine import (
     DecisionConfig,
     PortfolioContext,
@@ -231,6 +233,59 @@ async def get_analysis(
         coverage=output.factor_scores.coverage(),
     )
 
+    # AI enrichment — gagal graceful jika API key tidak ada
+    settings = get_settings()
+    sma_trend = "UNKNOWN"
+    if not df.empty and tech.sma_20 and tech.sma_50:
+        if tech.sma_20 > tech.sma_50:
+            sma_trend = "BULLISH"
+        elif tech.sma_20 < tech.sma_50:
+            sma_trend = "BEARISH"
+        else:
+            sma_trend = "NEUTRAL"
+
+    bundle = EvidenceBundle(
+        instrument_id=instrument.id,
+        canonical_symbol=instrument.canonical_symbol,
+        as_of=datetime.now(tz=timezone.utc),
+        action=output.action.value,
+        composite_score=output.composite_score,
+        hard_gate_status=output.hard_gate_status.value,
+        hard_gate_reason=output.hard_gate_reason,
+        rsi_14=tech.rsi_14,
+        macd=tech.macd,
+        sma_trend=sma_trend,
+        return_1d=tech.return_1d,
+        return_20d=tech.return_20d,
+        volume_ratio=tech.volume_ratio_20,
+        pe_ratio=fund.pe_ratio,
+        pb_ratio=fund.pb_ratio,
+        roe=fund.roe,
+        sector=fund.sector,
+        is_bank=fund.sector == "Financials",
+        factor_scores={
+            "fundamental": output.factor_scores.fundamental,
+            "valuation": output.factor_scores.valuation,
+            "technical": output.factor_scores.technical,
+            "macro_policy": output.factor_scores.macro_policy,
+            "risk_quality": output.factor_scores.risk_quality,
+        },
+        bull_thesis_raw=output.bull_thesis,
+        bear_case_raw=output.bear_case,
+        data_gaps=output.data_gaps,
+        provider=instrument.status,
+        price_stale=staleness.get("stale", False),
+    )
+
+    enrichment: AIEnrichment = await enrich_with_ai(
+        bundle,
+        api_key=settings.anthropic_api_key if settings.anthropic_api_key else None,
+    )
+
+    # Merge AI poin ke thesis (AI hanya menambah, tidak mengganti)
+    final_bull = output.bull_thesis + enrichment.enriched_bull_points
+    final_bear = output.bear_case + enrichment.enriched_bear_points
+
     return RecommendationResponse(
         instrument_id=instrument.id,
         canonical_symbol=instrument.canonical_symbol,
@@ -243,11 +298,15 @@ async def get_analysis(
         factor_scores=scores,
         evidence_confidence=output.evidence_confidence,
         owned=output.owned,
-        bull_thesis=output.bull_thesis,
-        bear_case=output.bear_case,
+        bull_thesis=final_bull,
+        bear_case=final_bear,
         conditions_to_buy=output.conditions_to_buy,
         conditions_to_sell=output.conditions_to_sell,
         invalidation_triggers=output.invalidation_triggers,
         data_gaps=output.data_gaps,
         changed_from=output.changed_from,
+        ai_enriched=not enrichment.skipped,
+        ai_macro_context=enrichment.macro_context,
+        ai_identified_risks=enrichment.identified_risks,
+        ai_model=enrichment.model_used if not enrichment.skipped else None,
     )

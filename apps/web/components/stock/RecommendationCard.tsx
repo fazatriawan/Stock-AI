@@ -139,6 +139,30 @@ export function RecommendationCard({ recommendation: rec }: Props) {
           </div>
         )}
 
+        {/* AI enrichment */}
+        {rec.ai_enriched && (
+          <div className="border-t border-gray-800 pt-3 space-y-2">
+            <p className="text-xs text-blue-400/70 font-medium">
+              ✦ Diperkaya AI ({rec.ai_model ?? "claude"})
+            </p>
+            {rec.ai_macro_context && (
+              <p className="text-xs text-gray-400">{rec.ai_macro_context}</p>
+            )}
+            {rec.ai_identified_risks.length > 0 && (
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Risiko tambahan:</p>
+                <ul className="space-y-0.5">
+                  {rec.ai_identified_risks.map((r, i) => (
+                    <li key={i} className="text-xs text-amber-300/70 flex gap-1.5">
+                      <span className="text-amber-500">⚠</span>{r}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Disclaimer */}
         <p className="text-xs text-gray-600 border-t border-gray-800 pt-2">
           {rec.disclaimer}

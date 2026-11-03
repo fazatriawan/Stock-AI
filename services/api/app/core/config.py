@@ -22,7 +22,7 @@ class Settings(BaseSettings):
 
     # Anthropic
     anthropic_api_key: str = ""
-    anthropic_model: str = "claude-opus-4-5"
+    anthropic_model: str = "claude-opus-5-5"
     ai_daily_token_budget: int = 500_000
     ai_cache_ttl_seconds: int = 3600
 
