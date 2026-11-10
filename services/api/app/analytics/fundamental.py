@@ -6,13 +6,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
-from decimal import Decimal
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import FinancialFact, Instrument
+
+if TYPE_CHECKING:
+    from app.analytics.integrity import MetricConflict
 
 
 @dataclass
@@ -46,6 +48,10 @@ class FundamentalSnapshot:
     metrics_missing: list[str] = field(default_factory=list)
     period_end: Optional[date] = None
     data_freshness: str = "UNKNOWN"
+    # Integrity check results (diisi oleh run_integrity_check setelah load)
+    integrity_status: str = "UNCHECKED"
+    integrity_blocked: list[str] = field(default_factory=list)
+    integrity_conflicts: list["MetricConflict"] = field(default_factory=list)
 
 
 METRIC_FIELD_MAP: dict[str, str] = {
@@ -109,7 +115,11 @@ async def load_fundamental_snapshot(
 
         field_name = METRIC_FIELD_MAP.get(metric)
         if field_name and fact.value is not None:
-            setattr(snap, field_name, float(fact.value))
+            value = float(fact.value)
+            # DIVIDEND_YIELD tersimpan dalam format persen (7.87), normalisasi ke desimal (0.0787)
+            if metric == "DIVIDEND_YIELD" and value > 1.0:
+                value = value / 100.0
+            setattr(snap, field_name, value)
             snap.metrics_available.append(metric)
             if snap.period_end is None:
                 snap.period_end = fact.period_end
@@ -128,6 +138,23 @@ async def load_fundamental_snapshot(
             snap.data_freshness = "ACCEPTABLE"
         else:
             snap.data_freshness = "STALE"
+
+    # Financial Integrity Check — jalankan setelah semua fact dimuat
+    from app.analytics.integrity import run_integrity_check  # noqa: PLC0415
+    report = run_integrity_check(instrument, list(facts))
+    snap.integrity_status = report.overall_status
+    snap.integrity_blocked = report.blocked_metrics
+    snap.integrity_conflicts = report.conflicts
+
+    # Clear metrik yang diblokir agar tidak masuk ke engine sebagai INSUFFICIENT_DATA
+    for blocked_metric in report.blocked_metrics:
+        field_name = METRIC_FIELD_MAP.get(blocked_metric)
+        if field_name and getattr(snap, field_name, None) is not None:
+            setattr(snap, field_name, None)
+            if blocked_metric in snap.metrics_available:
+                snap.metrics_available.remove(blocked_metric)
+            if blocked_metric not in snap.metrics_missing:
+                snap.metrics_missing.append(blocked_metric)
 
     return snap
 

@@ -4,13 +4,10 @@ Menguji: health score, concentration detection, loss scenario generation.
 """
 from __future__ import annotations
 
-from datetime import date
 
 import pytest
 
 from app.portfolio.analyzer import (
-    LOSS_THRESHOLD,
-    MAX_SINGLE_WEIGHT,
     HealthGrade,
     LossScenario,
     analyze_loss_position,

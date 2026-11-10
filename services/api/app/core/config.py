@@ -20,9 +20,10 @@ class Settings(BaseSettings):
     # Redis
     redis_url: str = "redis://localhost:6379/0"
 
-    # Anthropic
+    # Anthropic / TokenPlus
     anthropic_api_key: str = ""
-    anthropic_model: str = "claude-sonnet-5-5"  # model ID di TokenPlus
+    anthropic_base_url: str = ""  # kosong = pakai endpoint Anthropic langsung; isi untuk proxy (TokenPlus, dll)
+    anthropic_model: str = "claude-sonnet-5-5"
     ai_daily_token_budget: int = 500_000
     ai_cache_ttl_seconds: int = 3600
 
@@ -32,6 +33,18 @@ class Settings(BaseSettings):
     fmp_enabled: bool = False
     fred_api_key: str = ""
     bps_api_key: str = ""
+    sectors_api_key: str = ""
+    sectors_enabled: bool = False  # aktifkan kalau punya API key sectors.app
+
+    # OpenBB — experimental, US-focused, 500+ rasio
+    openbb_enabled: bool = False
+    openbb_pat: str = ""  # Personal Access Token openbb.co (opsional)
+
+    # Intraday polling (5-menit saat jam bursa)
+    intraday_polling_enabled: bool = True
+
+    # IDX Full Bootstrap
+    idx_bootstrap_days: int = 1825  # 5 tahun histori OHLCV
 
     # Timezone
     default_timezone: str = "Asia/Jakarta"

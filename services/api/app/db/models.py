@@ -11,7 +11,6 @@ from sqlalchemy import (
     BigInteger, Boolean, Date, DateTime, ForeignKey, Integer,
     Numeric, String, Text, UniqueConstraint, func, JSON,
 )
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
@@ -398,6 +397,46 @@ class DecisionJournal(Base):
 
 
 # ---------------------------------------------------------------------------
+# R14 — Insider Transactions
+# ---------------------------------------------------------------------------
+
+class InsiderTransaction(Base, TimestampMixin):
+    """Transaksi saham oleh orang dalam (direksi, komisaris, pemegang saham >5%)."""
+    __tablename__ = "insider_transactions"
+    __table_args__ = (
+        UniqueConstraint("instrument_id", "insider_name", "transaction_date", "shares", name="uq_insider_tx"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    instrument_id: Mapped[str] = mapped_column(ForeignKey("instruments.id"), nullable=False, index=True)
+
+    # Identitas insider
+    insider_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    insider_role: Mapped[str] = mapped_column(String(50), nullable=False)
+    # DIRECTOR / COMMISSIONER / MAJOR_SHAREHOLDER / OTHER
+
+    # Detail transaksi
+    transaction_type: Mapped[str] = mapped_column(String(10), nullable=False)
+    # BUY / SELL / GRANT / EXERCISE
+    transaction_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    shares: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    price_per_share: Mapped[Optional[Decimal]] = mapped_column(Numeric(20, 4))
+    total_value: Mapped[Optional[Decimal]] = mapped_column(Numeric(30, 2))
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="IDR")
+
+    # Kepemilikan setelah transaksi
+    shares_owned_after: Mapped[Optional[int]] = mapped_column(BigInteger)
+    ownership_pct_after: Mapped[Optional[Decimal]] = mapped_column(Numeric(8, 4))
+
+    # Provenance
+    disclosure_date: Mapped[Optional[date]] = mapped_column(Date)
+    source_url: Mapped[Optional[str]] = mapped_column(String(500))
+    notes: Mapped[Optional[str]] = mapped_column(Text)
+
+    instrument: Mapped["Instrument"] = relationship("Instrument")
+
+
+# ---------------------------------------------------------------------------
 # Alerts
 # ---------------------------------------------------------------------------
 
@@ -413,6 +452,24 @@ class Alert(Base):
     delivered_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     acknowledged_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AlertRule(Base, TimestampMixin):
+    """R19 — Aturan alert yang didefinisikan user."""
+    __tablename__ = "alert_rules"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    canonical_symbol: Mapped[Optional[str]] = mapped_column(String(20), index=True)
+    rule_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    threshold_value: Mapped[Optional[Decimal]] = mapped_column(Numeric(30, 6))
+    direction: Mapped[Optional[str]] = mapped_column(String(10))   # ABOVE / BELOW
+    cooldown_hours: Mapped[int] = mapped_column(Integer, nullable=False, default=24)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    last_fired_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    fire_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    webhook_url: Mapped[Optional[str]] = mapped_column(String(500))
+    webhook_secret: Mapped[Optional[str]] = mapped_column(String(200))
+    notes: Mapped[Optional[str]] = mapped_column(Text)
 
 
 # ---------------------------------------------------------------------------
@@ -431,6 +488,16 @@ class BacktestRun(Base):
     results_json: Mapped[Optional[dict]] = mapped_column(JSON)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDING")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # R23: backtest history columns
+    symbol: Mapped[Optional[str]] = mapped_column(String(20))
+    strategy: Mapped[Optional[str]] = mapped_column(String(30))
+    bars_used: Mapped[Optional[int]] = mapped_column(Integer)
+    total_return_pct: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 4))
+    cagr_pct: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 4))
+    sharpe_ratio: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 4))
+    max_drawdown_pct: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 4))
+    win_rate_pct: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 4))
+    total_trades: Mapped[Optional[int]] = mapped_column(Integer)
 
 
 # ---------------------------------------------------------------------------
@@ -455,6 +522,10 @@ class WatchlistItem(Base, TimestampMixin):
     watchlist_id: Mapped[str] = mapped_column(ForeignKey("watchlists.id"), nullable=False)
     instrument_id: Mapped[str] = mapped_column(ForeignKey("instruments.id"), nullable=False)
     notes: Mapped[Optional[str]] = mapped_column(Text)
+    price_target: Mapped[Optional[Decimal]] = mapped_column(Numeric(18, 4))
+    target_note: Mapped[Optional[str]] = mapped_column(Text)
+    cost_basis: Mapped[Optional[Decimal]] = mapped_column(Numeric(18, 4))
+    alert_on_target: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     watchlist: Mapped["Watchlist"] = relationship(back_populates="items")
 
@@ -497,3 +568,23 @@ class ResearchNote(Base, TimestampMixin):
     body: Mapped[str] = mapped_column(Text, nullable=False, default="")
     canonical_symbol: Mapped[Optional[str]] = mapped_column(String(20), index=True)
     tags: Mapped[Optional[list]] = mapped_column(JSON)  # list[str]
+
+
+# ---------------------------------------------------------------------------
+# Investment Policy Statement (IPS) — BL-05
+# ---------------------------------------------------------------------------
+
+class InvestmentPolicy(Base, TimestampMixin):
+    """Parameter IPS yang bisa diubah user. Satu row per profil ('default')."""
+    __tablename__ = "investment_policies"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    profile_name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, index=True)
+    mode: Mapped[str] = mapped_column(String(20), nullable=False, default="BALANCED")
+    max_position_weight: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False, default=Decimal("0.1000"))
+    max_sector_weight: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False, default=Decimal("0.3000"))
+    buy_score_threshold: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False, default=Decimal("60.00"))
+    min_core_coverage: Mapped[Decimal] = mapped_column(Numeric(4, 3), nullable=False, default=Decimal("0.600"))
+    max_staleness_days: Mapped[int] = mapped_column(Integer, nullable=False, default=3)
+    horizon: Mapped[str] = mapped_column(String(50), nullable=False, default="3-12 months")
+    notes: Mapped[Optional[str]] = mapped_column(Text)

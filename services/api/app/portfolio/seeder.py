@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
-from typing import Optional
 
 import structlog
 from sqlalchemy import select
@@ -19,10 +18,10 @@ log = structlog.get_logger(__name__)
 # Seed data dari CR §10
 # Format: (canonical_symbol, lots, avg_price_per_share)
 SEED_POSITIONS = [
-    ("IDX:BMRI", 11, 4978.69),   # 11 lot × 100 saham = 1100 saham
-    ("IDX:BBRI", 14, 2978.05),   # 14 lot × 100 saham = 1400 saham
-    ("IDX:BBNI", 3,  3375.89),   # 3 lot × 100 saham = 300 saham
-    ("IDX:BBCA", 1,  4978.69),   # 1 lot × 100 saham = 100 saham
+    ("IDX:BMRI", 11, 4160.90),   # 11 lot × 100 = 1100 saham @ 4,160.90 → modal 4,576,990
+    ("IDX:BBRI", 14, 2978.05),   # 14 lot × 100 = 1400 saham @ 2,978.05 → modal 4,169,270
+    ("IDX:BBNI", 3,  3375.89),   # 3 lot × 100 = 300 saham @ 3,375.89  → modal 1,012,767
+    ("IDX:BBCA", 1,  4978.69),   # 1 lot × 100 = 100 saham @ 4,978.69  → modal 497,869
 ]
 
 SEED_DATE = date(2024, 1, 2)  # tanggal fiktif — data historis pre-aplikasi
@@ -56,7 +55,9 @@ async def seed_initial_portfolio(db: AsyncSession) -> dict:
     """
     portfolio = await get_or_create_default_portfolio(db)
 
-    results = {"created": 0, "skipped": 0, "errors": [], "portfolio_id": portfolio.id}
+    created_count = 0
+    skipped_count = 0
+    errors_list: list[str] = []
 
     for symbol, lots, avg_price in SEED_POSITIONS:
         fingerprint = f"SEED-{symbol.replace(':', '-')}-v1"
@@ -67,7 +68,7 @@ async def seed_initial_portfolio(db: AsyncSession) -> dict:
         )
         if existing.scalar_one_or_none() is not None:
             log.debug("portfolio.seed.skip", symbol=symbol, reason="fingerprint_exists")
-            results["skipped"] += 1
+            skipped_count += 1
             continue
 
         # Cari instrumen
@@ -78,7 +79,7 @@ async def seed_initial_portfolio(db: AsyncSession) -> dict:
 
         if instrument is None:
             log.warning("portfolio.seed.error", symbol=symbol, reason="instrument_not_found")
-            results["errors"].append(f"Instrumen {symbol} tidak ditemukan — jalankan /admin/bootstrap lebih dulu")
+            errors_list.append(f"Instrumen {symbol} tidak ditemukan — jalankan /admin/bootstrap lebih dulu")
             continue
 
         shares = float(lots * LOT_SIZE)
@@ -98,8 +99,13 @@ async def seed_initial_portfolio(db: AsyncSession) -> dict:
             notes=f"Data awal sesuai CR §10 — {lots} lot @{avg_price:,.2f}",
         )
         db.add(trade)
-        results["created"] += 1
+        created_count += 1
         log.info("portfolio.seed.created", symbol=symbol, lots=lots, price=avg_price)
 
     await db.flush()
-    return results
+    return {
+        "created": created_count,
+        "skipped": skipped_count,
+        "errors": errors_list,
+        "portfolio_id": portfolio.id,
+    }

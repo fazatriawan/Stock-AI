@@ -11,7 +11,7 @@ from typing import Optional
 
 from app.providers.base import (
     Bar, CorporateActionRecord, Fact, InstrumentInfo,
-    MarketDataProvider, ProviderHealth, ProviderStatus,
+    ProviderHealth, ProviderStatus,
 )
 
 # Daftar instrument mock — IDX dan US

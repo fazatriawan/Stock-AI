@@ -6,7 +6,8 @@ import { api, type PortfolioSummary, type DailyIntelligence } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
 import { MarketStatusGrid } from "@/components/dashboard/MarketStatusGrid";
 import { DataHealthStatus } from "@/components/dashboard/DataHealthStatus";
-import { TrendingUp, TrendingDown, AlertTriangle, ChevronRight, Target } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertTriangle, ChevronRight, Target, Settings } from "lucide-react";
+import { OnboardingBanner } from "@/components/onboarding/OnboardingBanner";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -35,6 +36,38 @@ function KpiCard({
       <p className="text-xs text-gray-500 mb-1">{label}</p>
       <p className={`text-xl font-bold ${valueColor}`}>{value}</p>
       {sub && <p className="text-xs text-gray-600 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Setup Banner — tampil hanya jika data belum dimuat
+// ---------------------------------------------------------------------------
+function SetupBanner() {
+  const [status, setStatus] = useState<{ is_ready: boolean; instruments_loaded: number } | null>(null);
+
+  useEffect(() => {
+    api.admin.setupStatus().then(setStatus).catch(() => {});
+  }, []);
+
+  if (!status || status.is_ready) return null;
+
+  return (
+    <div className="rounded-xl border border-blue-800/50 bg-blue-950/20 px-4 py-4 flex items-start gap-3">
+      <Settings size={16} className="text-blue-400 mt-0.5 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-blue-300">Langkah pertama: Muat data saham</p>
+        <p className="text-xs text-blue-400/70 mt-1">
+          Screener, Decision Center, dan analisis membutuhkan data instrumen.
+          Belum ada data di database.
+        </p>
+        <Link
+          href="/settings"
+          className="inline-flex items-center gap-1.5 mt-2.5 text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors"
+        >
+          Buka Setup Data <ChevronRight size={11} />
+        </Link>
+      </div>
     </div>
   );
 }
@@ -155,7 +188,7 @@ function TopPositions() {
     </div>
   );
 
-  const sorted = [...positions].sort((a, b) => Math.abs(b.unrealized_pnl_pct ?? 0) - Math.abs(a.unrealized_pnl_pct ?? 0)).slice(0, 5);
+  const sorted = [...positions].sort((a, b) => (b.market_value ?? 0) - (a.market_value ?? 0)).slice(0, 5);
 
   return (
     <div className="space-y-1.5">
@@ -215,6 +248,12 @@ export default function OverviewPage() {
         <p className="text-sm text-gray-500 mt-0.5">Ringkasan portofolio & market hari ini</p>
       </div>
 
+      {/* Onboarding steps */}
+      <OnboardingBanner />
+
+      {/* Setup banner — fallback jika onboarding sudah dismiss tapi data belum ada */}
+      <SetupBanner />
+
       {/* Market status */}
       <section>
         <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Status Bursa</h2>
@@ -265,11 +304,11 @@ export default function OverviewPage() {
       </section>
 
       {/* Disclaimer */}
-      <div className="rounded-lg border border-amber-800/40 bg-amber-950/20 px-4 py-3">
-        <p className="text-xs text-amber-400/80">
-          <strong>Catatan:</strong> Seluruh data yang ditampilkan saat ini adalah data sintetis untuk testing.
-          Tidak ada angka yang mencerminkan kondisi pasar nyata. Sistem ini bukan nasihat investasi.
-          Keputusan transaksi sepenuhnya menjadi tanggung jawab pengguna.
+      <div className="rounded-lg border border-gray-700/40 bg-gray-800/20 px-4 py-3">
+        <p className="text-xs text-gray-500">
+          Data harga bersumber dari provider publik (yfinance). Aplikasi ini hanya untuk riset pribadi
+          dan <strong className="text-gray-400">bukan nasihat investasi</strong>. Semua keputusan beli/jual
+          sepenuhnya menjadi tanggung jawab pengguna.
         </p>
       </div>
     </div>

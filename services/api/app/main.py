@@ -19,7 +19,13 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("Stock Intelligence API starting", env=settings.app_env)
+    # R13: start APScheduler (backup + health probe)
+    from app.scheduling.scheduler import create_scheduler
+    scheduler = create_scheduler()
+    scheduler.start()
+    logger.info("Scheduler started", jobs=len(scheduler.get_jobs()))
     yield
+    scheduler.shutdown(wait=False)
     logger.info("Stock Intelligence API shutting down")
 
 
@@ -45,8 +51,10 @@ app.add_middleware(
 app.add_exception_handler(StockIntelligenceError, stock_error_handler)  # type: ignore[arg-type]
 
 # Routes
-from app.api.routes import markets, instruments, stocks, data_health, ingestion, portfolio, import_trades, portfolio_intelligence, rebalance, journal, daily, decisions, screener, performance, macro, notebook
+from app.api.routes import admin, markets, instruments, stocks, data_health, ingestion, portfolio, import_trades, portfolio_intelligence, rebalance, journal, daily, decisions, screener, performance, macro, notebook, insider, backtest, swing, alerts, watchlist, summary, chat  # noqa: E402
+from app.api.routes import settings as settings_routes  # noqa: E402
 
+app.include_router(admin.router, prefix="/api/v1")
 app.include_router(markets.router, prefix="/api/v1")
 app.include_router(instruments.router, prefix="/api/v1")
 app.include_router(stocks.router, prefix="/api/v1")
@@ -63,6 +71,14 @@ app.include_router(screener.router, prefix="/api/v1")
 app.include_router(performance.router, prefix="/api/v1")
 app.include_router(macro.router, prefix="/api/v1")
 app.include_router(notebook.router, prefix="/api/v1")
+app.include_router(settings_routes.router, prefix="/api/v1")
+app.include_router(insider.router, prefix="/api/v1")
+app.include_router(backtest.router, prefix="/api/v1")
+app.include_router(swing.router, prefix="/api/v1")
+app.include_router(alerts.router, prefix="/api/v1")
+app.include_router(watchlist.router, prefix="/api/v1")
+app.include_router(summary.router, prefix="/api/v1")
+app.include_router(chat.router, prefix="/api/v1")
 
 
 @app.get("/", include_in_schema=False)

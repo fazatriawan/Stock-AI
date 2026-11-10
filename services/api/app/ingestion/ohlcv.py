@@ -4,8 +4,6 @@ Idempotent: bar yang sudah ada (instrument_id + session_date + provider) tidak d
 """
 from __future__ import annotations
 
-import hashlib
-import json
 from datetime import date, datetime, timedelta
 
 from sqlalchemy import select

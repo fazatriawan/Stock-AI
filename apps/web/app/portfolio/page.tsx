@@ -6,8 +6,11 @@ import { formatCurrency, formatPercent } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, RefreshCw, AlertTriangle, PlusCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, RefreshCw, AlertTriangle, PlusCircle, Zap, Trash2, CloudDownload, Pencil } from "lucide-react";
 import { AddTradeModal } from "@/components/portfolio/AddTradeModal";
+import { QuickPositionModal } from "@/components/portfolio/QuickPositionModal";
+import { EditPositionModal } from "@/components/portfolio/EditPositionModal";
+import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 
 function PnlBadge({ value, pct }: { value: number | null; pct: number | null }) {
   if (value === null || pct === null) return <span className="text-gray-500">N/A</span>;
@@ -33,12 +36,21 @@ function SummaryCard({ title, value, sub }: { title: string; value: React.ReactN
   );
 }
 
-function PositionRow({ pos }: { pos: Position }) {
+function PositionRow({
+  pos,
+  onDelete,
+  onEdit,
+}: {
+  pos: Position;
+  onDelete: (symbol: string) => void;
+  onEdit: (pos: Position) => void;
+}) {
   const hasMV = pos.market_value !== null;
   const isPos = (pos.unrealized_pnl ?? 0) >= 0;
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
-    <tr className="border-b border-gray-800 hover:bg-gray-800/30 transition-colors">
+    <tr className="border-b border-gray-800 hover:bg-gray-800/30 transition-colors group">
       <td className="py-3 px-4">
         <div className="font-medium text-gray-100 text-sm">{pos.canonical_symbol.split(":")[1] ?? pos.canonical_symbol}</div>
         {pos.company_name && <div className="text-xs text-gray-500 truncate max-w-[140px]">{pos.company_name}</div>}
@@ -72,6 +84,42 @@ function PositionRow({ pos }: { pos: Position }) {
       <td className="py-3 px-4 text-right text-xs text-gray-500">
         {pos.weight > 0 ? `${(pos.weight * 100).toFixed(1)}%` : "—"}
       </td>
+      <td className="py-3 px-4 text-right">
+        {confirmDelete ? (
+          <span className="flex items-center gap-1 justify-end">
+            <button
+              onClick={() => onDelete(pos.canonical_symbol)}
+              className="text-xs text-red-400 hover:text-red-300 font-medium"
+            >
+              Hapus
+            </button>
+            <span className="text-gray-700">·</span>
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="text-xs text-gray-500 hover:text-gray-300"
+            >
+              Batal
+            </button>
+          </span>
+        ) : (
+          <span className="flex items-center gap-1.5 justify-end opacity-0 group-hover:opacity-100 transition-all">
+            <button
+              onClick={() => onEdit(pos)}
+              className="text-gray-600 hover:text-blue-400 transition-colors"
+              title="Edit posisi"
+            >
+              <Pencil size={13} />
+            </button>
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="text-gray-600 hover:text-red-400 transition-colors"
+              title="Hapus posisi"
+            >
+              <Trash2 size={13} />
+            </button>
+          </span>
+        )}
+      </td>
     </tr>
   );
 }
@@ -81,6 +129,10 @@ export default function PortfolioPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddTrade, setShowAddTrade] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [editingPosition, setEditingPosition] = useState<Position | null>(null);
+  const [refreshingPrices, setRefreshingPrices] = useState(false);
+  const [refreshMsg, setRefreshMsg] = useState<string | null>(null);
 
   async function load() {
     try {
@@ -104,6 +156,30 @@ export default function PortfolioPage() {
     }
   }
 
+  async function handleRefreshPrices() {
+    setRefreshingPrices(true);
+    setRefreshMsg(null);
+    try {
+      const r = await api.portfolio.refreshPrices();
+      setRefreshMsg(`Refresh dimulai untuk ${r.triggered} saham. Harga terbaru akan muncul dalam beberapa detik.`);
+      // Reload data setelah delay singkat
+      setTimeout(() => load(), 3000);
+    } catch (e) {
+      setRefreshMsg("Gagal memulai refresh harga. Coba lagi.");
+    } finally {
+      setRefreshingPrices(false);
+    }
+  }
+
+  async function handleDeletePosition(symbol: string) {
+    try {
+      await api.portfolio.deletePosition(symbol);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Gagal menghapus posisi");
+    }
+  }
+
   useEffect(() => { load(); }, []);
 
   if (loading) {
@@ -122,14 +198,9 @@ export default function PortfolioPage() {
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="flex items-center gap-2 text-red-400 text-sm">
-          <AlertTriangle size={16} />
-          <span>{error}</span>
-        </div>
-        <button onClick={load} className="mt-3 text-xs text-gray-400 hover:text-gray-200">
-          Coba lagi
-        </button>
+      <div className="p-6 max-w-lg">
+        <h1 className="text-lg font-semibold text-gray-100 mb-4">My Portfolio</h1>
+        <ErrorDisplay error={error} onRetry={load} context="portofolio" />
       </div>
     );
   }
@@ -146,9 +217,29 @@ export default function PortfolioPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={load} className="gap-1.5">
+          <Button variant="outline" size="sm" onClick={load} className="gap-1.5" title="Muat ulang data portofolio">
             <RefreshCw size={13} />
-            Refresh
+            Muat Ulang
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefreshPrices}
+            disabled={refreshingPrices}
+            className="gap-1.5 border-blue-700/50 text-blue-400 hover:bg-blue-900/30"
+            title="Ambil harga terkini dari provider data"
+          >
+            <CloudDownload size={13} className={refreshingPrices ? "animate-pulse" : ""} />
+            {refreshingPrices ? "Memperbarui..." : "Refresh Harga"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowQuickAdd(true)}
+            className="gap-1.5 border-emerald-700/50 text-emerald-400 hover:bg-emerald-900/30"
+          >
+            <Zap size={13} />
+            Tambah Posisi
           </Button>
           <Button size="sm" onClick={() => setShowAddTrade(true)} className="gap-1.5">
             <PlusCircle size={13} />
@@ -156,6 +247,14 @@ export default function PortfolioPage() {
           </Button>
         </div>
       </div>
+
+      {/* Refresh price feedback */}
+      {refreshMsg && (
+        <div className="rounded-lg border border-blue-800/40 bg-blue-950/15 px-4 py-2.5 flex items-center justify-between gap-3">
+          <p className="text-xs text-blue-400">{refreshMsg}</p>
+          <button onClick={() => setRefreshMsg(null)} className="text-blue-400/40 hover:text-blue-400/80 text-xs shrink-0">✕</button>
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -240,11 +339,12 @@ export default function PortfolioPage() {
                       <th className="py-2.5 px-4 text-right">Nilai Pasar</th>
                       <th className="py-2.5 px-4 text-right">Unrealized P/L</th>
                       <th className="py-2.5 px-4 text-right">Bobot</th>
+                      <th className="py-2.5 px-4 text-right w-10"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.positions.map((pos) => (
-                      <PositionRow key={pos.instrument_id} pos={pos} />
+                      <PositionRow key={pos.instrument_id} pos={pos} onDelete={handleDeletePosition} onEdit={setEditingPosition} />
                     ))}
                   </tbody>
                 </table>
@@ -285,6 +385,21 @@ export default function PortfolioPage() {
         Data ini hanya untuk riset pribadi, bukan nasihat investasi.
         Keputusan transaksi sepenuhnya menjadi tanggung jawab pengguna.
       </p>
+
+      {showQuickAdd && (
+        <QuickPositionModal
+          onClose={() => setShowQuickAdd(false)}
+          onSuccess={() => { setShowQuickAdd(false); load(); }}
+        />
+      )}
+
+      {editingPosition && (
+        <EditPositionModal
+          position={editingPosition}
+          onClose={() => setEditingPosition(null)}
+          onSuccess={() => { setEditingPosition(null); load(); }}
+        />
+      )}
 
       {showAddTrade && (
         <AddTradeModal

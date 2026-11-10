@@ -18,7 +18,6 @@ os.environ.setdefault("APP_ENV", "test")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-integration-tests")
 os.environ.setdefault("ANTHROPIC_API_KEY", "test-key")
 
-import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine

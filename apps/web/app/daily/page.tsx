@@ -42,7 +42,7 @@ function PositionRow({ pos }: { pos: DailyPositionBrief }) {
   return (
     <tr
       className="border-b border-gray-800/50 hover:bg-gray-800/20 cursor-pointer"
-      onClick={() => router.push(`/stocks/${pos.canonical_symbol}`)}
+      onClick={() => router.push(`/explorer?q=${encodeURIComponent(pos.canonical_symbol)}`)}
     >
       <td className="py-2.5 px-4">
         <div className="flex items-center gap-2">

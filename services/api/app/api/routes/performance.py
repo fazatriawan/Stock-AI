@@ -14,8 +14,12 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.analytics.attribution import (
+    PositionAttributionInput,
+    compute_portfolio_attribution,
+)
 from app.api.schemas import EquityDataPoint, PerformanceResponse, PositionContribution
-from app.db.models import Instrument, PriceBar, Trade
+from app.db.models import DividendCashflow, Instrument, PriceBar, Trade
 from app.db.session import get_db
 from app.portfolio.calculator import compute_positions
 from app.portfolio.seeder import get_or_create_default_portfolio
@@ -49,7 +53,7 @@ async def get_portfolio_performance(
         .where(Trade.portfolio_id == portfolio.id)
         .order_by(Trade.trade_date.asc())
     )
-    all_trades = trades_result.scalars().all()
+    all_trades = list(trades_result.scalars().all())
 
     if not all_trades:
         return PerformanceResponse(
@@ -174,3 +178,117 @@ async def get_portfolio_performance(
         worst_position=worst,
         as_of=datetime.now(tz=timezone.utc),
     )
+
+
+@router.get("/attribution")
+async def get_portfolio_attribution(
+    benchmark_return_pct: float = Query(0.0, description="Return indeks acuan (%) pada periode perbandingan"),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    HARD-05 (R18): Decision & Portfolio Attribution.
+    Mendekomposisi return posisi ke efek pasar (benchmark), sektor, stock-specific alpha,
+    dividen, dan beban biaya transaksi.
+    """
+    portfolio = await get_or_create_default_portfolio(db)
+    trades_result = await db.execute(
+        select(Trade)
+        .where(Trade.portfolio_id == portfolio.id)
+        .order_by(Trade.trade_date.asc())
+    )
+    all_trades = list(trades_result.scalars().all())
+    if not all_trades:
+        report = compute_portfolio_attribution([], benchmark_return_pct=benchmark_return_pct)
+        return {
+            "portfolio_total_return_pct": report.portfolio_total_return_pct,
+            "benchmark_return_pct": report.benchmark_return_pct,
+            "portfolio_excess_return_pct": report.portfolio_excess_return_pct,
+            "weighted_sector_effect_pct": report.weighted_sector_effect_pct,
+            "weighted_stock_alpha_pct": report.weighted_stock_alpha_pct,
+            "weighted_dividend_pct": report.weighted_dividend_pct,
+            "weighted_cost_drag_pct": report.weighted_cost_drag_pct,
+            "positions": [],
+            "caveat": report.caveat,
+            "as_of": datetime.now(tz=timezone.utc),
+        }
+
+    current_positions = compute_positions(all_trades)
+    instrument_ids = list(current_positions.keys())
+
+    instr_result = await db.execute(
+        select(Instrument).where(Instrument.id.in_(instrument_ids))
+    )
+    instruments = {i.id: i for i in instr_result.scalars().all()}
+
+    # Hitung biaya fee + tax per instrumen untuk memisahkan gross_cost vs total_cost
+    fees_by_iid: dict[str, float] = {}
+    for t in all_trades:
+        if t.side == "BUY":
+            fees_by_iid[t.instrument_id] = fees_by_iid.get(t.instrument_id, 0.0) + float(t.fee or 0.0) + float(t.tax or 0.0)
+
+    # Dividen kas bersih per instrumen
+    div_result = await db.execute(
+        select(DividendCashflow).where(
+            DividendCashflow.portfolio_id == portfolio.id,
+            DividendCashflow.instrument_id.in_(instrument_ids),
+        )
+    )
+    div_by_iid: dict[str, float] = {}
+    for d in div_result.scalars().all():
+        net_amt = float(d.net) if d.net is not None else float(d.gross or 0.0)
+        div_by_iid[d.instrument_id] = div_by_iid.get(d.instrument_id, 0.0) + net_amt
+
+    inputs: list[PositionAttributionInput] = []
+    for iid, pos in current_positions.items():
+        bar_res = await db.execute(
+            select(PriceBar)
+            .where(PriceBar.instrument_id == iid)
+            .order_by(PriceBar.session_date.desc())
+            .limit(1)
+        )
+        bar = bar_res.scalar_one_or_none()
+        mv = (float(bar.close) * pos.shares) if bar is not None else pos.total_cost
+        fee_total = min(pos.total_cost * 0.10, fees_by_iid.get(iid, 0.0))
+        gross_cost = max(1.0, pos.total_cost - fee_total)
+        instr = instruments.get(iid)
+
+        inputs.append(PositionAttributionInput(
+            symbol=instr.canonical_symbol if instr else iid,
+            sector=instr.sector if instr else None,
+            total_cost=pos.total_cost,
+            gross_cost=gross_cost,
+            market_value=mv,
+            dividend_received=div_by_iid.get(iid, 0.0),
+            benchmark_return_pct=benchmark_return_pct,
+            sector_return_pct=None,
+        ))
+
+    report = compute_portfolio_attribution(inputs, benchmark_return_pct=benchmark_return_pct)
+    return {
+        "portfolio_total_return_pct": report.portfolio_total_return_pct,
+        "benchmark_return_pct": report.benchmark_return_pct,
+        "portfolio_excess_return_pct": report.portfolio_excess_return_pct,
+        "weighted_sector_effect_pct": report.weighted_sector_effect_pct,
+        "weighted_stock_alpha_pct": report.weighted_stock_alpha_pct,
+        "weighted_dividend_pct": report.weighted_dividend_pct,
+        "weighted_cost_drag_pct": report.weighted_cost_drag_pct,
+        "positions": [
+            {
+                "symbol": p.symbol,
+                "sector": p.sector,
+                "weight": p.weight,
+                "total_return_pct": p.total_return_pct,
+                "price_return_pct": p.price_return_pct,
+                "dividend_contribution_pct": p.dividend_contribution_pct,
+                "cost_drag_pct": p.cost_drag_pct,
+                "benchmark_effect_pct": p.benchmark_effect_pct,
+                "sector_excess_pct": p.sector_excess_pct,
+                "stock_specific_alpha_pct": p.stock_specific_alpha_pct,
+                "baseline_excess_pct": p.baseline_excess_pct,
+                "attribution_caveat": p.attribution_caveat,
+            }
+            for p in report.positions
+        ],
+        "caveat": report.caveat,
+        "as_of": datetime.now(tz=timezone.utc),
+    }

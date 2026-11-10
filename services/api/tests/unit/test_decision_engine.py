@@ -5,7 +5,6 @@ corporate action + stale data + concentration.
 """
 from datetime import date
 
-import pytest
 
 from app.analytics.fundamental import FundamentalSnapshot
 from app.analytics.technical import TechnicalSnapshot
@@ -277,3 +276,29 @@ class TestOutputContract:
             default_portfolio(), DecisionConfig(),
         )
         assert 0.0 <= output.composite_score <= 100.0
+
+    def test_liquidity_hard_gate_blocks_illiquid_microcap(self) -> None:
+        output = run_decision_engine(
+            "TEST", date(2026, 6, 1),
+            make_good_technical(), make_good_fundamental(),
+            default_portfolio(owned=False), DecisionConfig(),
+            last_price=500.0,
+            adv_shares=200.0,  # 1 lot (100 shares) = 50% ADV (> 25%)
+            exchange="IDX",
+        )
+        assert output.hard_gate_status == HardGateStatus.FAIL_LIQUIDITY
+        assert output.action == Action.WAIT
+
+    def test_min_lot_capital_blocks_buy_when_cash_less_than_one_lot(self) -> None:
+        portfolio = default_portfolio(owned=False)
+        portfolio.available_cash = 200_000.0  # Rp200rb, sedangkan 1 lot @ Rp5.000 = Rp500rb
+        output = run_decision_engine(
+            "TEST", date(2026, 6, 1),
+            make_good_technical(), make_good_fundamental(),
+            portfolio, DecisionConfig(),
+            last_price=5000.0,
+            adv_shares=500_000.0,
+            exchange="IDX",
+        )
+        assert output.action == Action.WAIT
+        assert any("1 lot minimum" in c for c in output.conditions_to_buy)

@@ -16,10 +16,10 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
-def get_url() -> str:
+def get_url(async_mode: bool = False) -> str:
     from app.core.config import get_settings
     settings = get_settings()
-    return settings.database_url_sync
+    return settings.database_url if async_mode else settings.database_url_sync
 
 
 def run_migrations_offline() -> None:
@@ -42,7 +42,7 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     cfg = config.get_section(config.config_ini_section, {})
-    cfg["sqlalchemy.url"] = get_url()
+    cfg["sqlalchemy.url"] = get_url(async_mode=True)
     connectable = async_engine_from_config(
         cfg,
         prefix="sqlalchemy.",

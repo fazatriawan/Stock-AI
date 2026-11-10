@@ -4,7 +4,7 @@ Setiap provider HARUS mengimplementasikan interface ini.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum

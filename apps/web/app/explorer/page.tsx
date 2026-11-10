@@ -17,7 +17,11 @@ export default function ExplorerPage() {
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (!query.trim()) return;
+    await searchTicker(query.trim());
+  }
+
+  async function searchTicker(ticker: string) {
+    if (!ticker) return;
 
     setLoading(true);
     setError(null);
@@ -26,8 +30,8 @@ export default function ExplorerPage() {
 
     try {
       const [ov, rec] = await Promise.all([
-        api.stocks.overview(query.trim()),
-        api.stocks.analysis(query.trim()),
+        api.stocks.overview(ticker),
+        api.stocks.analysis(ticker),
       ]);
       setOverview(ov);
       setRecommendation(rec);
@@ -75,9 +79,7 @@ export default function ExplorerPage() {
             key={sym}
             onClick={() => {
               setQuery(sym);
-              document.querySelector("form")?.dispatchEvent(
-                new Event("submit", { bubbles: true, cancelable: true })
-              );
+              searchTicker(sym);
             }}
             className="px-2.5 py-1 bg-gray-800 hover:bg-gray-700 text-xs text-gray-400 hover:text-gray-200 rounded transition-colors border border-gray-700"
           >

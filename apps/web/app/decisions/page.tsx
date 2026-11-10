@@ -238,13 +238,27 @@ export default function DecisionsPage() {
           {[1, 2, 3].map(i => <div key={i} className="h-20 bg-gray-800 rounded-lg animate-pulse" />)}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-12 text-gray-600">
-          <Minus size={28} className="mx-auto mb-2 opacity-40" />
-          <p className="text-sm">
-            {decisions.length === 0
-              ? "Tidak ada posisi atau watchlist — tambahkan saham terlebih dahulu"
-              : "Tidak ada sinyal untuk filter ini"}
-          </p>
+        <div className="text-center py-12 space-y-3">
+          <Minus size={28} className="mx-auto text-gray-700" />
+          {decisions.length === 0 ? (
+            <>
+              <p className="text-sm text-gray-400 font-medium">Belum ada saham untuk dianalisis</p>
+              <p className="text-xs text-gray-600 max-w-xs mx-auto leading-relaxed">
+                Decision Center menganalisis saham di portofolio dan watchlist-mu.
+                Tambahkan saham terlebih dahulu.
+              </p>
+              <div className="flex justify-center gap-2 mt-2">
+                <a href="/portfolio" className="text-xs px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors">
+                  Buka Portofolio
+                </a>
+                <a href="/watchlist" className="text-xs px-3 py-1.5 bg-indigo-700 hover:bg-indigo-600 text-white rounded-lg transition-colors">
+                  Buka Watchlist
+                </a>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-gray-600">Tidak ada sinyal untuk filter yang dipilih</p>
+          )}
         </div>
       ) : (
         <div className="space-y-2">

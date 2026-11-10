@@ -2,8 +2,7 @@
 Unit tests — mock provider dan data ingestion.
 Gate Milestone A: 20 ticker, duplicate, stale, currency, missing days, split.
 """
-from datetime import date, timedelta
-from decimal import Decimal
+from datetime import date
 
 import pytest
 

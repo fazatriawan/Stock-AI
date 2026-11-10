@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -212,3 +212,75 @@ async def get_loss_analysis(
         total_unrealized_loss_idr=round(total_loss, 2),
         as_of=datetime.now(tz=timezone.utc),
     )
+
+
+# ---------------------------------------------------------------------------
+# Correlation Heatmap (Fitur Baru)
+# ---------------------------------------------------------------------------
+
+from datetime import date, timedelta  # noqa: E402
+from app.analytics.correlation import compute_correlation_matrix  # noqa: E402
+
+
+@router.get("/correlation", response_model=dict)
+async def get_portfolio_correlation(
+    lookback_days: int = 180,
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Matriks korelasi return harian antar instrumen di portofolio aktif.
+
+    Berguna untuk mengidentifikasi over-diversifikasi (korelasi tinggi)
+    atau under-diversifikasi (semua posisi bergerak bersama).
+    """
+    portfolio = await get_or_create_default_portfolio(db)
+
+    trades_result = await db.execute(
+        select(Trade).where(Trade.portfolio_id == portfolio.id).order_by(Trade.trade_date.asc())
+    )
+    trades = list(trades_result.scalars().all())
+    if not trades:
+        return {"symbols": [], "matrix": {}, "pairs": [], "bars_used": 0, "warnings": ["Portofolio kosong"]}
+
+    # Kumpulkan symbol yang ada di portofolio
+    instr_ids = {t.instrument_id for t in trades}
+    instrs_result = await db.execute(
+        select(Instrument).where(Instrument.id.in_(instr_ids))
+    )
+    instrs = {i.id: i for i in instrs_result.scalars().all()}
+
+    end = date.today()
+    start = end - timedelta(days=lookback_days)
+
+    prices: dict[str, "pd.Series"] = {}
+    import pandas as pd
+    for iid, instr in instrs.items():
+        bars_res = await db.execute(
+            select(PriceBar)
+            .where(PriceBar.instrument_id == iid, PriceBar.session_date.between(start, end))
+            .order_by(PriceBar.session_date.asc())
+        )
+        bars = bars_res.scalars().all()
+        if bars:
+            s = pd.Series(
+                {b.session_date: float(b.close) for b in bars},
+                name=instr.canonical_symbol,
+            )
+            prices[instr.canonical_symbol] = s
+
+    result = compute_correlation_matrix(prices)
+    return {
+        "symbols": result.symbols,
+        "matrix": result.matrix,
+        "pairs": [
+            {
+                "symbol_a": p.symbol_a,
+                "symbol_b": p.symbol_b,
+                "correlation": p.correlation,
+                "interpretation": p.interpretation,
+            }
+            for p in result.pairs
+        ],
+        "bars_used": result.bars_used,
+        "warnings": result.warnings,
+    }

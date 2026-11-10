@@ -4,12 +4,10 @@ Menguji: fingerprint generator, CSV parser, format detection, symbol normalisati
 """
 from __future__ import annotations
 
-import io
 from datetime import date
 
-import pytest
 
-from app.portfolio.importers.base import BrokerFormat, ImportResult, ValidationStatus
+from app.portfolio.importers.base import BrokerFormat, ValidationStatus
 from app.portfolio.importers.fingerprint import generate_fingerprint
 from app.portfolio.importers.csv_importer import (
     _detect_format,

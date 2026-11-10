@@ -123,6 +123,7 @@ class RecommendationOutput:
     data_gaps: list[str] = field(default_factory=list)
     changed_from: Optional[str] = None
     notes: str = ""
+    rule_version: str = "v1.7.1"
 
 
 def _score_technical(snap: TechnicalSnapshot) -> Optional[float]:
@@ -130,7 +131,6 @@ def _score_technical(snap: TechnicalSnapshot) -> Optional[float]:
     if not snap.sufficient_data:
         return None
 
-    score = 50.0
     signals: list[tuple[float, float]] = []  # (weight, value 0-1)
 
     # Trend vs MA
@@ -268,6 +268,9 @@ def run_decision_engine(
     has_unresolved_corporate_action: bool = False,
     stale_price: bool = False,
     previous_action: Optional[str] = None,
+    last_price: Optional[float] = None,
+    adv_shares: Optional[float] = None,
+    exchange: str = "IDX",
 ) -> RecommendationOutput:
     """
     Pipeline rekomendasi deterministik.
@@ -310,6 +313,20 @@ def run_decision_engine(
             factor_scores=FactorScores(), composite_score=0.0,
             evidence_confidence="LOW", owned=portfolio.owned,
             data_gaps=["fresh_price_data"],
+        )
+
+    lot_size = 100 if exchange in ("IDX", "BEI") else 1
+    if adv_shares is not None and (adv_shares <= 0 or (lot_size / adv_shares) > 0.25):
+        return RecommendationOutput(
+            instrument_id=instrument_id, as_of=as_of,
+            action=Action.HOLD if portfolio.owned else Action.WAIT,
+            urgency=Urgency.REVIEW_NOW if portfolio.owned else Urgency.NORMAL,
+            horizon=config.horizon,
+            hard_gate_status=HardGateStatus.FAIL_LIQUIDITY,
+            hard_gate_reason="Likuiditas harian (ADV) terlalu tipis (>25% ADV untuk 1 lot) — NOT_EXECUTABLE_AT_ASSUMED_SIZE",
+            factor_scores=FactorScores(), composite_score=0.0,
+            evidence_confidence="LOW", owned=portfolio.owned,
+            data_gaps=["liquidity_adv"],
         )
 
     # --- Scoring ---
@@ -443,7 +460,15 @@ def run_decision_engine(
         quality_ok = (scores.fundamental or 0) >= 50 and (scores.valuation or 0) >= 45
         tech_ok = (scores.technical or 0) >= 45 if technical.sufficient_data else True
         score_ok = composite >= config.buy_score_threshold
-        cash_ok = portfolio.available_cash > 0
+        if last_price is not None and last_price > 0:
+            min_lot_cost = last_price * lot_size * 1.03
+            cash_ok = portfolio.available_cash >= min_lot_cost
+            if not cash_ok:
+                conditions_buy.append(
+                    f"Modal tersedia (Rp{portfolio.available_cash:,.0f}) belum cukup untuk 1 lot minimum (Rp{min_lot_cost:,.0f})"
+                )
+        else:
+            cash_ok = portfolio.available_cash > 0
 
         if quality_ok and tech_ok and score_ok and cash_ok and portfolio_risk_ok:
             action = Action.BUY

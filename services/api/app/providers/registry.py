@@ -8,8 +8,11 @@ from __future__ import annotations
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.providers.base import MarketDataProvider, ProviderHealth, ProviderStatus
+from app.providers.circuit_breaker import all_circuit_breaker_statuses, get_circuit_breaker
 from app.providers.mock_provider import MockProvider
+from app.providers.sectors_provider import SectorsProvider
 from app.providers.yfinance_provider import YFinanceProvider
+from app.providers.openbb_provider import OpenBBProvider
 
 logger = get_logger(__name__)
 
@@ -24,11 +27,27 @@ class ProviderRegistry:
         self._provider_by_name: dict[str, MarketDataProvider] = {}
 
         # Daftarkan provider berdasarkan konfigurasi
+        # Sectors — prioritas tertinggi untuk fundamental IDX (lebih akurat dari yfinance)
+        if settings.sectors_enabled and settings.sectors_api_key:
+            sectors = SectorsProvider(api_key=settings.sectors_api_key)
+            self._providers["IDX"].insert(0, sectors)  # type: ignore[arg-type]
+            self._provider_by_name["sectors"] = sectors  # type: ignore[assignment]
+            logger.info("SectorsProvider aktif untuk IDX fundamental")
+
         if settings.yfinance_enabled:
             yf = YFinanceProvider()
             self._providers["IDX"].append(yf)  # type: ignore[arg-type]
             self._providers["US"].append(yf)  # type: ignore[arg-type]
             self._provider_by_name["yfinance"] = yf  # type: ignore[assignment]
+
+        # OpenBB — experimental, US-focused, 500+ rasio finansial
+        if settings.openbb_enabled:
+            openbb = OpenBBProvider(pat=settings.openbb_pat or None)
+            self._providers["US"].append(openbb)  # type: ignore[arg-type]
+            # IDX support terbatas, tambahkan sebagai fallback saja
+            self._providers["IDX"].append(openbb)  # type: ignore[arg-type]
+            self._provider_by_name["openbb"] = openbb  # type: ignore[assignment]
+            logger.info("OpenBBProvider aktif (experimental)")
 
         # Mock selalu tersedia sebagai fallback terakhir untuk testing
         mock = MockProvider()
@@ -43,6 +62,20 @@ class ProviderRegistry:
         logger.warning("Tidak ada provider terdaftar untuk market, menggunakan mock", market=market)
         return self._mock  # type: ignore[return-value]
 
+    def get_fundamental_provider(self, market: str) -> MarketDataProvider:
+        """
+        Pilih provider terbaik untuk data fundamental.
+        Untuk IDX: Sectors > yfinance > mock.
+        Untuk US: yfinance > mock.
+        """
+        if market == "IDX":
+            if "sectors" in self._provider_by_name:
+                return self._provider_by_name["sectors"]  # type: ignore[return-value]
+        providers = self._providers.get(market, [])
+        if providers:
+            return providers[0]
+        return self._mock  # type: ignore[return-value]
+
     def get_fallback(self, market: str) -> MarketDataProvider:
         """Ambil provider fallback (mock)."""
         return self._mock  # type: ignore[return-value]
@@ -53,15 +86,31 @@ class ProviderRegistry:
     def all_health(self) -> list[ProviderHealth]:
         results = []
         for name, provider in self._provider_by_name.items():
+            cb = get_circuit_breaker(name)
+            if not cb.allow_request():
+                results.append(ProviderHealth(
+                    provider=name,
+                    status=ProviderStatus.DOWN,
+                    last_error=f"Circuit breaker OPEN — {cb._state.last_error}",
+                    notes="Circuit breaker aktif, provider tidak diuji",
+                ))
+                cb._state.total_calls -= 1  # health probe bukan request sesungguhnya
+                continue
             try:
-                results.append(provider.health())
+                h = provider.health()
+                cb.record_success()
+                results.append(h)
             except Exception as e:
+                cb.record_failure(str(e))
                 results.append(ProviderHealth(
                     provider=name,
                     status=ProviderStatus.DOWN,
                     last_error=str(e),
                 ))
         return results
+
+    def all_circuit_breaker_statuses(self) -> list[dict]:
+        return all_circuit_breaker_statuses()
 
 
 _registry: ProviderRegistry | None = None

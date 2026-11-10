@@ -204,6 +204,27 @@ export interface TradeCreateRequest {
   notes?: string;
 }
 
+export interface QuickPositionRequest {
+  symbol: string;
+  lots: number;
+  avg_price: number;
+  trade_date?: string;
+  fee?: number;
+  notes?: string;
+}
+
+export interface QuickPositionResponse {
+  trade_id: string;
+  canonical_symbol: string;
+  company_name: string | null;
+  lots: number;
+  shares: number;
+  avg_price: number;
+  total_cost: number;
+  trade_date: string;
+  price_refresh_triggered: boolean;
+}
+
 export interface Position {
   instrument_id: string;
   canonical_symbol: string;
@@ -537,6 +558,77 @@ export type ScreenerFilters = {
   limit?: number;
 };
 
+export type ReverseScenario = {
+  target_multiple: number;
+  horizon_years: number;
+  required_eps_cagr_constant_pe_pct: number;
+  required_eps_cagr_rerating_pct: number | null;
+  assumed_annual_dilution_pct: number;
+  downside_risk_note: string;
+};
+
+export type MultibaggerResult = {
+  instrument_id: string;
+  canonical_symbol: string;
+  company_name: string | null;
+  sector: string | null;
+  exchange: string | null;
+  current_price: number | null;
+  score: {
+    instrument_id: string;
+    symbol: string;
+    tier: string;
+    total_score: number;
+    components: Array<{ name: string; score: number; max_score: number; notes: string }>;
+    strengths: string[];
+    concerns: string[];
+    data_completeness: number;
+    pipelines_matched: string[];
+    reverse_scenarios: ReverseScenario[];
+  };
+  pe_ratio: number | null;
+  roe: number | null;
+  net_margin: number | null;
+  revenue_growth_1y: number | null;
+  debt_to_equity: number | null;
+  data_freshness: string;
+};
+
+export type MultibaggerList = {
+  results: MultibaggerResult[];
+  total: number;
+  min_tier: string;
+  as_of: string;
+};
+
+export type PositionAttributionItem = {
+  symbol: string;
+  sector: string | null;
+  weight: number;
+  total_return_pct: number;
+  price_return_pct: number;
+  dividend_contribution_pct: number;
+  cost_drag_pct: number;
+  benchmark_effect_pct: number;
+  sector_excess_pct: number;
+  stock_specific_alpha_pct: number;
+  baseline_excess_pct: number;
+  attribution_caveat: string;
+};
+
+export type PortfolioAttribution = {
+  portfolio_total_return_pct: number;
+  benchmark_return_pct: number;
+  portfolio_excess_return_pct: number;
+  weighted_sector_effect_pct: number;
+  weighted_stock_alpha_pct: number;
+  weighted_dividend_pct: number;
+  weighted_cost_drag_pct: number;
+  positions: PositionAttributionItem[];
+  caveat: string;
+  as_of: string;
+};
+
 export type EquityDataPoint = {
   date: string;
   portfolio_value: number;
@@ -652,6 +744,138 @@ export type NoteUpdateRequest = {
 };
 
 // ---------------------------------------------------------------------------
+// R20 — Watchlist types
+// ---------------------------------------------------------------------------
+
+export type WatchlistItemResponse = {
+  id: string;
+  watchlist_id: string;
+  instrument_id: string;
+  canonical_symbol: string;
+  company_name: string | null;
+  exchange: string | null;
+  notes: string | null;
+  price_target: number | null;
+  target_note: string | null;
+  cost_basis: number | null;
+  alert_on_target: boolean;
+  last_price: number | null;
+  pct_to_target: number | null;
+  pct_from_cost: number | null;
+  created_at: string | null;
+};
+
+export type WatchlistResponse = {
+  id: string;
+  name: string;
+  description: string | null;
+  item_count: number;
+  items: WatchlistItemResponse[];
+  created_at: string | null;
+};
+
+export type WatchlistItemAddRequest = {
+  canonical_symbol: string;
+  notes?: string;
+  price_target?: number;
+  target_note?: string;
+  cost_basis?: number;
+  alert_on_target?: boolean;
+};
+
+// ---------------------------------------------------------------------------
+// R19 — Alert types
+// ---------------------------------------------------------------------------
+
+export type AlertRuleResponse = {
+  id: string;
+  rule_type: string;
+  canonical_symbol: string | null;
+  threshold_value: number | null;
+  cooldown_hours: number;
+  is_active: boolean;
+  fire_count: number;
+  last_fired_at: string | null;
+  webhook_url: string | null;
+  notes: string | null;
+  created_at: string | null;
+};
+
+export type AlertRuleCreateRequest = {
+  rule_type: string;
+  canonical_symbol?: string;
+  threshold_value?: number;
+  cooldown_hours?: number;
+  webhook_url?: string;
+  notes?: string;
+};
+
+export type AlertFiredResponse = {
+  rule_id: string;
+  rule_type: string;
+  symbol: string | null;
+  message: string;
+  value: number | null;
+  threshold: number | null;
+  fired_at: string;
+  dedup_key: string;
+  webhook_sent: boolean;
+};
+
+export type AlertEvalResponse = {
+  rules_checked: number;
+  alerts_fired: number;
+  alerts_skipped_cooldown: number;
+  fired: AlertFiredResponse[];
+  as_of: string;
+};
+
+export type AlertHistoryItem = {
+  id: string;
+  event_type: string;
+  materiality: string;
+  dedup_key: string;
+  payload: Record<string, unknown> | null;
+  delivered_at: string | null;
+  acknowledged_at: string | null;
+  created_at: string | null;
+};
+
+// ---------------------------------------------------------------------------
+// R22 — Summary types
+// ---------------------------------------------------------------------------
+
+export type DashboardSummaryResponse = {
+  as_of: string;
+  macro: {
+    yield_curve_signal: string | null;
+    macro_impact_score: number | null;
+    fed_funds_rate: number | null;
+    as_of: string | null;
+  };
+  top_swing_setups: {
+    symbol: string;
+    setup_type: string;
+    strength: string;
+    rr_ratio: number | null;
+    entry_low: number | null;
+    entry_high: number | null;
+  }[];
+  recent_alerts: {
+    rule_type: string;
+    symbol: string | null;
+    message: string;
+    fired_at: string;
+  }[];
+  watchlist_near_target: {
+    symbol: string;
+    last_price: number | null;
+    price_target: number | null;
+    pct_to_target: number | null;
+  }[];
+};
+
+// ---------------------------------------------------------------------------
 // API functions
 // ---------------------------------------------------------------------------
 
@@ -699,6 +923,24 @@ export const api = {
       apiFetch<ImportConfirmResponse>("/portfolio/import/confirm", {
         method: "POST",
         body: JSON.stringify({ trades, skip_duplicates: skipDuplicates }),
+      }),
+    quickAddPosition: (body: QuickPositionRequest) =>
+      apiFetch<QuickPositionResponse>("/portfolio/positions/quick", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    deletePosition: (symbol: string) =>
+      apiFetch<{ deleted_trades: number; message: string }>(`/portfolio/positions/${encodeURIComponent(symbol)}`, {
+        method: "DELETE",
+      }),
+    refreshPrices: () =>
+      apiFetch<{ triggered: number; symbols: string[]; message: string }>("/portfolio/prices/refresh", {
+        method: "POST",
+      }),
+    editPosition: (symbol: string, body: { lots: number; avg_price: number; trade_date?: string; notes?: string }) =>
+      apiFetch<{ canonical_symbol: string; lots: number; shares: number; avg_price: number; total_cost: number; trade_date: string }>(`/portfolio/positions/${encodeURIComponent(symbol)}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
       }),
     health: () => apiFetch<PortfolioHealth>("/portfolio/health"),
     lossAnalysis: () => apiFetch<LossAnalysis>("/portfolio/loss"),
@@ -758,9 +1000,20 @@ export const api = {
       if (filters.limit) params.set("limit", String(filters.limit));
       return apiFetch<ScreenerList>(`/screener?${params.toString()}`);
     },
+    multibagger: (filters: { sector?: string; exchange?: string; min_tier?: string; min_score?: number; limit?: number } = {}) => {
+      const params = new URLSearchParams();
+      if (filters.sector) params.set("sector", filters.sector);
+      if (filters.exchange) params.set("exchange", filters.exchange);
+      if (filters.min_tier) params.set("min_tier", filters.min_tier);
+      if (filters.min_score != null) params.set("min_score", String(filters.min_score));
+      if (filters.limit) params.set("limit", String(filters.limit));
+      return apiFetch<MultibaggerList>(`/screener/multibagger?${params.toString()}`);
+    },
   },
   performance: {
     get: (range = "6m") => apiFetch<PortfolioPerformance>(`/portfolio/performance?range=${range}`),
+    attribution: (benchmarkReturnPct = 5.0) =>
+      apiFetch<PortfolioAttribution>(`/portfolio/attribution?benchmark_return_pct=${benchmarkReturnPct}`),
   },
   macro: {
     snapshot: () => apiFetch<MacroSnapshot>("/macro/observations"),
@@ -803,9 +1056,57 @@ export const api = {
       apiFetch<void>(`/notebook/${id}`, { method: "DELETE" }),
   },
   admin: {
-    bootstrap: (useMock = true) =>
-      apiFetch<{ message: string; instruments_loaded: number }>(`/admin/bootstrap?use_mock=${useMock}`, {
+    setupStatus: () =>
+      apiFetch<{ instruments_loaded: number; price_bars: number; yfinance_enabled: boolean; is_ready: boolean }>("/admin/setup-status"),
+    bootstrap: (useMock = false) =>
+      apiFetch<{ message: string; instruments_loaded: number; ohlcv_job: string }>(`/admin/bootstrap?use_mock=${useMock}`, {
         method: "POST",
+      }),
+  },
+
+  // R20 — Watchlist
+  watchlists: {
+    list: () => apiFetch<WatchlistResponse[]>("/watchlists"),
+    get: (id: string) => apiFetch<WatchlistResponse>(`/watchlists/${id}`),
+    create: (body: { name: string; description?: string }) =>
+      apiFetch<WatchlistResponse>("/watchlists", { method: "POST", body: JSON.stringify(body) }),
+    delete: (id: string) => apiFetch<void>(`/watchlists/${id}`, { method: "DELETE" }),
+    addItem: (watchlistId: string, body: WatchlistItemAddRequest) =>
+      apiFetch<WatchlistItemResponse>(`/watchlists/${watchlistId}/items`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    updateItem: (watchlistId: string, itemId: string, body: Partial<WatchlistItemAddRequest>) =>
+      apiFetch<WatchlistItemResponse>(`/watchlists/${watchlistId}/items/${itemId}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      }),
+    removeItem: (watchlistId: string, itemId: string) =>
+      apiFetch<void>(`/watchlists/${watchlistId}/items/${itemId}`, { method: "DELETE" }),
+  },
+
+  // R19 — Alerts
+  alerts: {
+    listRules: (activeOnly = true) =>
+      apiFetch<AlertRuleResponse[]>(`/alerts/rules?active_only=${activeOnly}`),
+    createRule: (body: AlertRuleCreateRequest) =>
+      apiFetch<AlertRuleResponse>("/alerts/rules", { method: "POST", body: JSON.stringify(body) }),
+    deleteRule: (id: string) => apiFetch<void>(`/alerts/rules/${id}`, { method: "DELETE" }),
+    evaluate: () => apiFetch<AlertEvalResponse>("/alerts/evaluate", { method: "POST" }),
+    history: (limit = 50) => apiFetch<AlertHistoryItem[]>(`/alerts/history?limit=${limit}`),
+  },
+
+  // R22 — Summary
+  summary: {
+    get: () => apiFetch<DashboardSummaryResponse>("/summary"),
+  },
+
+  // Chat assistant
+  chat: {
+    send: (body: { message: string; history?: { role: string; content: string }[]; context?: Record<string, unknown> }) =>
+      apiFetch<{ reply: string; model_used: string; skipped: boolean; skip_reason?: string }>("/chat", {
+        method: "POST",
+        body: JSON.stringify(body),
       }),
   },
 };

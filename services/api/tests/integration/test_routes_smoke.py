@@ -219,3 +219,40 @@ async def test_journal_create(client: AsyncClient) -> None:
     body = r.json()
     assert body["action"] == "BUY"
     assert body["canonical_symbol"] == "IDX:BBRI"
+
+
+@pytest.mark.asyncio
+async def test_insider_import_and_signal_flow(client: AsyncClient) -> None:
+    # Seed satu posisi quick agar instrumen IDX:BBCA tersedia di test DB
+    await client.post("/api/v1/portfolio/positions/quick", json={
+        "symbol": "BBCA",
+        "lots": 2,
+        "avg_price": 9000.0,
+    })
+
+    tx_payload = [
+        {
+            "insider_name": "Budi Santoso",
+            "insider_role": "DIRECTOR",
+            "transaction_type": "BUY",
+            "transaction_date": "2026-11-01",
+            "shares": 50000,
+            "price_per_share": 9100.0,
+            "total_value": 455000000.0,
+            "currency": "IDR",
+            "source_url": "https://idx.co.id/disclosure/1",
+        }
+    ]
+    r_post = await client.post("/api/v1/insider/IDX:BBCA/transactions", json=tx_payload)
+    assert r_post.status_code == 200
+    assert r_post.json()["inserted"] == 1
+
+    r_dup = await client.post("/api/v1/insider/IDX:BBCA/transactions", json=tx_payload)
+    assert r_dup.status_code == 200
+    assert r_dup.json()["skipped"] == 1
+
+    r_sig = await client.get("/api/v1/insider/IDX:BBCA/signal")
+    assert r_sig.status_code == 200
+    sig_body = r_sig.json()
+    assert sig_body["sentiment"] in ("BUY", "STRONG_BUY")
+    assert sig_body["transactions"][0]["source_url"] == "https://idx.co.id/disclosure/1"

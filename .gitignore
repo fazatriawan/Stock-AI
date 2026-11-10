@@ -50,3 +50,9 @@ logs/
 
 # Alembic
 services/api/app/db/migrations/versions/*.pyc
+
+# Backup files — jangan pernah di-commit
+backups/
+*.sql.gz
+*.sql.gz.enc
+*.sha256

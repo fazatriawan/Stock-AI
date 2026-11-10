@@ -4,9 +4,7 @@ Menguji: rebalance simulation, capital allocation plan.
 """
 from __future__ import annotations
 
-import math
 
-import pytest
 
 from app.portfolio.calculator import PositionData
 from app.portfolio.simulator import (

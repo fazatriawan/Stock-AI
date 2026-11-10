@@ -23,9 +23,8 @@ from app.decisions.engine import (
     PortfolioContext,
     run_decision_engine,
 )
-from app.domain.instruments import resolve_instrument
 from app.ingestion.ohlcv import check_data_staleness
-from app.portfolio.calculator import compute_positions
+from app.portfolio.calculator import compute_positions, enrich_positions_with_prices
 from app.portfolio.seeder import get_or_create_default_portfolio
 
 import pandas as pd
@@ -84,16 +83,27 @@ async def list_decisions(
     trades = trades_result.scalars().all()
     positions = compute_positions(trades)
 
+    # Enrich positions dengan harga terkini agar portfolio_weight benar
+    if positions:
+        prices_map: dict[str, tuple[float, date]] = {}
+        for iid in list(positions.keys()):
+            bar_res = await db.execute(
+                select(PriceBar)
+                .where(PriceBar.instrument_id == iid)
+                .order_by(PriceBar.session_date.desc())
+                .limit(1)
+            )
+            bar = bar_res.scalar_one_or_none()
+            if bar:
+                prices_map[iid] = (float(bar.close), bar.session_date)
+        enrich_positions_with_prices(positions, prices_map)
+
     # Enrich dengan info instrumen
     if positions:
         instr_result = await db.execute(
             select(Instrument).where(Instrument.id.in_(list(positions.keys())))
         )
         instruments_map = {i.id: i for i in instr_result.scalars().all()}
-
-        total_portfolio_value = sum(
-            p.market_value or p.total_cost for p in positions.values()
-        )
 
         for iid, pos in positions.items():
             instr = instruments_map.get(iid)

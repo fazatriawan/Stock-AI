@@ -6,14 +6,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
 from typing import Optional
 
 import pytest
 
 from app.portfolio.calculator import (
-    LOT_SIZE_IDX,
-    PositionData,
     compute_positions,
     enrich_positions_with_prices,
 )

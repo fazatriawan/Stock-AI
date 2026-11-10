@@ -17,17 +17,33 @@ from app.providers.registry import get_provider_registry
 logger = get_logger(__name__)
 
 
-async def bootstrap_instruments(db: AsyncSession, use_mock: bool = True) -> list[str]:
-    """
-    Inisialisasi instrument dari provider/mock ke database.
-    Kembalikan daftar canonical_symbol yang diinsert/update.
-    """
-    registry = get_provider_registry()
-    provider = registry.get_by_name("mock") if use_mock else registry.get_primary("IDX")
+async def _seed_sources(db: AsyncSession) -> None:
+    """Seed default data sources agar financial_facts FK constraint terpenuhi."""
+    from sqlalchemy import text
+    default_sources = [
+        ("src_yfinance", "https://finance.yahoo.com", "Yahoo Finance", "yfinance provider"),
+        ("src_mock", None, "Mock Provider", "synthetic test data"),
+        ("src_sectors", "https://sectors.app", "Sectors.app", "Sectors Financial API"),
+        ("src_fred", "https://fred.stlouisfed.org", "Federal Reserve (FRED)", "FRED macro data"),
+        ("src_manual", None, "Manual Entry", "data diinput manual"),
+    ]
+    for src_id, url, publisher, title in default_sources:
+        await db.execute(text("""
+            INSERT INTO sources (id, url, publisher, title, license_class, primary_or_secondary)
+            VALUES (:id, :url, :publisher, :title, 'THIRD_PARTY', 'SECONDARY')
+            ON CONFLICT (id) DO NOTHING
+        """), {"id": src_id, "url": url, "publisher": publisher, "title": title})
 
-    if provider is None:
-        logger.error("Tidak ada provider tersedia untuk bootstrap")
-        return []
+
+async def bootstrap_instruments(db: AsyncSession, use_mock: bool = False) -> list[str]:
+    """
+    Inisialisasi instrument dari catalog ke database.
+    Catalog instrument selalu dari MOCK_INSTRUMENTS (ticker IDX & US yang didukung).
+    Harga OHLCV akan diambil dari provider sesuai use_mock flag.
+
+    Returns daftar canonical_symbol yang diinsert/update.
+    """
+    await _seed_sources(db)
 
     canonical_symbols = []
     for canonical_symbol, info in MOCK_INSTRUMENTS.items():
@@ -36,7 +52,11 @@ async def bootstrap_instruments(db: AsyncSession, use_mock: bool = True) -> list
         logger.info("Instrument di-bootstrap", symbol=instrument.canonical_symbol)
 
     await db.commit()
-    logger.info("Bootstrap instruments selesai", count=len(canonical_symbols))
+    logger.info(
+        "Bootstrap instruments selesai",
+        count=len(canonical_symbols),
+        data_source="mock_ohlcv" if use_mock else "live_ohlcv",
+    )
     return canonical_symbols
 
 

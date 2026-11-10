@@ -64,7 +64,7 @@ export function FundamentalCard({ fundamental: f }: Props) {
         )}
 
         <p className="text-xs text-gray-600 mt-3 pt-2 border-t border-gray-800">
-          Sumber: {f.metrics_available.length} metrik tersedia · Data sintetis (mock)
+          {f.metrics_available.length} metrik fundamental tersedia
         </p>
       </CardContent>
     </Card>

@@ -8,11 +8,8 @@ from datetime import date, timedelta
 from typing import Optional
 
 import pandas as pd
-import numpy as np
-import pytest
 
 from app.analytics.technical import (
-    TechnicalSnapshot,
     calculate_rsi,
     calculate_macd,
     calculate_atr,

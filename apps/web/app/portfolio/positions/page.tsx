@@ -27,7 +27,7 @@ function PositionRow({ pos, rank }: { pos: Position; rank: number }) {
   const tier = hasPnl ? PNL_TIER(pos.unrealized_pnl_pct!) : null;
 
   return (
-    <tr className="border-b border-gray-800/50 hover:bg-gray-800/20 cursor-pointer" onClick={() => router.push(`/stocks/${pos.canonical_symbol}`)}>
+    <tr className="border-b border-gray-800/50 hover:bg-gray-800/20 cursor-pointer" onClick={() => router.push(`/explorer?q=${encodeURIComponent(pos.canonical_symbol)}`)}>
       <td className="py-3 px-4">
         <span className="text-xs text-gray-600">{rank}</span>
       </td>

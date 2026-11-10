@@ -5,10 +5,10 @@ Aturan: menghitung HARGA RATA-RATA yang benar — jangan diubah tanpa alasan aku
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
-from typing import Optional
+from typing import Any, Optional
 
 
 LOT_SIZE_IDX = 100  # 1 lot = 100 saham di IDX
@@ -62,7 +62,7 @@ class _RawAccumulator:
 
 
 def compute_positions(
-    trades: list,  # list[Trade] dari SQLAlchemy
+    trades: Sequence[Any],  # Sequence[Trade] dari SQLAlchemy
     as_of: Optional[date] = None,
 ) -> dict[str, PositionData]:
     """
@@ -139,7 +139,7 @@ def compute_positions(
 
 def enrich_positions_with_prices(
     positions: dict[str, PositionData],
-    prices: dict[str, tuple[float, date]],  # {instrument_id: (price, date)}
+    prices: dict[str, tuple[float, Any]],  # {instrument_id: (price, date)}
 ) -> dict[str, PositionData]:
     """Tambahkan harga pasar dan hitung P/L untuk setiap posisi."""
     total_market_value = sum(

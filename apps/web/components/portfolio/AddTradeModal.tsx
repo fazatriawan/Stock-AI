@@ -114,7 +114,7 @@ export function AddTradeModal({ onClose, onSuccess }: Props) {
               <label className="block text-xs text-gray-400 mb-1">Saham (bukan lot)</label>
               <input
                 type="number"
-                min="1"
+                min="100"
                 step="100"
                 placeholder="100"
                 value={form.shares || ""}

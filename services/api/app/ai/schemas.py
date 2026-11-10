@@ -45,25 +45,39 @@ class EvidenceBundle:
     provider: str
     price_stale: bool
 
+    # R9 additions — integrity check context (BL-04)
+    integrity_status: str = "UNCHECKED"
+    integrity_conflicts_count: int = 0
+    integrity_blocked_metrics: list[str] = field(default_factory=list)
+
+    # R9 additions — peer comparison context (R8)
+    peer_pe_median: Optional[float] = None
+    peer_pb_median: Optional[float] = None
+    peer_roe_median: Optional[float] = None
+    peer_count: int = 0
+
 
 @dataclass
 class AIEnrichment:
     """Output dari AI adapter — pengayaan kontekstual, bukan override rekomendasi."""
 
-    # Enriched thesis (AI boleh memperkaya, bukan mengubah action)
+    # Pass 1 — Enrichment: perkaya thesis
     enriched_bull_points: list[str] = field(default_factory=list)
     enriched_bear_points: list[str] = field(default_factory=list)
-
-    # Risiko tambahan yang diidentifikasi AI
     identified_risks: list[str] = field(default_factory=list)
-
-    # Konteks makro singkat
     macro_context: Optional[str] = None
-
-    # Flag kualitas data dari AI
     data_quality_notes: list[str] = field(default_factory=list)
 
-    # Metadata AI call
+    # Pass 2 — Independent Critic: kelemahan dan asumsi yang tidak valid
+    critic_notes: list[str] = field(default_factory=list)
+    critic_skipped: bool = False
+    critic_skip_reason: Optional[str] = None
+
+    # Pass 3 — Deterministic Claim Verifier (ANL-06 / PRD §19 Gate 5)
+    verification_status: str = "VERIFIED"  # "VERIFIED" | "NEEDS_REVIEW" | "SKIPPED"
+    unverified_claims: list[str] = field(default_factory=list)
+
+    # Metadata
     model_used: str = ""
     tokens_input: int = 0
     tokens_output: int = 0

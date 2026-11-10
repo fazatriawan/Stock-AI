@@ -7,7 +7,7 @@ Disclaimer: bukan nasihat investasi.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 from app.portfolio.calculator import PositionData
@@ -108,10 +108,6 @@ def simulate_rebalance(
     )
     total_cost_fallback = sum(p.total_cost for p in positions.values())
     total_value = (total_mv if total_mv > 0 else total_cost_fallback) + new_capital
-
-    # Normalise target weights — jika user menentukan sebagian, sisanya dibagi rata
-    specified_symbols = set(target_weights.keys())
-    total_specified_weight = sum(target_weights.values())
 
     # Buat mapping symbol → position
     sym_to_pos: dict[str, PositionData] = {
