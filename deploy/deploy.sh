@@ -61,7 +61,10 @@ rsync -az --delete \
     --exclude '*.pyc' \
     --exclude '.env' \
     --exclude 'venv' \
+    --exclude '.venv' \
     --exclude '.pytest_cache' \
+    --exclude '.mypy_cache' \
+    --exclude '.ruff_cache' \
     --exclude 'htmlcov' \
     --exclude '*.egg-info' \
     "$LOCAL_API/" \
@@ -220,7 +223,7 @@ if [ "$PM2_RUNNING" = "no" ]; then
     echo "   Start PM2 pertama kali..."
     ssh "$VPS" "pm2 start $APP_DIR/ecosystem.config.js && pm2 save"
 else
-    ssh "$VPS" "pm2 restart stock-api --update-env && pm2 save"
+    ssh "$VPS" "pm2 delete stock-api && pm2 start $APP_DIR/ecosystem.config.js && pm2 save"
 fi
 echo "   PM2 running"
 

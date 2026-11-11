@@ -10,7 +10,7 @@ module.exports = {
     {
       name: "stock-api",
       script: "/opt/stock-intelligence/venv/bin/uvicorn",
-      args: "app.main:app --host 0.0.0.0 --port 8000 --workers 2 --loop uvloop",
+      args: "app.main:app --host 0.0.0.0 --port 8000 --workers 1 --loop uvloop",
       cwd: "/opt/stock-intelligence/api",
       interpreter: "none",
 
