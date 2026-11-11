@@ -30,8 +30,10 @@ LOT_SIZE = 100
 
 async def get_or_create_default_portfolio(db: AsyncSession) -> Portfolio:
     """Ambil atau buat portfolio 'Default'."""
-    result = await db.execute(select(Portfolio).where(Portfolio.name == "Default"))
-    portfolio = result.scalar_one_or_none()
+    result = await db.execute(
+        select(Portfolio).where(Portfolio.name == "Default").order_by(Portfolio.created_at.asc())
+    )
+    portfolio = result.scalars().first()
 
     if portfolio is None:
         portfolio = Portfolio(
