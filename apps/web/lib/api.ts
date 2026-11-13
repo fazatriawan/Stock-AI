@@ -1119,6 +1119,10 @@ export const api = {
       apiFetch<{ message: string; instruments_loaded: number; ohlcv_job: string }>(`/admin/bootstrap?use_mock=${useMock}`, {
         method: "POST",
       }),
+    bootstrapIDX: () =>
+      apiFetch<{ status: string; message: string }>("/admin/bootstrap/idx", { method: "POST" }),
+    bootstrapUS: () =>
+      apiFetch<{ status: string; message: string }>("/admin/bootstrap/us", { method: "POST" }),
   },
 
   // R20 — Watchlist

@@ -486,6 +486,109 @@ function BootstrapSection() {
 }
 
 // ---------------------------------------------------------------------------
+// FREE-11: Market bootstrap section — IDX + US per-market seed
+// ---------------------------------------------------------------------------
+type BootstrapJob = "idx" | "us" | null;
+
+function MarketBootstrapSection() {
+  const [status, setStatus] = useState<{ instruments_loaded: number; price_bars: number } | null>(null);
+  const [loading, setLoading] = useState<BootstrapJob>(null);
+  const [toast, setToast] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+
+  function refreshStatus() {
+    api.admin.setupStatus().then(setStatus).catch(() => {});
+  }
+
+  useEffect(() => { refreshStatus(); }, []);
+
+  async function trigger(market: "idx" | "us") {
+    setLoading(market);
+    setToast(null);
+    try {
+      const r = market === "idx"
+        ? await api.admin.bootstrapIDX()
+        : await api.admin.bootstrapUS();
+      setToast({ type: "ok", msg: r.message });
+      setTimeout(refreshStatus, 3000);
+    } catch (ex) {
+      setToast({ type: "err", msg: ex instanceof Error ? ex.message : "Gagal" });
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-gray-300">Bootstrap Instrumen</h2>
+        {status && (
+          <span className="text-xs text-gray-500">
+            {status.instruments_loaded} instrumen · {status.price_bars.toLocaleString("id-ID")} bar
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* IDX */}
+        <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl p-4 space-y-3">
+          <div>
+            <p className="text-sm font-medium text-gray-200">IDX (~200 saham)</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              LQ45 · IDX80 · sektoral pilihan. Histori 5 tahun via yfinance.
+              Berjalan di background ~5–15 menit.
+            </p>
+          </div>
+          <button
+            onClick={() => trigger("idx")}
+            disabled={loading !== null}
+            className="w-full text-sm py-2 bg-emerald-800 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+          >
+            {loading === "idx"
+              ? <><RefreshCw size={13} className="animate-spin" /> Memuat...</>
+              : <><Database size={13} /> Bootstrap IDX</>}
+          </button>
+        </div>
+
+        {/* US */}
+        <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl p-4 space-y-3">
+          <div>
+            <p className="text-sm font-medium text-gray-200">US (~90 saham + ETF)</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              S&amp;P 500 pilihan · ETF likuid (SPY, QQQ, GLD). Histori 5 tahun via yfinance.
+              Berjalan di background ~3–10 menit.
+            </p>
+          </div>
+          <button
+            onClick={() => trigger("us")}
+            disabled={loading !== null}
+            className="w-full text-sm py-2 bg-blue-800 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+          >
+            {loading === "us"
+              ? <><RefreshCw size={13} className="animate-spin" /> Memuat...</>
+              : <><Database size={13} /> Bootstrap US</>}
+          </button>
+        </div>
+      </div>
+
+      {toast && (
+        <div className={`rounded-lg border px-3 py-2 text-xs ${
+          toast.type === "ok"
+            ? "border-emerald-800/40 bg-emerald-950/20 text-emerald-400"
+            : "border-red-800/40 bg-red-950/20 text-red-400"
+        }`}>
+          {toast.type === "ok" ? "✓ " : "✗ "}{toast.msg}
+        </div>
+      )}
+
+      <p className="text-xs text-gray-600">
+        Bootstrap berjalan sekali — data yang sudah ada tidak dihapus (upsert idempoten).
+        Jalankan ulang kapan saja untuk mengisi gap data.
+      </p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // About section
 // ---------------------------------------------------------------------------
 function AboutSection() {
@@ -533,6 +636,7 @@ export default function SettingsPage() {
 
       <DataHealthSection />
       <CSVImportSection />
+      <MarketBootstrapSection />
       <BootstrapSection />
       <AboutSection />
     </div>
