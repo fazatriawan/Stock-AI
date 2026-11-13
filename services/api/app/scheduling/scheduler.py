@@ -142,6 +142,23 @@ async def _run_weekly_fundamental_refresh() -> None:
         log.error("weekly_fundamental.error", error=str(exc))
 
 
+async def _run_staleness_mark() -> None:
+    """
+    Harian 06:30 WIB: tandai price_bars kadaluarsa sebagai STALE.
+    Menggunakan max_staleness_days dari investment policy (default 3).
+    """
+    try:
+        from app.db.session import AsyncSessionLocal
+        from app.ingestion.staleness import mark_stale_from_policy
+
+        async with AsyncSessionLocal() as db:
+            result = await mark_stale_from_policy(db)
+            await db.commit()
+        log.info("staleness_job.done", marked=result.marked_stale, cutoff=result.cutoff_date.isoformat())
+    except Exception as exc:
+        log.error("staleness_job.error", error=str(exc))
+
+
 async def _run_idx_bootstrap_check() -> None:
     """
     Senin pagi 06:00 WIB: cek apakah ada instrumen IDX baru yang perlu ditambah.
@@ -240,7 +257,18 @@ def create_scheduler() -> AsyncIOScheduler:
         misfire_grace_time=3600,
     )
 
-    all_jobs = ["daily_backup", "health_probe", "weekly_fundamental", "idx_bootstrap_check"]
+    # Staleness marking — harian 06:30 WIB
+    _scheduler.add_job(
+        _run_staleness_mark,
+        trigger=CronTrigger(hour=6, minute=30, timezone="Asia/Jakarta"),
+        id="staleness_mark",
+        name="Nightly Staleness Mark",
+        coalesce=True,
+        max_instances=1,
+        misfire_grace_time=3600,
+    )
+
+    all_jobs = ["daily_backup", "health_probe", "weekly_fundamental", "idx_bootstrap_check", "staleness_mark"]
     if settings.intraday_polling_enabled:
         all_jobs.append("intraday_poll")
     log.info("scheduler.created", jobs=all_jobs)

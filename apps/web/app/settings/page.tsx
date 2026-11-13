@@ -77,6 +77,8 @@ function DataHealthSection() {
   const [data, setData] = useState<DataProvidersResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [staleResult, setStaleResult] = useState<{ marked_stale: number; cutoff_date: string } | null>(null);
+  const [markingStale, setMarkingStale] = useState(false);
 
   function load() {
     setLoading(true);
@@ -87,21 +89,50 @@ function DataHealthSection() {
       .finally(() => setLoading(false));
   }
 
+  async function handleMarkStale() {
+    setMarkingStale(true);
+    setStaleResult(null);
+    try {
+      const r = await api.data.markStale();
+      setStaleResult(r);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Gagal menandai data lama");
+    } finally {
+      setMarkingStale(false);
+    }
+  }
+
   useEffect(load, []);
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-medium text-gray-300">Status Provider Data</h2>
-        <button
-          onClick={load}
-          disabled={loading}
-          className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1 transition-colors disabled:opacity-50"
-        >
-          <RefreshCw size={11} className={loading ? "animate-spin" : ""} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleMarkStale}
+            disabled={markingStale}
+            title="Tandai bar harga kadaluarsa sebagai STALE"
+            className="text-xs text-amber-500/70 hover:text-amber-400 flex items-center gap-1 transition-colors disabled:opacity-50"
+          >
+            {markingStale ? <RefreshCw size={11} className="animate-spin" /> : <Database size={11} />}
+            Tandai Stale
+          </button>
+          <button
+            onClick={load}
+            disabled={loading}
+            className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={11} className={loading ? "animate-spin" : ""} />
+            Refresh
+          </button>
+        </div>
       </div>
+      {staleResult && (
+        <div className="rounded-lg border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-xs text-amber-400">
+          {staleResult.marked_stale} bar ditandai STALE (cutoff: {staleResult.cutoff_date})
+        </div>
+      )}
 
       {error && (
         <div className="rounded-lg border border-red-800/40 bg-red-950/20 px-4 py-3 text-sm text-red-400">

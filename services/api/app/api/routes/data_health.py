@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
+from typing import Optional
 
 import structlog
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 
 from app.api.schemas import (
     CSVImportResponse,
@@ -10,6 +11,7 @@ from app.api.schemas import (
     DataProvidersResponse,
     FreshnessBreakdown,
     InstrumentFreshnessResponse,
+    MarkStaleResponse,
     ProviderHealthResponse,
 )
 from app.db.session import get_db
@@ -170,4 +172,30 @@ async def get_instrument_freshness(
             FreshnessBreakdown(status=s, count=c)
             for s, c in sorted(breakdown_raw.items())
         ],
+    )
+
+
+@router.post("/mark-stale", response_model=MarkStaleResponse)
+async def mark_stale_endpoint(
+    instrument_id: Optional[str] = Query(default=None, description="Batasi ke satu instrumen (UUID). Kosong = semua."),
+    db=Depends(get_db),
+) -> MarkStaleResponse:
+    """
+    Tandai price_bars kadaluarsa sebagai STALE berdasarkan investment policy.
+
+    Query param opsional: instrument_id — batasi ke satu instrumen.
+    Tanpa parameter: proses semua instrumen.
+
+    Idempoten — aman dijalankan berulang.
+    """
+    from app.ingestion.staleness import mark_stale_from_policy
+
+    result = await mark_stale_from_policy(db, instrument_id=instrument_id)
+    await db.commit()
+
+    return MarkStaleResponse(
+        marked_stale=result.marked_stale,
+        cutoff_date=result.cutoff_date,
+        instrument_id=result.instrument_id,
+        ran_at=result.ran_at,
     )

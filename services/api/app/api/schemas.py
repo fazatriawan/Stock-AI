@@ -177,6 +177,13 @@ class InstrumentFreshnessResponse(BaseModel):
     breakdown: list[FreshnessBreakdown]
 
 
+class MarkStaleResponse(BaseModel):
+    marked_stale: int
+    cutoff_date: date
+    instrument_id: Optional[str] = None
+    ran_at: datetime
+
+
 # ---------------------------------------------------------------------------
 # Market status
 # ---------------------------------------------------------------------------

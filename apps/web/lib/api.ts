@@ -947,6 +947,8 @@ export const api = {
     providers: () => apiFetch<DataProvidersResponse>("/data/providers"),
     freshness: (instrumentId: string) =>
       apiFetch<InstrumentFreshness>(`/data/freshness/${instrumentId}`),
+    markStale: () =>
+      apiFetch<{ marked_stale: number; cutoff_date: string; ran_at: string }>("/data/mark-stale", { method: "POST" }),
     importCSV: (formData: FormData) =>
       apiFetch<CSVImportResult>("/data/import/csv", {
         method: "POST",
