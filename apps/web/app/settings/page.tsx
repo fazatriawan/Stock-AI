@@ -126,7 +126,7 @@ function BootstrapSection() {
   function loadStatus() {
     api.admin.setupStatus()
       .then(setStatus)
-      .catch(() => {});
+      .catch(() => setError("Gagal memuat status — pastikan API berjalan"));
   }
 
   useEffect(() => { loadStatus(); }, []);
