@@ -20,8 +20,8 @@ import httpx
 
 from app.core.logging import get_logger
 from app.providers.base import (
-    Bar, CorporateActionRecord, Fact, InstrumentInfo,
-    ProviderHealth, ProviderStatus,
+    AccessStatus, Bar, CorporateActionRecord, Fact, InstrumentInfo,
+    LicenseStatus, ProviderCapability, ProviderHealth, ProviderStatus,
 )
 
 logger = get_logger(__name__)
@@ -226,6 +226,20 @@ class SectorsProvider:
         except Exception as e:
             return ProviderHealth(provider="sectors", status=ProviderStatus.DOWN, last_error=str(e))
         return ProviderHealth(provider="sectors", status=ProviderStatus.UNKNOWN)
+
+    def capability(self) -> ProviderCapability:
+        access = AccessStatus.ACTIVE if self._api_key else AccessStatus.NOT_CONFIGURED
+        return ProviderCapability(
+            license_status=LicenseStatus.PAID,
+            access_status=access,
+            cost="paid",
+            granularity="snapshot",
+            freshness_policy="on_demand",
+            supports_point_in_time=False,
+            datasets=["fundamental", "peers", "instruments"],
+            quota_per_day=None,  # tergantung paket Insider (5000 kredit/bulan)
+            notes="Sectors Financial API — Insider US$59/bulan; paket Free tidak termasuk akses API",
+        )
 
     # ------------------------------------------------------------------
     # Sectors-specific — peer listing (di luar MarketDataProvider)

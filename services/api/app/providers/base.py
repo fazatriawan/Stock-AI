@@ -4,7 +4,7 @@ Setiap provider HARUS mengimplementasikan interface ini.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
@@ -16,6 +16,41 @@ class ProviderStatus(str, Enum):
     DEGRADED = "DEGRADED"
     DOWN = "DOWN"
     UNKNOWN = "UNKNOWN"
+
+
+class LicenseStatus(str, Enum):
+    FREE_PERSONAL = "FREE_PERSONAL"   # gratis untuk riset pribadi
+    PAID = "PAID"                     # berbayar / berlangganan
+    RESTRICTED = "RESTRICTED"         # ada syarat khusus (ToS, registrasi)
+    UNKNOWN = "UNKNOWN"
+
+
+class AccessStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"             # provider tidak dikonfigurasi / dinonaktifkan
+    NOT_CONFIGURED = "NOT_CONFIGURED" # API key / paket tidak tersedia
+    QUOTA_EXHAUSTED = "QUOTA_EXHAUSTED"
+    LICENSE_BLOCKED = "LICENSE_BLOCKED"
+
+
+@dataclass
+class ProviderCapability:
+    """
+    Deklarasi kemampuan dan metadata akses sebuah provider.
+    Digunakan oleh budget guard dan Data Health UI.
+    """
+    license_status: LicenseStatus
+    access_status: AccessStatus
+    cost: str                              # "free" / "paid" / "unknown"
+    granularity: str                       # "daily" / "intraday" / "snapshot"
+    freshness_policy: str                  # "EOD" / "on_demand" / "manual_import"
+    supports_point_in_time: bool
+    coverage_start: Optional[date] = None
+    coverage_end: Optional[date] = None    # None = ongoing
+    quota_per_day: Optional[int] = None
+    quota_remaining: Optional[int] = None
+    datasets: list[str] = field(default_factory=list)  # ["ohlcv", "fundamental", ...]
+    notes: Optional[str] = None
 
 
 @dataclass
@@ -134,4 +169,8 @@ class MarketDataProvider(Protocol):
 
     def health(self) -> ProviderHealth:
         """Cek status provider."""
+        ...
+
+    def capability(self) -> ProviderCapability:
+        """Deklarasikan kemampuan, lisensi, dan kuota provider ini."""
         ...

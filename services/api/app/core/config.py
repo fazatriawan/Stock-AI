@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     ai_daily_token_budget: int = 500_000
     ai_cache_ttl_seconds: int = 3600
 
+    # Budget guard (FREE-03) — default Rp0 / tidak ada langganan otomatis
+    data_monthly_budget_idr: int = 0
+    ai_runtime_monthly_budget_idr: int = 0
+    paid_providers_enabled: bool = False
+    automatic_subscription: bool = False
+
     # Providers
     yfinance_enabled: bool = True
     fmp_api_key: str = ""

@@ -10,8 +10,8 @@ from decimal import Decimal
 from typing import Optional
 
 from app.providers.base import (
-    Bar, CorporateActionRecord, Fact, InstrumentInfo,
-    ProviderHealth, ProviderStatus,
+    AccessStatus, Bar, CorporateActionRecord, Fact, InstrumentInfo,
+    LicenseStatus, ProviderCapability, ProviderHealth, ProviderStatus,
 )
 
 # Daftar instrument mock — IDX dan US
@@ -163,4 +163,16 @@ class MockProvider:
             status=ProviderStatus.OK,
             last_success=datetime.utcnow(),
             notes="Mock provider — synthetic data only",
+        )
+
+    def capability(self) -> ProviderCapability:
+        return ProviderCapability(
+            license_status=LicenseStatus.FREE_PERSONAL,
+            access_status=AccessStatus.ACTIVE,
+            cost="free",
+            granularity="daily",
+            freshness_policy="synthetic",
+            supports_point_in_time=False,
+            datasets=["ohlcv", "fundamental", "instruments"],
+            notes="Synthetic data only — tidak mencerminkan data pasar nyata",
         )

@@ -12,8 +12,8 @@ from typing import Optional
 
 from app.core.logging import get_logger
 from app.providers.base import (
-    Bar, CorporateActionRecord, Fact, InstrumentInfo,
-    ProviderHealth, ProviderStatus,
+    AccessStatus, Bar, CorporateActionRecord, Fact, InstrumentInfo,
+    LicenseStatus, ProviderCapability, ProviderHealth, ProviderStatus,
 )
 
 logger = get_logger(__name__)
@@ -254,3 +254,20 @@ class YFinanceProvider:
                 last_error=str(e),
             )
         return ProviderHealth(provider="yfinance", status=ProviderStatus.UNKNOWN)
+
+    def capability(self) -> ProviderCapability:
+        try:
+            import yfinance  # noqa: F401
+            access = AccessStatus.ACTIVE
+        except ImportError:
+            access = AccessStatus.NOT_CONFIGURED
+        return ProviderCapability(
+            license_status=LicenseStatus.FREE_PERSONAL,
+            access_status=access,
+            cost="free",
+            granularity="daily",
+            freshness_policy="EOD",
+            supports_point_in_time=False,
+            datasets=["ohlcv", "fundamental", "corporate_actions", "instruments"],
+            notes="Hanya untuk riset pribadi — lihat ketentuan penggunaan yfinance",
+        )

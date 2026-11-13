@@ -26,8 +26,8 @@ from typing import Optional
 
 from app.core.logging import get_logger
 from app.providers.base import (
-    Bar, CorporateActionRecord, Fact, InstrumentInfo,
-    ProviderHealth, ProviderStatus,
+    AccessStatus, Bar, CorporateActionRecord, Fact, InstrumentInfo,
+    LicenseStatus, ProviderCapability, ProviderHealth, ProviderStatus,
 )
 
 logger = get_logger(__name__)
@@ -109,6 +109,19 @@ class OpenBBProvider:
                 status=ProviderStatus.DEGRADED,
                 last_error=str(exc),
             )
+
+    def capability(self) -> ProviderCapability:
+        access = AccessStatus.ACTIVE if self._available else AccessStatus.NOT_CONFIGURED
+        return ProviderCapability(
+            license_status=LicenseStatus.FREE_PERSONAL,
+            access_status=access,
+            cost="free",
+            granularity="daily",
+            freshness_policy="on_demand",
+            supports_point_in_time=False,
+            datasets=["ohlcv", "fundamental"],
+            notes="OpenBB Platform — open source, US-focused; IDX support belum terverifikasi",
+        )
 
     def get_instruments(self, market: str) -> list[InstrumentInfo]:
         return []  # OpenBB tidak punya registry instrument lengkap

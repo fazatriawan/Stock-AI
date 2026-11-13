@@ -29,10 +29,17 @@ class ProviderRegistry:
         # Daftarkan provider berdasarkan konfigurasi
         # Sectors — prioritas tertinggi untuk fundamental IDX (lebih akurat dari yfinance)
         if settings.sectors_enabled and settings.sectors_api_key:
-            sectors: MarketDataProvider = SectorsProvider(api_key=settings.sectors_api_key)
-            self._providers["IDX"].insert(0, sectors)
-            self._provider_by_name["sectors"] = sectors
-            logger.info("SectorsProvider aktif untuk IDX fundamental")
+            if not settings.paid_providers_enabled:
+                logger.warning(
+                    "budget_guard.blocked_paid_provider",
+                    provider="sectors",
+                    reason="paid_providers_enabled=false",
+                )
+            else:
+                sectors: MarketDataProvider = SectorsProvider(api_key=settings.sectors_api_key)
+                self._providers["IDX"].insert(0, sectors)
+                self._provider_by_name["sectors"] = sectors
+                logger.info("SectorsProvider aktif untuk IDX fundamental")
 
         if settings.yfinance_enabled:
             yf: MarketDataProvider = YFinanceProvider()
