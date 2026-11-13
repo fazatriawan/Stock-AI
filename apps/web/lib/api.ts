@@ -203,6 +203,18 @@ export interface InstrumentFreshness {
   breakdown: FreshnessBreakdown[];
 }
 
+export interface CoverageStatus {
+  fresh: number;
+  stale: number;
+  unavailable: number;
+  quota_exhausted: number;
+  other: number;
+  total: number;
+  stale_pct: number;
+  unavailable_instruments: number;
+  quota_instruments: number;
+}
+
 export interface MarketStatus {
   exchange: string;
   timezone: string;
@@ -957,6 +969,9 @@ export const api = {
         body: formData,
         headers: {},  // let browser set multipart boundary
       }),
+    coverage: () => apiFetch<CoverageStatus>("/data/coverage"),
+    resetQuota: () =>
+      apiFetch<{ bars_reset: number; ran_at: string }>("/data/reset-quota", { method: "POST" }),
   },
   portfolio: {
     summary: () => apiFetch<PortfolioSummary>("/portfolio"),

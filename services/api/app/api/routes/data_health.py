@@ -15,6 +15,7 @@ from app.api.schemas import (
     MarkStaleResponse,
     ProviderHealthResponse,
     RefreshStaleResponse,
+    ResetQuotaResponse,
 )
 from app.db.session import get_db
 from app.providers.registry import get_provider_registry
@@ -273,4 +274,30 @@ async def get_coverage_status(db=Depends(get_db)) -> CoverageStatusResponse:
         stale_pct=round(stale / total * 100, 1) if total else 0.0,
         unavailable_instruments=uniq_unavail.scalar_one() or 0,
         quota_instruments=uniq_quota.scalar_one() or 0,
+    )
+
+
+@router.post("/reset-quota", response_model=ResetQuotaResponse)
+async def reset_quota_endpoint(db=Depends(get_db)) -> ResetQuotaResponse:
+    """
+    Reset semua bar QUOTA_EXHAUSTED → STALE agar bisa di-refresh kembali.
+
+    Gunakan setelah rate-limit yfinance berakhir (biasanya setelah 24 jam).
+    Bar UNAVAILABLE tidak tersentuh — mereka memang tidak tersedia di provider.
+    """
+    from datetime import timezone
+    from sqlalchemy import update
+    from app.db.models import PriceBar
+
+    stmt = (
+        update(PriceBar)
+        .where(PriceBar.freshness_status == "QUOTA_EXHAUSTED")
+        .values(freshness_status="STALE")
+    )
+    result = await db.execute(stmt)
+    await db.commit()
+
+    return ResetQuotaResponse(
+        bars_reset=result.rowcount,
+        ran_at=datetime.now(tz=timezone.utc),
     )

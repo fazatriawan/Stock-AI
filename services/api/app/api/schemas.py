@@ -201,8 +201,14 @@ class CoverageStatusResponse(BaseModel):
     other: int
     total: int
     stale_pct: float
-    unavailable_instruments: int   # instrumen unik dengan bar UNAVAILABLE
-    quota_instruments: int          # instrumen unik dengan bar QUOTA_EXHAUSTED
+    unavailable_instruments: int
+    quota_instruments: int
+
+
+class ResetQuotaResponse(BaseModel):
+    """Hasil reset QUOTA_EXHAUSTED → STALE."""
+    bars_reset: int
+    ran_at: datetime
 
 
 # ---------------------------------------------------------------------------

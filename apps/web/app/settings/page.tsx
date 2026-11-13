@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { api, type DataProvidersResponse, type CSVImportResult } from "@/lib/api";
+import { api, type DataProvidersResponse, type CSVImportResult, type CoverageStatus } from "@/lib/api";
 import { CheckCircle, XCircle, AlertCircle, RefreshCw, Database, Wifi, WifiOff, ChevronRight, Upload, ShieldCheck, Lock } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -225,6 +225,112 @@ function DataHealthSection() {
             )}
           </div>
         </>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// FREE-13: Coverage dashboard
+// ---------------------------------------------------------------------------
+function CoverageSection() {
+  const [data, setData] = useState<CoverageStatus | null>(null);
+  const [resetting, setResetting] = useState(false);
+  const [toast, setToast] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+
+  function load() {
+    api.data.coverage().then(setData).catch(() => {});
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function resetQuota() {
+    setResetting(true);
+    setToast(null);
+    try {
+      const r = await api.data.resetQuota();
+      setToast({ type: "ok", msg: `${r.bars_reset} bar di-reset ke STALE — siap di-refresh malam ini.` });
+      load();
+    } catch (ex) {
+      setToast({ type: "err", msg: ex instanceof Error ? ex.message : "Gagal reset" });
+    } finally {
+      setResetting(false);
+    }
+  }
+
+  const pct = (n: number) => data && data.total > 0 ? Math.round(n / data.total * 100) : 0;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-gray-300">Coverage & Freshness</h2>
+        <button onClick={load} className="text-gray-500 hover:text-gray-300">
+          <RefreshCw size={12} />
+        </button>
+      </div>
+
+      {data ? (
+        <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl p-4 space-y-3">
+          {/* Bar chart distribusi */}
+          <div className="space-y-2">
+            {[
+              { label: "Fresh",           val: data.fresh,           color: "bg-emerald-500" },
+              { label: "Stale",           val: data.stale,           color: "bg-amber-500" },
+              { label: "Unavailable",     val: data.unavailable,     color: "bg-gray-600" },
+              { label: "Quota Exhausted", val: data.quota_exhausted, color: "bg-red-700" },
+            ].map(({ label, val, color }) => (
+              <div key={label} className="flex items-center gap-2 text-xs">
+                <span className="w-28 text-gray-400 shrink-0">{label}</span>
+                <div className="flex-1 bg-gray-700/40 rounded-full h-1.5">
+                  <div
+                    className={`${color} h-1.5 rounded-full transition-all`}
+                    style={{ width: `${pct(val)}%` }}
+                  />
+                </div>
+                <span className="w-12 text-right text-gray-400 tabular-nums">{val.toLocaleString("id-ID")}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Summary row */}
+          <div className="flex flex-wrap gap-4 text-xs text-gray-500 pt-1 border-t border-gray-700/30">
+            <span>Total <strong className="text-gray-300">{data.total.toLocaleString("id-ID")}</strong> bar</span>
+            <span>Stale <strong className="text-amber-400">{data.stale_pct}%</strong></span>
+            {data.unavailable_instruments > 0 && (
+              <span className="text-gray-500">{data.unavailable_instruments} instrumen unavailable</span>
+            )}
+            {data.quota_instruments > 0 && (
+              <span className="text-red-400">{data.quota_instruments} instrumen quota exhausted</span>
+            )}
+          </div>
+
+          {/* Reset quota action */}
+          {data.quota_exhausted > 0 && (
+            <button
+              onClick={resetQuota}
+              disabled={resetting}
+              className="w-full text-xs py-2 bg-red-900/40 hover:bg-red-900/60 border border-red-800/40 text-red-300 rounded-lg disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+            >
+              {resetting
+                ? <><RefreshCw size={12} className="animate-spin" /> Mereset...</>
+                : `Reset ${data.quota_exhausted.toLocaleString("id-ID")} bar quota exhausted → STALE`}
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl p-4 text-xs text-gray-500 text-center">
+          Memuat coverage...
+        </div>
+      )}
+
+      {toast && (
+        <div className={`rounded-lg border px-3 py-2 text-xs ${
+          toast.type === "ok"
+            ? "border-emerald-800/40 bg-emerald-950/20 text-emerald-400"
+            : "border-red-800/40 bg-red-950/20 text-red-400"
+        }`}>
+          {toast.type === "ok" ? "✓ " : "✗ "}{toast.msg}
+        </div>
       )}
     </div>
   );
@@ -635,6 +741,7 @@ export default function SettingsPage() {
       </div>
 
       <DataHealthSection />
+      <CoverageSection />
       <CSVImportSection />
       <MarketBootstrapSection />
       <BootstrapSection />
