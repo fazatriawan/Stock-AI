@@ -14,12 +14,13 @@ TIDAK melakukan: auto-trade, login broker, scraping private.
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 from zoneinfo import ZoneInfo
 
 import structlog
+from sqlalchemy import update
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -209,12 +210,14 @@ async def update_latest_prices(db: "AsyncSession") -> dict:  # noqa: F821
                 is_adjusted=False,
                 adjustment_version="v1",
                 ingested_at=now,
+                freshness_status="FRESH",
             ).on_conflict_do_update(
                 index_elements=["instrument_id", "session_date", "provider"],
                 set_={
                     "close": Decimal(str(price)),
                     "adj_close": Decimal(str(price)),
                     "ingested_at": now,
+                    "freshness_status": "FRESH",
                 },
             )
             await db.execute(stmt)
@@ -228,3 +231,40 @@ async def update_latest_prices(db: "AsyncSession") -> dict:  # noqa: F821
 
     log.debug("intraday.update_done", updated=updated, total=len(instruments), errors=errors)
     return {"updated": updated, "skipped": len(instruments) - updated - errors, "errors": errors}
+
+
+# ---------------------------------------------------------------------------
+# FREE-09: Market-close cleanup
+# ---------------------------------------------------------------------------
+
+async def mark_intraday_stale(
+    db: "AsyncSession",
+    target_date: Optional[date] = None,
+) -> int:
+    """
+    Tandai bar yfinance_intraday hari ini sebagai STALE setelah jam bursa tutup.
+
+    Dipanggil oleh scheduler saat IDX (15:55 WIB) atau NYSE (21:05 UTC) tutup.
+    Bar STALE ini tidak akan muncul sebagai data valid di chart — EOD bar dari
+    yfinance (provider='yfinance') akan menjadi sumber kebenaran setelah refresh malam.
+
+    Returns: jumlah bar yang ditandai STALE.
+    """
+    from app.db.models import PriceBar
+
+    if target_date is None:
+        target_date = date.today()
+
+    stmt = (
+        update(PriceBar)
+        .where(
+            PriceBar.provider == "yfinance_intraday",
+            PriceBar.freshness_status == "FRESH",
+            PriceBar.session_date == target_date,
+        )
+        .values(freshness_status="STALE")
+    )
+    result = await db.execute(stmt)
+    marked = result.rowcount
+    log.info("intraday.mark_stale", date=target_date.isoformat(), marked=marked)
+    return marked

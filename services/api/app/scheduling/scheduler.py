@@ -185,6 +185,45 @@ async def _run_refresh_stale() -> None:
         log.error("refresh_stale_job.error", error=str(exc))
 
 
+async def _run_idx_intraday_close() -> None:
+    """
+    15:55 WIB: tandai bar intraday IDX sebagai STALE setelah bursa tutup.
+    EOD bar resmi akan datang saat refresh_stale berjalan malam ini.
+    """
+    settings = _get_settings()
+    if not settings.intraday_polling_enabled:
+        return
+    try:
+        from app.db.session import AsyncSessionLocal
+        from app.ingestion.intraday import mark_intraday_stale
+
+        async with AsyncSessionLocal() as db:
+            marked = await mark_intraday_stale(db)
+            await db.commit()
+        log.info("intraday_close_job.done", market="IDX", marked=marked)
+    except Exception as exc:
+        log.error("intraday_close_job.error", market="IDX", error=str(exc))
+
+
+async def _run_us_intraday_close() -> None:
+    """
+    16:05 EST (21:05 UTC): tandai bar intraday US sebagai STALE setelah NYSE tutup.
+    """
+    settings = _get_settings()
+    if not settings.intraday_polling_enabled:
+        return
+    try:
+        from app.db.session import AsyncSessionLocal
+        from app.ingestion.intraday import mark_intraday_stale
+
+        async with AsyncSessionLocal() as db:
+            marked = await mark_intraday_stale(db)
+            await db.commit()
+        log.info("intraday_close_job.done", market="US", marked=marked)
+    except Exception as exc:
+        log.error("intraday_close_job.error", market="US", error=str(exc))
+
+
 async def _run_idx_bootstrap_check() -> None:
     """
     Senin pagi 06:00 WIB: cek apakah ada instrumen IDX baru yang perlu ditambah.
@@ -260,6 +299,26 @@ def create_scheduler() -> AsyncIOScheduler:
             max_instances=1,
             misfire_grace_time=60,
         )
+        # IDX market close cleanup — 15:55 WIB
+        _scheduler.add_job(
+            _run_idx_intraday_close,
+            trigger=CronTrigger(hour=15, minute=55, timezone="Asia/Jakarta"),
+            id="idx_intraday_close",
+            name="IDX Intraday Close Cleanup",
+            coalesce=True,
+            max_instances=1,
+            misfire_grace_time=300,
+        )
+        # US market close cleanup — 16:05 EST
+        _scheduler.add_job(
+            _run_us_intraday_close,
+            trigger=CronTrigger(hour=16, minute=5, timezone="America/New_York"),
+            id="us_intraday_close",
+            name="US Intraday Close Cleanup",
+            coalesce=True,
+            max_instances=1,
+            misfire_grace_time=300,
+        )
 
     # Weekly fundamental refresh — Minggu 08:00 WIB
     _scheduler.add_job(
@@ -310,7 +369,7 @@ def create_scheduler() -> AsyncIOScheduler:
         "idx_bootstrap_check", "staleness_mark", "refresh_stale",
     ]
     if settings.intraday_polling_enabled:
-        all_jobs.append("intraday_poll")
+        all_jobs.extend(["intraday_poll", "idx_intraday_close", "us_intraday_close"])
     log.info("scheduler.created", jobs=all_jobs)
     return _scheduler
 
