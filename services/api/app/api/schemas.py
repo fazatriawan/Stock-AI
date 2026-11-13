@@ -227,6 +227,28 @@ class ProviderQuotaResponse(BaseModel):
     as_of: datetime
 
 
+class GapReportRow(BaseModel):
+    """Gap report untuk satu instrumen."""
+    instrument_id: str
+    canonical_symbol: str
+    exchange: str
+    bar_count: int
+    expected_bars: int
+    gap_pct: float
+    first_date: date
+    last_date: date
+    history_days: int
+    severity: str   # "CRITICAL" / "WARNING" / "OK"
+
+
+class DataGapsResponse(BaseModel):
+    """Hasil deteksi gap data OHLCV."""
+    reports: list[GapReportRow]
+    instruments_checked: int
+    with_gaps: int
+    ran_at: datetime
+
+
 # ---------------------------------------------------------------------------
 # Market status
 # ---------------------------------------------------------------------------

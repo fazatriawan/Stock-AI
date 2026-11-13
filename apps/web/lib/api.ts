@@ -215,6 +215,26 @@ export interface CoverageStatus {
   quota_instruments: number;
 }
 
+export interface GapReportRow {
+  instrument_id: string;
+  canonical_symbol: string;
+  exchange: string;
+  bar_count: number;
+  expected_bars: number;
+  gap_pct: number;
+  first_date: string;
+  last_date: string;
+  history_days: number;
+  severity: "CRITICAL" | "WARNING" | "OK";
+}
+
+export interface DataGapsStatus {
+  reports: GapReportRow[];
+  instruments_checked: number;
+  with_gaps: number;
+  ran_at: string;
+}
+
 export interface ProviderQuotaRow {
   provider_name: string;
   calls_today: number;
@@ -987,6 +1007,8 @@ export const api = {
     resetQuota: () =>
       apiFetch<{ bars_reset: number; ran_at: string }>("/data/reset-quota", { method: "POST" }),
     providerQuota: () => apiFetch<ProviderQuotaStatus>("/data/provider-quota"),
+    gaps: (threshold = 10, minHistory = 30, limit = 50) =>
+      apiFetch<DataGapsStatus>(`/data/gaps?threshold_pct=${threshold}&min_history=${minHistory}&limit=${limit}`),
   },
   portfolio: {
     summary: () => apiFetch<PortfolioSummary>("/portfolio"),

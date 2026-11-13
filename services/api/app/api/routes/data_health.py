@@ -7,10 +7,12 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Upload
 from app.api.schemas import (
     CSVImportResponse,
     CoverageStatusResponse,
+    DataGapsResponse,
     DataHealthResponse,
     DataProviderResponse,
     DataProvidersResponse,
     FreshnessBreakdown,
+    GapReportRow,
     InstrumentFreshnessResponse,
     MarkStaleResponse,
     ProviderHealthResponse,
@@ -315,6 +317,51 @@ async def get_provider_quota() -> ProviderQuotaResponse:
         providers=rows,
         total_calls_today=total,
         as_of=datetime.now(tz=timezone.utc),
+    )
+
+
+@router.get("/gaps", response_model=DataGapsResponse)
+async def get_data_gaps(
+    threshold_pct: float = Query(default=10.0, ge=0, le=100, description="Laporkan instrumen dengan gap >= nilai ini (%)"),
+    min_history: int = Query(default=30, ge=1, description="Abaikan instrumen dengan history < N hari"),
+    limit: int = Query(default=50, ge=1, le=200, description="Maks instrumen dilaporkan"),
+    db=Depends(get_db),
+) -> DataGapsResponse:
+    """
+    Deteksi instrumen dengan data OHLCV tidak lengkap (gap).
+
+    Gap dihitung sebagai selisih antara jumlah bar aktual (FRESH/STALE)
+    dan estimasi hari kerja * 0.90 dalam rentang tanggal instrumen tersebut.
+    Berguna untuk menemukan instrumen yang perlu di-refresh manual.
+    """
+    from app.analytics.gap_detector import detect_data_gaps
+
+    result = await detect_data_gaps(
+        db,
+        threshold_pct=threshold_pct,
+        min_days_history=min_history,
+        limit=limit,
+    )
+
+    return DataGapsResponse(
+        reports=[
+            GapReportRow(
+                instrument_id=r.instrument_id,
+                canonical_symbol=r.canonical_symbol,
+                exchange=r.exchange,
+                bar_count=r.bar_count,
+                expected_bars=r.expected_bars,
+                gap_pct=r.gap_pct,
+                first_date=r.first_date,
+                last_date=r.last_date,
+                history_days=r.history_days,
+                severity=r.severity,
+            )
+            for r in result.reports
+        ],
+        instruments_checked=result.instruments_checked,
+        with_gaps=result.with_gaps,
+        ran_at=result.ran_at,
     )
 
 

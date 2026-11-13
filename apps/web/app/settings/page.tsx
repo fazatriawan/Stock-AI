@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { api, type DataProvidersResponse, type CSVImportResult, type CoverageStatus, type ProviderQuotaStatus } from "@/lib/api";
+import { api, type DataProvidersResponse, type CSVImportResult, type CoverageStatus, type ProviderQuotaStatus, type DataGapsStatus, type GapReportRow } from "@/lib/api";
 import { CheckCircle, XCircle, AlertCircle, RefreshCw, Database, Wifi, WifiOff, ChevronRight, Upload, ShieldCheck, Lock } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -695,6 +695,112 @@ function MarketBootstrapSection() {
 }
 
 // ---------------------------------------------------------------------------
+// FREE-17: Data Gap section — instrumen dengan OHLCV tidak lengkap
+// ---------------------------------------------------------------------------
+function SeverityBadge({ severity }: { severity: GapReportRow["severity"] }) {
+  const map: Record<string, string> = {
+    CRITICAL: "bg-red-900/30 text-red-400 border-red-800/40",
+    WARNING:  "bg-amber-900/30 text-amber-400 border-amber-800/40",
+    OK:       "bg-emerald-900/20 text-emerald-400 border-emerald-800/30",
+  };
+  return (
+    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${map[severity] ?? "bg-gray-700 text-gray-400 border-gray-600"}`}>
+      {severity}
+    </span>
+  );
+}
+
+function DataGapsSection() {
+  const [data, setData] = useState<DataGapsStatus | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function load() {
+    setLoading(true);
+    setError(null);
+    api.data.gaps()
+      .then(setData)
+      .catch(() => setError("Gagal memuat data gap"))
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => { load(); }, []);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-medium text-gray-300">Data Gap</h2>
+          <p className="text-[11px] text-gray-500 mt-0.5">Instrumen dengan bar OHLCV kurang dari ekspektasi</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {data && (
+            <span className="text-xs text-gray-500">
+              {data.with_gaps} / {data.instruments_checked} instrumen
+            </span>
+          )}
+          <button
+            onClick={load}
+            disabled={loading}
+            className="text-xs text-gray-500 hover:text-gray-300 disabled:opacity-40 transition-colors"
+            title="Refresh"
+          >
+            <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="text-xs px-3 py-2 rounded-lg border bg-red-900/20 border-red-800/40 text-red-400">
+          {error}
+        </div>
+      )}
+
+      <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl overflow-hidden">
+        {loading && !data ? (
+          <div className="p-4 text-xs text-gray-500 text-center">Menghitung gap…</div>
+        ) : !data || data.reports.length === 0 ? (
+          <div className="p-4 text-xs text-gray-500 text-center">
+            {data ? "Tidak ada gap terdeteksi — semua instrumen terlihat lengkap." : "Belum ada data."}
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-700/30">
+            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 px-4 py-2 text-[10px] text-gray-500 uppercase tracking-wide">
+              <span>Instrumen</span>
+              <span className="text-right">Bar</span>
+              <span className="text-right">Gap</span>
+              <span>Status</span>
+            </div>
+            {data.reports.slice(0, 20).map((r) => (
+              <div key={r.instrument_id} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 px-4 py-2.5 items-center">
+                <div>
+                  <span className="text-xs font-medium text-gray-200">{r.canonical_symbol}</span>
+                  <span className="text-[10px] text-gray-500 ml-1.5">{r.exchange}</span>
+                </div>
+                <div className="text-xs text-right text-gray-400 tabular-nums">
+                  {r.bar_count.toLocaleString()} / {r.expected_bars.toLocaleString()}
+                </div>
+                <div className={`text-xs text-right tabular-nums font-medium ${
+                  r.severity === "CRITICAL" ? "text-red-400" : r.severity === "WARNING" ? "text-amber-400" : "text-gray-400"
+                }`}>
+                  {r.gap_pct.toFixed(1)}%
+                </div>
+                <SeverityBadge severity={r.severity} />
+              </div>
+            ))}
+            {data.reports.length > 20 && (
+              <div className="px-4 py-2 text-[11px] text-gray-500 text-center">
+                +{data.reports.length - 20} instrumen lainnya
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // FREE-16: Provider Quota section — daily call counter per provider
 // ---------------------------------------------------------------------------
 function ProviderQuotaSection() {
@@ -871,6 +977,7 @@ export default function SettingsPage() {
 
       <DataHealthSection />
       <CoverageSection />
+      <DataGapsSection />
       <ProviderQuotaSection />
       <CSVImportSection />
       <MarketBootstrapSection />
