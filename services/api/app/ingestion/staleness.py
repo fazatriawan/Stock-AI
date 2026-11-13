@@ -21,6 +21,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.investment_policy import get_or_create_default
+from app.ingestion.empty_ingest import classify_empty_ingest, mark_empty_bars
 from app.ingestion.ohlcv import ingest_ohlcv
 from app.providers.registry import get_provider_registry
 
@@ -166,14 +167,31 @@ async def refresh_stale_instruments(
         provider = registry.get_primary(market)
         try:
             ingest_result = await ingest_ohlcv(db, instr, provider, start, end, force=True)
-            result.instruments_refreshed += 1
-            result.bars_added += ingest_result.inserted
-            log.info(
-                "refresh_stale.instrument_ok",
-                symbol=instr.canonical_symbol,
-                inserted=ingest_result.inserted,
-            )
+            if ingest_result.inserted == 0 and ingest_result.skipped == 0:
+                # Provider kembali kosong — klasifikasikan dan tandai terminal
+                reason = classify_empty_ingest(instr.canonical_symbol, None)
+                if reason != "STALE":
+                    await mark_empty_bars(db, instr.id, reason)
+                    log.info(
+                        "refresh_stale.empty_marked",
+                        symbol=instr.canonical_symbol,
+                        reason=reason,
+                    )
+            else:
+                result.instruments_refreshed += 1
+                result.bars_added += ingest_result.inserted
+                log.info(
+                    "refresh_stale.instrument_ok",
+                    symbol=instr.canonical_symbol,
+                    inserted=ingest_result.inserted,
+                )
         except Exception as exc:
+            reason = classify_empty_ingest(instr.canonical_symbol, exc)
+            if reason != "STALE":
+                try:
+                    await mark_empty_bars(db, instr.id, reason)
+                except Exception:
+                    pass
             msg = f"{instr.canonical_symbol}: {exc}"
             result.errors.append(msg)
             log.warning("refresh_stale.instrument_error", symbol=instr.canonical_symbol, error=str(exc))

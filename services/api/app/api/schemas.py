@@ -192,6 +192,19 @@ class RefreshStaleResponse(BaseModel):
     ran_at: datetime
 
 
+class CoverageStatusResponse(BaseModel):
+    """Distribusi freshness_status seluruh price_bars di DB."""
+    fresh: int
+    stale: int
+    unavailable: int
+    quota_exhausted: int
+    other: int
+    total: int
+    stale_pct: float
+    unavailable_instruments: int   # instrumen unik dengan bar UNAVAILABLE
+    quota_instruments: int          # instrumen unik dengan bar QUOTA_EXHAUSTED
+
+
 # ---------------------------------------------------------------------------
 # Market status
 # ---------------------------------------------------------------------------

@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Upload
 
 from app.api.schemas import (
     CSVImportResponse,
+    CoverageStatusResponse,
     DataHealthResponse,
     DataProviderResponse,
     DataProvidersResponse,
@@ -226,4 +227,50 @@ async def refresh_stale_endpoint(
         bars_added=result.bars_added,
         errors=result.errors,
         ran_at=result.ran_at,
+    )
+
+
+@router.get("/coverage", response_model=CoverageStatusResponse)
+async def get_coverage_status(db=Depends(get_db)) -> CoverageStatusResponse:
+    """
+    Distribusi freshness_status seluruh price_bars.
+
+    Berguna untuk monitoring: berapa bar UNAVAILABLE / QUOTA_EXHAUSTED
+    sehingga operator tahu instrumen mana yang berhenti di-refresh.
+    """
+    from sqlalchemy import func, select
+    from app.db.models import PriceBar
+
+    rows = await db.execute(
+        select(PriceBar.freshness_status, func.count().label("cnt"))
+        .group_by(PriceBar.freshness_status)
+    )
+    counts: dict[str, int] = {r.freshness_status: r.cnt for r in rows}
+
+    fresh = counts.get("FRESH", 0)
+    stale = counts.get("STALE", 0)
+    unavail = counts.get("UNAVAILABLE", 0)
+    quota = counts.get("QUOTA_EXHAUSTED", 0)
+    other = sum(v for k, v in counts.items() if k not in ("FRESH", "STALE", "UNAVAILABLE", "QUOTA_EXHAUSTED"))
+    total = fresh + stale + unavail + quota + other
+
+    uniq_unavail = await db.execute(
+        select(func.count(func.distinct(PriceBar.instrument_id)))
+        .where(PriceBar.freshness_status == "UNAVAILABLE")
+    )
+    uniq_quota = await db.execute(
+        select(func.count(func.distinct(PriceBar.instrument_id)))
+        .where(PriceBar.freshness_status == "QUOTA_EXHAUSTED")
+    )
+
+    return CoverageStatusResponse(
+        fresh=fresh,
+        stale=stale,
+        unavailable=unavail,
+        quota_exhausted=quota,
+        other=other,
+        total=total,
+        stale_pct=round(stale / total * 100, 1) if total else 0.0,
+        unavailable_instruments=uniq_unavail.scalar_one() or 0,
+        quota_instruments=uniq_quota.scalar_one() or 0,
     )
