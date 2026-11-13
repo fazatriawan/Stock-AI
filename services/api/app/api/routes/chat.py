@@ -12,7 +12,7 @@ from __future__ import annotations
 import structlog
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Any, Optional
 
 from app.core.config import get_settings
 
@@ -105,7 +105,7 @@ async def chat(body: ChatRequest) -> ChatResponse:
             system += "\n\nKONTEKS SESI INI:\n" + "\n".join(ctx_lines)
 
     # Susun messages — riwayat + pesan baru
-    messages = [
+    messages: list[Any] = [
         {"role": m.role, "content": m.content}
         for m in body.history
     ]
@@ -123,7 +123,7 @@ async def chat(body: ChatRequest) -> ChatResponse:
             model=model_id,
             max_tokens=1024,
             system=system,
-            messages=messages,  # type: ignore[arg-type]
+            messages=messages,
         )
 
         # Ekstrak teks (skip ThinkingBlock jika ada)

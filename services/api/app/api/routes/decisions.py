@@ -124,7 +124,7 @@ async def list_decisions(
             if instr.sector:
                 sector_weight = sum(
                     p.weight for p in positions.values()
-                    if instruments_map.get(p.instrument_id, instr).sector == instr.sector  # type: ignore[arg-type]
+                    if (instruments_map.get(p.instrument_id) or instr).sector == instr.sector
                 )
 
             portfolio_ctx = PortfolioContext(
