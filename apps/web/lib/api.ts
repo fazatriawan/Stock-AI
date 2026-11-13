@@ -215,6 +215,20 @@ export interface CoverageStatus {
   quota_instruments: number;
 }
 
+export interface ProviderQuotaRow {
+  provider_name: string;
+  calls_today: number;
+  quota_per_day: number | null;
+  quota_exhausted: boolean;
+  date_str: string;
+}
+
+export interface ProviderQuotaStatus {
+  providers: ProviderQuotaRow[];
+  total_calls_today: number;
+  as_of: string;
+}
+
 export interface MarketStatus {
   exchange: string;
   timezone: string;
@@ -972,6 +986,7 @@ export const api = {
     coverage: () => apiFetch<CoverageStatus>("/data/coverage"),
     resetQuota: () =>
       apiFetch<{ bars_reset: number; ran_at: string }>("/data/reset-quota", { method: "POST" }),
+    providerQuota: () => apiFetch<ProviderQuotaStatus>("/data/provider-quota"),
   },
   portfolio: {
     summary: () => apiFetch<PortfolioSummary>("/portfolio"),
@@ -1138,6 +1153,8 @@ export const api = {
       apiFetch<{ status: string; message: string }>("/admin/bootstrap/idx", { method: "POST" }),
     bootstrapUS: () =>
       apiFetch<{ status: string; message: string }>("/admin/bootstrap/us", { method: "POST" }),
+    resetQuotaTracker: () =>
+      apiFetch<{ status: string; message: string; reset_at: string }>("/admin/quota-tracker/reset", { method: "POST" }),
   },
 
   // R20 — Watchlist

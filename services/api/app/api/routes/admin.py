@@ -80,6 +80,27 @@ async def trigger_us_bootstrap(db: AsyncSession = Depends(get_db)) -> dict:
     return {"status": "triggered", "message": "US bootstrap berjalan di background. Cek /admin/setup-status untuk progress."}
 
 
+@router.post("/quota-tracker/reset")
+async def reset_quota_tracker() -> dict:
+    """
+    Reset in-process daily call counter untuk semua provider.
+
+    Counter reset otomatis setiap pergantian hari, tapi endpoint ini berguna
+    saat testing atau setelah quota provider diperluas manual oleh operator.
+    Tidak mempengaruhi freshness_status di price_bars (gunakan POST /data/reset-quota untuk itu).
+    """
+    from datetime import datetime, timezone
+    from app.providers.quota_tracker import get_quota_tracker
+
+    tracker = get_quota_tracker()
+    tracker.reset_all()
+    return {
+        "status": "reset",
+        "message": "In-process quota counter direset. Semua provider kembali ke 0 panggilan hari ini.",
+        "reset_at": datetime.now(tz=timezone.utc).isoformat(),
+    }
+
+
 @router.post("/backup/trigger")
 async def trigger_backup() -> dict:
     """

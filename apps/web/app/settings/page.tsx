@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { api, type DataProvidersResponse, type CSVImportResult, type CoverageStatus } from "@/lib/api";
+import { api, type DataProvidersResponse, type CSVImportResult, type CoverageStatus, type ProviderQuotaStatus } from "@/lib/api";
 import { CheckCircle, XCircle, AlertCircle, RefreshCw, Database, Wifi, WifiOff, ChevronRight, Upload, ShieldCheck, Lock } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -695,6 +695,135 @@ function MarketBootstrapSection() {
 }
 
 // ---------------------------------------------------------------------------
+// FREE-16: Provider Quota section — daily call counter per provider
+// ---------------------------------------------------------------------------
+function ProviderQuotaSection() {
+  const [data, setData] = useState<ProviderQuotaStatus | null>(null);
+  const [resetting, setResetting] = useState(false);
+  const [toast, setToast] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+
+  function load() {
+    api.data.providerQuota().then(setData).catch(() => {});
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function handleReset() {
+    setResetting(true);
+    setToast(null);
+    try {
+      await api.admin.resetQuotaTracker();
+      setToast({ type: "ok", msg: "Counter direset — semua provider kembali ke 0 panggilan." });
+      load();
+    } catch {
+      setToast({ type: "err", msg: "Gagal reset counter." });
+    } finally {
+      setResetting(false);
+    }
+  }
+
+  const anyExhausted = data?.providers.some((p) => p.quota_exhausted) ?? false;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-gray-300">Panggilan Provider Hari Ini</h2>
+        <div className="flex items-center gap-2">
+          {data && (
+            <span className="text-xs text-gray-500">
+              Total: <span className="text-gray-300 font-medium">{data.total_calls_today}</span>
+            </span>
+          )}
+          <button
+            onClick={load}
+            className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+            title="Refresh"
+          >
+            <RefreshCw size={12} />
+          </button>
+        </div>
+      </div>
+
+      {toast && (
+        <div className={`text-xs px-3 py-2 rounded-lg border ${
+          toast.type === "ok"
+            ? "bg-emerald-900/20 border-emerald-800/40 text-emerald-400"
+            : "bg-red-900/20 border-red-800/40 text-red-400"
+        }`}>
+          {toast.msg}
+        </div>
+      )}
+
+      <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl overflow-hidden">
+        {!data ? (
+          <div className="p-4 text-xs text-gray-500 text-center">Memuat statistik provider…</div>
+        ) : data.providers.length === 0 ? (
+          <div className="p-4 text-xs text-gray-500 text-center">
+            Belum ada panggilan provider hari ini. Counter akan terisi saat refresh data berjalan.
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-700/30">
+            {data.providers.map((p) => {
+              const pct = p.quota_per_day ? Math.min(100, Math.round(p.calls_today / p.quota_per_day * 100)) : null;
+              return (
+                <div key={p.provider_name} className="px-4 py-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-200">{p.provider_name}</span>
+                      {p.quota_exhausted && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded border bg-red-900/30 text-red-400 border-red-800/40">
+                          QUOTA HABIS
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      <span className="text-gray-200 font-medium">{p.calls_today}</span>
+                      {p.quota_per_day !== null && (
+                        <span className="text-gray-500"> / {p.quota_per_day}</span>
+                      )}
+                      <span className="text-gray-600"> panggilan</span>
+                    </div>
+                  </div>
+                  {pct !== null && (
+                    <div className="w-full bg-gray-700/40 rounded-full h-1">
+                      <div
+                        className={`h-1 rounded-full transition-all ${
+                          pct >= 100 ? "bg-red-500" : pct >= 80 ? "bg-amber-500" : "bg-emerald-500"
+                        }`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {anyExhausted && (
+        <div className="bg-amber-900/10 border border-amber-800/30 rounded-lg px-3 py-2.5 flex items-center justify-between gap-3">
+          <p className="text-xs text-amber-300/80">
+            Ada provider yang quota harian-nya habis. Reset counter agar percobaan ulang bisa berjalan malam ini.
+          </p>
+          <button
+            onClick={handleReset}
+            disabled={resetting}
+            className="shrink-0 text-xs px-3 py-1.5 rounded-lg bg-amber-700/30 border border-amber-600/40 text-amber-300 hover:bg-amber-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {resetting ? "…" : "Reset Counter"}
+          </button>
+        </div>
+      )}
+
+      <p className="text-[11px] text-gray-600">
+        Counter reset otomatis setiap pergantian hari. Tanggal: {data?.providers[0]?.date_str ?? "—"}
+      </p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // About section
 // ---------------------------------------------------------------------------
 function AboutSection() {
@@ -742,6 +871,7 @@ export default function SettingsPage() {
 
       <DataHealthSection />
       <CoverageSection />
+      <ProviderQuotaSection />
       <CSVImportSection />
       <MarketBootstrapSection />
       <BootstrapSection />
