@@ -64,6 +64,22 @@ async def trigger_idx_bootstrap(db: AsyncSession = Depends(get_db)) -> dict:
     return {"status": "triggered", "message": "IDX bootstrap berjalan di background. Cek /admin/setup-status untuk progress."}
 
 
+@router.post("/bootstrap/us")
+async def trigger_us_bootstrap(db: AsyncSession = Depends(get_db)) -> dict:
+    """
+    Trigger US stocks bootstrap di background (~20 menit).
+    Download histori 90 ticker US (S&P 500 pilihan + ETF) via yfinance.
+    """
+    import asyncio
+    from app.ingestion.us_bootstrap import run_us_bootstrap
+
+    async def _run() -> None:
+        await run_us_bootstrap(db)
+
+    asyncio.create_task(_run())
+    return {"status": "triggered", "message": "US bootstrap berjalan di background. Cek /admin/setup-status untuk progress."}
+
+
 @router.post("/backup/trigger")
 async def trigger_backup() -> dict:
     """

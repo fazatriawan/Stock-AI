@@ -255,6 +255,42 @@ async def _run_idx_bootstrap_check() -> None:
         log.error("idx_bootstrap_check.error", error=str(exc))
 
 
+async def _run_us_bootstrap_check() -> None:
+    """
+    Senin 06:15 WIB: cek apakah ada instrumen US yang perlu di-bootstrap.
+    Hanya run jika jumlah instrumen US di DB < 20 (bootstrap awal).
+    """
+    settings = _get_settings()
+    if not settings.us_bootstrap_enabled:
+        log.debug("us_bootstrap_check.skip", reason="us_bootstrap_disabled")
+        return
+    try:
+        from sqlalchemy import select, func
+        from app.db.models import Instrument
+        from app.db.session import AsyncSessionLocal
+
+        async with AsyncSessionLocal() as db:
+            count_result = await db.execute(
+                select(func.count()).select_from(Instrument).where(
+                    Instrument.exchange.in_(["NASDAQ", "NYSE", "US"]),
+                    Instrument.status == "ACTIVE",
+                )
+            )
+            count = count_result.scalar_one()
+
+        if count >= 20:
+            log.debug("us_bootstrap_check.skip", reason="enough_instruments", count=count)
+            return
+
+        log.info("us_bootstrap_check.running", current_count=count)
+        from app.ingestion.us_bootstrap import run_us_bootstrap
+        async with AsyncSessionLocal() as db:
+            summary = await run_us_bootstrap(db)
+        log.info("us_bootstrap_check.done", **summary)
+    except Exception as exc:
+        log.error("us_bootstrap_check.error", error=str(exc))
+
+
 _scheduler: Optional[AsyncIOScheduler] = None
 
 
@@ -342,6 +378,17 @@ def create_scheduler() -> AsyncIOScheduler:
         misfire_grace_time=3600,
     )
 
+    # US bootstrap check — Senin 06:15 WIB (setelah IDX check, hanya jika DB < 20 instrumen US)
+    _scheduler.add_job(
+        _run_us_bootstrap_check,
+        trigger=CronTrigger(day_of_week="mon", hour=6, minute=15, timezone="Asia/Jakarta"),
+        id="us_bootstrap_check",
+        name="US Bootstrap Check",
+        coalesce=True,
+        max_instances=1,
+        misfire_grace_time=3600,
+    )
+
     # Staleness marking — harian 06:30 WIB
     _scheduler.add_job(
         _run_staleness_mark,
@@ -366,7 +413,7 @@ def create_scheduler() -> AsyncIOScheduler:
 
     all_jobs = [
         "daily_backup", "health_probe", "weekly_fundamental",
-        "idx_bootstrap_check", "staleness_mark", "refresh_stale",
+        "idx_bootstrap_check", "us_bootstrap_check", "staleness_mark", "refresh_stale",
     ]
     if settings.intraday_polling_enabled:
         all_jobs.extend(["intraday_poll", "idx_intraday_close", "us_intraday_close"])

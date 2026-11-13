@@ -52,6 +52,10 @@ class Settings(BaseSettings):
     # IDX Full Bootstrap
     idx_bootstrap_days: int = 1825  # 5 tahun histori OHLCV
 
+    # US Stocks Bootstrap (FREE-10)
+    us_bootstrap_days: int = 1825  # 5 tahun histori OHLCV
+    us_bootstrap_enabled: bool = True
+
     # Timezone
     default_timezone: str = "Asia/Jakarta"
     idx_timezone: str = "Asia/Jakarta"
