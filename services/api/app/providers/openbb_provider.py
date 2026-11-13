@@ -20,13 +20,13 @@ Data OpenBB bersumber dari public API (Yahoo Finance, CBOE, dll).
 """
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 
 from app.core.logging import get_logger
 from app.providers.base import (
-    Bar, Fact, InstrumentInfo,
+    Bar, CorporateActionRecord, Fact, InstrumentInfo,
     ProviderHealth, ProviderStatus,
 )
 
@@ -152,7 +152,7 @@ class OpenBBProvider:
             logger.warning("openbb.ohlcv_error", symbol=symbol, error=str(exc))
             return []
 
-    def get_fundamentals(self, instrument_id: str) -> list[Fact]:
+    def get_fundamentals(self, instrument_id: str, as_of: datetime | None = None) -> list[Fact]:
         if not self._available:
             return []
 
@@ -198,7 +198,7 @@ class OpenBBProvider:
 
         return facts
 
-    def get_corporate_actions(self, instrument_id: str, start: date, end: date):
+    def get_corporate_actions(self, instrument_id: str, start: date) -> list[CorporateActionRecord]:
         return []  # Belum diimplementasi
 
     def _to_openbb_symbol(self, instrument_id: str) -> Optional[str]:

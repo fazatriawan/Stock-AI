@@ -175,10 +175,10 @@ async def get_dashboard_summary(
             .limit(1)
         )
         raw_price = price_res.scalar_one_or_none()
-        if raw_price is None:
+        if raw_price is None or wi.price_target is None:
             continue
         last_price = float(raw_price)
-        target = float(wi.price_target)  # type: ignore[arg-type]
+        target = float(wi.price_target)
         pct = ((target / last_price) - 1) * 100
 
         # Hanya tampilkan yang masih di bawah target, dalam radius _NEAR_TARGET_PCT

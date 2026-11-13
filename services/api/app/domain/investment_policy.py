@@ -83,7 +83,7 @@ async def update_policy(
         days_val = int(fields["max_staleness_days"])
         if days_val < 1:
             raise ValueError("max_staleness_days harus >= 1")
-        policy.max_staleness_days = days_val  # type: ignore[assignment]
+        policy.max_staleness_days = days_val
 
     if "horizon" in fields:
         h = str(fields["horizon"]).strip()

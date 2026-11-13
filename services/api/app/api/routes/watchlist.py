@@ -12,6 +12,7 @@ DELETE /watchlists/{id}/items/{iid}    → Hapus item dari watchlist
 from __future__ import annotations
 
 from datetime import date, timedelta
+from decimal import Decimal
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
@@ -228,11 +229,11 @@ async def update_watchlist_item(
     if body.notes is not None:
         item.notes = body.notes
     if body.price_target is not None:
-        item.price_target = body.price_target  # type: ignore[assignment]
+        item.price_target = Decimal(str(body.price_target))
     if body.target_note is not None:
         item.target_note = body.target_note
     if body.cost_basis is not None:
-        item.cost_basis = body.cost_basis  # type: ignore[assignment]
+        item.cost_basis = Decimal(str(body.cost_basis))
     if body.alert_on_target is not None:
         item.alert_on_target = body.alert_on_target
 

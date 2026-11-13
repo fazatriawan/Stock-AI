@@ -29,30 +29,29 @@ class ProviderRegistry:
         # Daftarkan provider berdasarkan konfigurasi
         # Sectors — prioritas tertinggi untuk fundamental IDX (lebih akurat dari yfinance)
         if settings.sectors_enabled and settings.sectors_api_key:
-            sectors = SectorsProvider(api_key=settings.sectors_api_key)
-            self._providers["IDX"].insert(0, sectors)  # type: ignore[arg-type]
-            self._provider_by_name["sectors"] = sectors  # type: ignore[assignment]
+            sectors: MarketDataProvider = SectorsProvider(api_key=settings.sectors_api_key)
+            self._providers["IDX"].insert(0, sectors)
+            self._provider_by_name["sectors"] = sectors
             logger.info("SectorsProvider aktif untuk IDX fundamental")
 
         if settings.yfinance_enabled:
-            yf = YFinanceProvider()
-            self._providers["IDX"].append(yf)  # type: ignore[arg-type]
-            self._providers["US"].append(yf)  # type: ignore[arg-type]
-            self._provider_by_name["yfinance"] = yf  # type: ignore[assignment]
+            yf: MarketDataProvider = YFinanceProvider()
+            self._providers["IDX"].append(yf)
+            self._providers["US"].append(yf)
+            self._provider_by_name["yfinance"] = yf
 
         # OpenBB — experimental, US-focused, 500+ rasio finansial
         if settings.openbb_enabled:
-            openbb = OpenBBProvider(pat=settings.openbb_pat or None)
-            self._providers["US"].append(openbb)  # type: ignore[arg-type]
+            openbb: MarketDataProvider = OpenBBProvider(pat=settings.openbb_pat or None)
+            self._providers["US"].append(openbb)
             # IDX support terbatas, tambahkan sebagai fallback saja
-            self._providers["IDX"].append(openbb)  # type: ignore[arg-type]
-            self._provider_by_name["openbb"] = openbb  # type: ignore[assignment]
+            self._providers["IDX"].append(openbb)
+            self._provider_by_name["openbb"] = openbb
             logger.info("OpenBBProvider aktif (experimental)")
 
         # Mock selalu tersedia sebagai fallback terakhir untuk testing
-        mock = MockProvider()
-        self._mock = mock
-        self._provider_by_name["mock"] = mock  # type: ignore[assignment]
+        self._mock: MarketDataProvider = MockProvider()
+        self._provider_by_name["mock"] = self._mock
 
     def get_primary(self, market: str) -> MarketDataProvider:
         """Ambil provider utama untuk market. Fallback ke mock jika tidak ada."""
@@ -60,7 +59,7 @@ class ProviderRegistry:
         if providers:
             return providers[0]
         logger.warning("Tidak ada provider terdaftar untuk market, menggunakan mock", market=market)
-        return self._mock  # type: ignore[return-value]
+        return self._mock
 
     def get_fundamental_provider(self, market: str) -> MarketDataProvider:
         """
@@ -70,18 +69,18 @@ class ProviderRegistry:
         """
         if market == "IDX":
             if "sectors" in self._provider_by_name:
-                return self._provider_by_name["sectors"]  # type: ignore[return-value]
+                return self._provider_by_name["sectors"]
         providers = self._providers.get(market, [])
         if providers:
             return providers[0]
-        return self._mock  # type: ignore[return-value]
+        return self._mock
 
     def get_fallback(self, market: str) -> MarketDataProvider:
         """Ambil provider fallback (mock)."""
-        return self._mock  # type: ignore[return-value]
+        return self._mock
 
     def get_by_name(self, name: str) -> MarketDataProvider | None:
-        return self._provider_by_name.get(name)  # type: ignore[return-value]
+        return self._provider_by_name.get(name)
 
     def all_health(self) -> list[ProviderHealth]:
         results = []
