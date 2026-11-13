@@ -98,6 +98,10 @@ class PriceBar(Base):
     ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     adjustment_version: Mapped[str] = mapped_column(String(20), nullable=False, default="v1")
     is_adjusted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    freshness_status: Mapped[str] = mapped_column(String(20), nullable=False, default="FRESH")
+    source_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("sources.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     instrument: Mapped["Instrument"] = relationship(back_populates="price_bars")
 
