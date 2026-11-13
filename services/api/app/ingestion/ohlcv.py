@@ -123,6 +123,7 @@ async def ingest_ohlcv(
                     "adj_close": stmt.excluded.adj_close,
                     "volume": stmt.excluded.volume,
                     "ingested_at": stmt.excluded.ingested_at,
+                    "freshness_status": stmt.excluded.freshness_status,
                 },
             )
             await db.execute(stmt)

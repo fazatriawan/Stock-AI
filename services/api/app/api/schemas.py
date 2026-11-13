@@ -184,6 +184,14 @@ class MarkStaleResponse(BaseModel):
     ran_at: datetime
 
 
+class RefreshStaleResponse(BaseModel):
+    instruments_found: int
+    instruments_refreshed: int
+    bars_added: int
+    errors: list[str]
+    ran_at: datetime
+
+
 # ---------------------------------------------------------------------------
 # Market status
 # ---------------------------------------------------------------------------

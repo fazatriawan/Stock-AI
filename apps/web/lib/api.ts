@@ -949,6 +949,8 @@ export const api = {
       apiFetch<InstrumentFreshness>(`/data/freshness/${instrumentId}`),
     markStale: () =>
       apiFetch<{ marked_stale: number; cutoff_date: string; ran_at: string }>("/data/mark-stale", { method: "POST" }),
+    refreshStale: () =>
+      apiFetch<{ instruments_found: number; instruments_refreshed: number; bars_added: number; errors: string[] }>("/data/refresh-stale", { method: "POST" }),
     importCSV: (formData: FormData) =>
       apiFetch<CSVImportResult>("/data/import/csv", {
         method: "POST",

@@ -159,6 +159,32 @@ async def _run_staleness_mark() -> None:
         log.error("staleness_job.error", error=str(exc))
 
 
+async def _run_refresh_stale() -> None:
+    """
+    Harian 06:35 WIB (5 menit setelah mark-stale): re-ingest instrumen dengan bar STALE.
+    Hanya jalan jika yfinance diaktifkan — tidak ada biaya tambahan.
+    """
+    settings = _get_settings()
+    if not settings.yfinance_enabled:
+        log.info("refresh_stale_job.skip", reason="yfinance_disabled")
+        return
+    try:
+        from app.db.session import AsyncSessionLocal
+        from app.ingestion.staleness import refresh_stale_instruments
+
+        async with AsyncSessionLocal() as db:
+            result = await refresh_stale_instruments(db)
+            await db.commit()
+        log.info(
+            "refresh_stale_job.done",
+            found=result.instruments_found,
+            refreshed=result.instruments_refreshed,
+            bars_added=result.bars_added,
+        )
+    except Exception as exc:
+        log.error("refresh_stale_job.error", error=str(exc))
+
+
 async def _run_idx_bootstrap_check() -> None:
     """
     Senin pagi 06:00 WIB: cek apakah ada instrumen IDX baru yang perlu ditambah.
@@ -268,7 +294,21 @@ def create_scheduler() -> AsyncIOScheduler:
         misfire_grace_time=3600,
     )
 
-    all_jobs = ["daily_backup", "health_probe", "weekly_fundamental", "idx_bootstrap_check", "staleness_mark"]
+    # Refresh stale instruments — harian 06:35 WIB (setelah staleness_mark)
+    _scheduler.add_job(
+        _run_refresh_stale,
+        trigger=CronTrigger(hour=6, minute=35, timezone="Asia/Jakarta"),
+        id="refresh_stale",
+        name="Nightly Stale Refresh",
+        coalesce=True,
+        max_instances=1,
+        misfire_grace_time=3600,
+    )
+
+    all_jobs = [
+        "daily_backup", "health_probe", "weekly_fundamental",
+        "idx_bootstrap_check", "staleness_mark", "refresh_stale",
+    ]
     if settings.intraday_polling_enabled:
         all_jobs.append("intraday_poll")
     log.info("scheduler.created", jobs=all_jobs)

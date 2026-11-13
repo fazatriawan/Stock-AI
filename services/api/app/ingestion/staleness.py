@@ -1,25 +1,28 @@
 """
-Staleness Marking Service — FREE-07.
+Staleness Marking & Refresh Service — FREE-07/FREE-08.
 
-Menandai price_bars yang sudah melewati batas freshness sebagai STALE.
+Menandai price_bars yang sudah melewati batas freshness sebagai STALE,
+dan me-refresh instrumen dengan bar STALE via provider gratis (yfinance).
+
 Prinsip:
-- Hanya bar dengan freshness_status=FRESH yang di-update ke STALE.
-  Bar UNAVAILABLE / QUOTA_EXHAUSTED tidak di-override.
+- Hanya bar FRESH yang di-update ke STALE. Bar UNAVAILABLE / QUOTA_EXHAUSTED tidak di-override.
 - Cutoff = today() - max_staleness_days (dari investment policy, default 3).
 - Idempoten — aman dijalankan berulang.
-- Tidak pernah menghapus data — hanya update status.
+- Tidak pernah menghapus data — refresh meng-upsert bar baru/update yang kadaluarsa.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
 import structlog
-from sqlalchemy import update
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.investment_policy import get_or_create_default
+from app.ingestion.ohlcv import ingest_ohlcv
+from app.providers.registry import get_provider_registry
 
 log = structlog.get_logger(__name__)
 
@@ -101,3 +104,85 @@ async def mark_stale_from_policy(
         days = DEFAULT_STALENESS_DAYS
 
     return await mark_stale_bars(db, max_staleness_days=days, instrument_id=instrument_id)
+
+
+# ---------------------------------------------------------------------------
+# FREE-08: Bulk refresh stale instruments
+# ---------------------------------------------------------------------------
+
+@dataclass
+class RefreshStaleResult:
+    instruments_found: int
+    instruments_refreshed: int
+    bars_added: int
+    errors: list[str] = field(default_factory=list)
+    ran_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
+
+
+async def refresh_stale_instruments(
+    db: AsyncSession,
+    days_back: int = 365,
+    limit: int = 50,
+) -> RefreshStaleResult:
+    """
+    Temukan instrumen dengan bar STALE, re-ingest via provider gratis.
+
+    - Mencari instrument_id distinct yang punya bar STALE.
+    - Untuk setiap instrumen, panggil ingest_ohlcv dengan force=True.
+      Upsert menulis freshness_status=FRESH sehingga bar lama yang terupdate jadi FRESH kembali.
+    - limit: maksimum instrumen yang diproses per panggilan (hindari timeout).
+    - Tidak pernah menghapus data.
+    """
+    from app.db.models import Instrument, PriceBar
+
+    result = RefreshStaleResult(instruments_found=0, instruments_refreshed=0, bars_added=0)
+
+    # Ambil instrument_id dengan bar STALE
+    stale_rows = await db.execute(
+        select(PriceBar.instrument_id)
+        .where(PriceBar.freshness_status == "STALE")
+        .distinct()
+        .limit(limit)
+    )
+    instrument_ids = [r[0] for r in stale_rows.fetchall()]
+    result.instruments_found = len(instrument_ids)
+
+    if not instrument_ids:
+        log.info("refresh_stale.no_stale_instruments")
+        return result
+
+    # Ambil Instrument objects
+    instr_rows = await db.execute(
+        select(Instrument).where(Instrument.id.in_(instrument_ids))
+    )
+    instruments = instr_rows.scalars().all()
+
+    registry = get_provider_registry()
+    end = date.today()
+    start = end - timedelta(days=days_back)
+
+    for instr in instruments:
+        market = "IDX" if instr.exchange in ("IDX", "BEI") else "US"
+        provider = registry.get_primary(market)
+        try:
+            ingest_result = await ingest_ohlcv(db, instr, provider, start, end, force=True)
+            result.instruments_refreshed += 1
+            result.bars_added += ingest_result.inserted
+            log.info(
+                "refresh_stale.instrument_ok",
+                symbol=instr.canonical_symbol,
+                inserted=ingest_result.inserted,
+            )
+        except Exception as exc:
+            msg = f"{instr.canonical_symbol}: {exc}"
+            result.errors.append(msg)
+            log.warning("refresh_stale.instrument_error", symbol=instr.canonical_symbol, error=str(exc))
+
+    log.info(
+        "refresh_stale.complete",
+        found=result.instruments_found,
+        refreshed=result.instruments_refreshed,
+        bars_added=result.bars_added,
+        errors=len(result.errors),
+    )
+    return result

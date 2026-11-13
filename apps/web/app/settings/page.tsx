@@ -79,6 +79,8 @@ function DataHealthSection() {
   const [error, setError] = useState<string | null>(null);
   const [staleResult, setStaleResult] = useState<{ marked_stale: number; cutoff_date: string } | null>(null);
   const [markingStale, setMarkingStale] = useState(false);
+  const [refreshResult, setRefreshResult] = useState<{ instruments_refreshed: number; bars_added: number; errors: string[] } | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   function load() {
     setLoading(true);
@@ -102,6 +104,19 @@ function DataHealthSection() {
     }
   }
 
+  async function handleRefreshStale() {
+    setRefreshing(true);
+    setRefreshResult(null);
+    try {
+      const r = await api.data.refreshStale();
+      setRefreshResult(r);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Gagal refresh data");
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   useEffect(load, []);
 
   return (
@@ -109,6 +124,15 @@ function DataHealthSection() {
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-medium text-gray-300">Status Provider Data</h2>
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleRefreshStale}
+            disabled={refreshing}
+            title="Re-ingest instrumen dengan bar STALE via yfinance"
+            className="text-xs text-blue-500/70 hover:text-blue-400 flex items-center gap-1 transition-colors disabled:opacity-50"
+          >
+            {refreshing ? <RefreshCw size={11} className="animate-spin" /> : <RefreshCw size={11} />}
+            Refresh Stale
+          </button>
           <button
             onClick={handleMarkStale}
             disabled={markingStale}
@@ -131,6 +155,18 @@ function DataHealthSection() {
       {staleResult && (
         <div className="rounded-lg border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-xs text-amber-400">
           {staleResult.marked_stale} bar ditandai STALE (cutoff: {staleResult.cutoff_date})
+        </div>
+      )}
+      {refreshResult && (
+        <div className={`rounded-lg border px-3 py-2 text-xs space-y-0.5 ${
+          refreshResult.errors.length > 0
+            ? "border-amber-800/40 bg-amber-950/20 text-amber-400"
+            : "border-emerald-800/40 bg-emerald-950/20 text-emerald-400"
+        }`}>
+          <p>✓ {refreshResult.instruments_refreshed} instrumen di-refresh · {refreshResult.bars_added} bar baru</p>
+          {refreshResult.errors.length > 0 && (
+            <p className="text-red-400/80">{refreshResult.errors.length} error: {refreshResult.errors[0]}</p>
+          )}
         </div>
       )}
 

@@ -13,6 +13,7 @@ from app.api.schemas import (
     InstrumentFreshnessResponse,
     MarkStaleResponse,
     ProviderHealthResponse,
+    RefreshStaleResponse,
 )
 from app.db.session import get_db
 from app.providers.registry import get_provider_registry
@@ -197,5 +198,32 @@ async def mark_stale_endpoint(
         marked_stale=result.marked_stale,
         cutoff_date=result.cutoff_date,
         instrument_id=result.instrument_id,
+        ran_at=result.ran_at,
+    )
+
+
+@router.post("/refresh-stale", response_model=RefreshStaleResponse)
+async def refresh_stale_endpoint(
+    days_back: int = Query(default=365, ge=1, le=1825, description="Berapa hari ke belakang untuk di-refresh"),
+    limit: int = Query(default=50, ge=1, le=200, description="Maks instrumen per panggilan"),
+    db=Depends(get_db),
+) -> RefreshStaleResponse:
+    """
+    Re-ingest OHLCV untuk semua instrumen yang punya bar STALE.
+
+    Memanggil yfinance (atau provider gratis aktif) dengan force=True,
+    sehingga bar STALE yang diperbarui kembali menjadi FRESH.
+    Idempoten — bar FRESH yang sudah ada tidak digandakan.
+    """
+    from app.ingestion.staleness import refresh_stale_instruments
+
+    result = await refresh_stale_instruments(db, days_back=days_back, limit=limit)
+    await db.commit()
+
+    return RefreshStaleResponse(
+        instruments_found=result.instruments_found,
+        instruments_refreshed=result.instruments_refreshed,
+        bars_added=result.bars_added,
+        errors=result.errors,
         ran_at=result.ran_at,
     )
