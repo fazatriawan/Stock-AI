@@ -27,18 +27,20 @@ function JournalCard({ entry, onReview }: { entry: JournalEntry; onReview: () =>
   const [outcome, setOutcome] = useState<"CORRECT" | "INCORRECT" | "PENDING">("PENDING");
   const [outcomeNotes, setOutcomeNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   const ticker = entry.canonical_symbol.split(":")[1] ?? entry.canonical_symbol;
   const outcomeStyle = entry.outcome ? OUTCOME_STYLE[entry.outcome] : null;
 
   async function submitReview() {
     setSaving(true);
+    setReviewError(null);
     try {
       await api.journal.review(entry.id, outcome, outcomeNotes || undefined);
       setReviewing(false);
       onReview();
-    } catch {
-      // ignore
+    } catch (e) {
+      setReviewError(e instanceof Error ? e.message : "Gagal menyimpan review");
     } finally {
       setSaving(false);
     }
@@ -129,6 +131,7 @@ function JournalCard({ entry, onReview }: { entry: JournalEntry; onReview: () =>
               rows={2}
               className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-xs text-gray-300 focus:outline-none focus:border-gray-600 resize-none"
             />
+            {reviewError && <p className="text-xs text-red-400">{reviewError}</p>}
             <div className="flex gap-2">
               <Button size="sm" onClick={submitReview} disabled={saving}>
                 {saving ? "Menyimpan..." : "Simpan Review"}
@@ -278,16 +281,18 @@ function AddEntryModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
 export default function JournalPage() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [filterAction, setFilterAction] = useState<string>("ALL");
 
   async function load() {
     setLoading(true);
+    setLoadError(false);
     try {
       const data = await api.journal.list();
       setEntries(data);
     } catch {
-      // ignore
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -354,6 +359,10 @@ export default function JournalPage() {
       {loading ? (
         <div className="space-y-3">
           {[1,2,3].map(i => <div key={i} className="h-20 bg-gray-800 rounded-lg animate-pulse" />)}
+        </div>
+      ) : loadError ? (
+        <div className="text-center py-12 text-sm text-red-400">
+          Gagal memuat jurnal — pastikan API berjalan
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-12">
