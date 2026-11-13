@@ -22,8 +22,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.investment_policy import get_or_create_default
 from app.ingestion.empty_ingest import classify_empty_ingest, mark_empty_bars
-from app.ingestion.ohlcv import ingest_ohlcv
-from app.providers.registry import get_provider_registry
+from app.ingestion.ohlcv import ingest_ohlcv  # noqa: F401 — dipakai oleh mark_stale_from_policy path
+from app.ingestion.provider_fallback import ingest_with_fallback
+from app.providers.registry import get_provider_registry  # noqa: F401 — dipakai test patch
 
 log = structlog.get_logger(__name__)
 
@@ -158,17 +159,17 @@ async def refresh_stale_instruments(
     )
     instruments = instr_rows.scalars().all()
 
-    registry = get_provider_registry()
     end = date.today()
     start = end - timedelta(days=days_back)
 
     for instr in instruments:
         market = "IDX" if instr.exchange in ("IDX", "BEI") else "US"
-        provider = registry.get_primary(market)
         try:
-            ingest_result = await ingest_ohlcv(db, instr, provider, start, end, force=True)
-            if ingest_result.inserted == 0 and ingest_result.skipped == 0:
-                # Provider kembali kosong — klasifikasikan dan tandai terminal
+            fallback_result = await ingest_with_fallback(
+                db, instr, market, start, end, force=True
+            )
+            if fallback_result is None:
+                # Semua provider gagal atau kosong — klasifikasikan status terminal
                 reason = classify_empty_ingest(instr.canonical_symbol, None)
                 if reason != "STALE":
                     await mark_empty_bars(db, instr.id, reason)
@@ -179,12 +180,20 @@ async def refresh_stale_instruments(
                     )
             else:
                 result.instruments_refreshed += 1
-                result.bars_added += ingest_result.inserted
-                log.info(
-                    "refresh_stale.instrument_ok",
-                    symbol=instr.canonical_symbol,
-                    inserted=ingest_result.inserted,
-                )
+                result.bars_added += fallback_result.ohlcv.inserted
+                if fallback_result.fallback_used:
+                    log.info(
+                        "refresh_stale.fallback_used",
+                        symbol=instr.canonical_symbol,
+                        provider=fallback_result.provider_used,
+                        tried=fallback_result.providers_tried,
+                    )
+                else:
+                    log.info(
+                        "refresh_stale.instrument_ok",
+                        symbol=instr.canonical_symbol,
+                        inserted=fallback_result.ohlcv.inserted,
+                    )
         except Exception as exc:
             reason = classify_empty_ingest(instr.canonical_symbol, exc)
             if reason != "STALE":

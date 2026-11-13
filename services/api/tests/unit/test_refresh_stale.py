@@ -3,12 +3,19 @@ Unit tests FREE-08 — Bulk stale refresh service.
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app.ingestion.provider_fallback import FallbackIngestResult
 from app.ingestion.staleness import RefreshStaleResult, refresh_stale_instruments
+
+
+def _make_fallback_result(inserted: int = 5, provider: str = "yfinance") -> FallbackIngestResult:
+    ohlcv = MagicMock()
+    ohlcv.inserted = inserted
+    return FallbackIngestResult(ohlcv=ohlcv, provider_used=provider, fallback_used=False)
 
 
 # ---------------------------------------------------------------------------
@@ -72,15 +79,10 @@ class TestRefreshStaleInstruments:
         instr = _make_instrument("BBCA")
         db = _make_db(["uuid-BBCA"], [instr])
 
-        ingest_result = MagicMock()
-        ingest_result.inserted = 10
+        fallback_result = _make_fallback_result(inserted=10)
 
-        with patch("app.ingestion.staleness.ingest_ohlcv", new=AsyncMock(return_value=ingest_result)):
-            with patch("app.ingestion.staleness.get_provider_registry") as mock_registry:
-                mock_provider = MagicMock()
-                mock_registry.return_value.get_primary.return_value = mock_provider
-
-                result = await refresh_stale_instruments(db, days_back=365)
+        with patch("app.ingestion.staleness.ingest_with_fallback", new=AsyncMock(return_value=fallback_result)):
+            result = await refresh_stale_instruments(db, days_back=365)
 
         assert result.instruments_found == 1
         assert result.instruments_refreshed == 1
@@ -94,24 +96,15 @@ class TestRefreshStaleInstruments:
         instr2 = _make_instrument("BMRI")
         db = _make_db(["uuid-BBCA", "uuid-BMRI"], [instr1, instr2])
 
-        ok_result = MagicMock()
-        ok_result.inserted = 5
+        ok_fallback = _make_fallback_result(inserted=5)
 
-        call_count = 0
-
-        async def mock_ingest(db, instr, *args, **kwargs):
-            nonlocal call_count
-            call_count += 1
+        async def mock_fallback(db, instr, market, start, end, force=False, skip_mock=True):
             if instr.canonical_symbol == "BBCA":
                 raise ConnectionError("yfinance timeout")
-            return ok_result
+            return ok_fallback
 
-        with patch("app.ingestion.staleness.ingest_ohlcv", side_effect=mock_ingest):
-            with patch("app.ingestion.staleness.get_provider_registry") as mock_registry:
-                mock_provider = MagicMock()
-                mock_registry.return_value.get_primary.return_value = mock_provider
-
-                result = await refresh_stale_instruments(db)
+        with patch("app.ingestion.staleness.ingest_with_fallback", side_effect=mock_fallback):
+            result = await refresh_stale_instruments(db)
 
         assert result.instruments_found == 2
         assert result.instruments_refreshed == 1  # hanya BMRI berhasil
@@ -124,34 +117,27 @@ class TestRefreshStaleInstruments:
         instr = _make_instrument("BBCA", exchange="IDX")
         db = _make_db(["uuid-BBCA"], [instr])
 
-        ingest_result = MagicMock()
-        ingest_result.inserted = 3
+        fallback_result = _make_fallback_result(inserted=3)
+        mock_fallback = AsyncMock(return_value=fallback_result)
 
-        with patch("app.ingestion.staleness.ingest_ohlcv", new=AsyncMock(return_value=ingest_result)):
-            with patch("app.ingestion.staleness.get_provider_registry") as mock_registry:
-                mock_provider = MagicMock()
-                mock_registry.return_value.get_primary.return_value = mock_provider
+        with patch("app.ingestion.staleness.ingest_with_fallback", mock_fallback):
+            await refresh_stale_instruments(db)
 
-                await refresh_stale_instruments(db)
-
-        mock_registry.return_value.get_primary.assert_called_once_with("IDX")
+        _, kwargs = mock_fallback.call_args
+        assert mock_fallback.call_args[0][2] == "IDX" or kwargs.get("market") == "IDX"
 
     @pytest.mark.asyncio
     async def test_uses_us_provider_for_nasdaq(self):
         instr = _make_instrument("AAPL", exchange="NASDAQ")
         db = _make_db(["uuid-AAPL"], [instr])
 
-        ingest_result = MagicMock()
-        ingest_result.inserted = 2
+        fallback_result = _make_fallback_result(inserted=2)
+        mock_fallback = AsyncMock(return_value=fallback_result)
 
-        with patch("app.ingestion.staleness.ingest_ohlcv", new=AsyncMock(return_value=ingest_result)):
-            with patch("app.ingestion.staleness.get_provider_registry") as mock_registry:
-                mock_provider = MagicMock()
-                mock_registry.return_value.get_primary.return_value = mock_provider
+        with patch("app.ingestion.staleness.ingest_with_fallback", mock_fallback):
+            await refresh_stale_instruments(db)
 
-                await refresh_stale_instruments(db)
-
-        mock_registry.return_value.get_primary.assert_called_once_with("US")
+        assert mock_fallback.call_args[0][2] == "US" or mock_fallback.call_args.kwargs.get("market") == "US"
 
     @pytest.mark.asyncio
     async def test_ran_at_is_utc(self):

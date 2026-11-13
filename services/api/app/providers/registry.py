@@ -86,6 +86,13 @@ class ProviderRegistry:
         """Ambil provider fallback (mock)."""
         return self._mock
 
+    def get_ordered(self, market: str) -> list[MarketDataProvider]:
+        """
+        Kembalikan semua provider untuk market dalam urutan prioritas.
+        Digunakan oleh fallback chain — coba satu per satu sampai ada yang berhasil.
+        """
+        return list(self._providers.get(market, []))
+
     def get_by_name(self, name: str) -> MarketDataProvider | None:
         return self._provider_by_name.get(name)
 
