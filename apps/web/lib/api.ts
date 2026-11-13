@@ -159,6 +159,33 @@ export interface DataHealth {
   checked_at: string;
 }
 
+export interface DataProvider {
+  provider: string;
+  health_status: "OK" | "DEGRADED" | "DOWN" | "UNKNOWN";
+  license_status: "FREE_PERSONAL" | "PAID" | "RESTRICTED" | "UNKNOWN";
+  access_status: "ACTIVE" | "INACTIVE" | "NOT_CONFIGURED" | "QUOTA_EXHAUSTED" | "LICENSE_BLOCKED";
+  cost: string;
+  datasets: string[];
+  granularity: string;
+  freshness_policy: string;
+  last_success: string | null;
+  last_error: string | null;
+  notes: string | null;
+}
+
+export interface DataProvidersResponse {
+  providers: DataProvider[];
+  checked_at: string;
+}
+
+export interface CSVImportResult {
+  inserted: number;
+  skipped_duplicate: number;
+  skipped_existing_source: boolean;
+  parse_errors: string[];
+  source_id: string | null;
+}
+
 export interface MarketStatus {
   exchange: string;
   timezone: string;
@@ -900,6 +927,13 @@ export const api = {
   },
   data: {
     health: () => apiFetch<DataHealth>("/data/health"),
+    providers: () => apiFetch<DataProvidersResponse>("/data/providers"),
+    importCSV: (formData: FormData) =>
+      apiFetch<CSVImportResult>("/data/import/csv", {
+        method: "POST",
+        body: formData,
+        headers: {},  // let browser set multipart boundary
+      }),
   },
   portfolio: {
     summary: () => apiFetch<PortfolioSummary>("/portfolio"),

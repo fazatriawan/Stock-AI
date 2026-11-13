@@ -118,6 +118,47 @@ class DataHealthResponse(BaseModel):
     checked_at: datetime
 
 
+class ProviderCapabilityResponse(BaseModel):
+    license_status: str
+    access_status: str
+    cost: str
+    granularity: str
+    freshness_policy: str
+    supports_point_in_time: bool
+    datasets: list[str]
+    quota_per_day: Optional[int] = None
+    quota_remaining: Optional[int] = None
+    notes: Optional[str] = None
+
+
+class DataProviderResponse(BaseModel):
+    """Gabungan capability + health untuk satu provider."""
+    provider: str
+    health_status: str
+    license_status: str
+    access_status: str
+    cost: str
+    datasets: list[str]
+    granularity: str
+    freshness_policy: str
+    last_success: Optional[datetime] = None
+    last_error: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class DataProvidersResponse(BaseModel):
+    providers: list[DataProviderResponse]
+    checked_at: datetime
+
+
+class CSVImportResponse(BaseModel):
+    inserted: int
+    skipped_duplicate: int
+    skipped_existing_source: bool
+    parse_errors: list[str]
+    source_id: Optional[str] = None
+
+
 # ---------------------------------------------------------------------------
 # Market status
 # ---------------------------------------------------------------------------

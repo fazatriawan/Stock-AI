@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { api, type DataHealth } from "@/lib/api";
-import { CheckCircle, XCircle, AlertCircle, RefreshCw, Database, Wifi, WifiOff, ChevronRight } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { api, type DataProvidersResponse, type CSVImportResult } from "@/lib/api";
+import { CheckCircle, XCircle, AlertCircle, RefreshCw, Database, Wifi, WifiOff, ChevronRight, Upload, ShieldCheck, Lock } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -37,18 +37,51 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+function LicenseBadge({ license }: { license: string }) {
+  if (license === "FREE_PERSONAL") return (
+    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-sky-950/30 text-sky-400 border-sky-800/40">
+      <ShieldCheck size={9} /> GRATIS
+    </span>
+  );
+  if (license === "PAID") return (
+    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-amber-950/30 text-amber-400 border-amber-800/40">
+      <Lock size={9} /> BERBAYAR
+    </span>
+  );
+  return (
+    <span className="text-[10px] px-1.5 py-0.5 rounded border bg-gray-800 text-gray-500 border-gray-700">
+      {license}
+    </span>
+  );
+}
+
+function AccessBadge({ access }: { access: string }) {
+  if (access === "ACTIVE") return (
+    <span className="text-[10px] px-1.5 py-0.5 rounded border bg-emerald-950/20 text-emerald-400 border-emerald-800/30">AKTIF</span>
+  );
+  if (access === "NOT_CONFIGURED") return (
+    <span className="text-[10px] px-1.5 py-0.5 rounded border bg-gray-800 text-gray-500 border-gray-700">BELUM DIKONFIGURASI</span>
+  );
+  if (access === "LICENSE_BLOCKED") return (
+    <span className="text-[10px] px-1.5 py-0.5 rounded border bg-red-950/20 text-red-400 border-red-800/30">DIBLOKIR BUDGET</span>
+  );
+  return (
+    <span className="text-[10px] px-1.5 py-0.5 rounded border bg-gray-800 text-gray-500 border-gray-700">{access}</span>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Data Health section
 // ---------------------------------------------------------------------------
 function DataHealthSection() {
-  const [data, setData] = useState<DataHealth | null>(null);
+  const [data, setData] = useState<DataProvidersResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   function load() {
     setLoading(true);
     setError(null);
-    api.data.health()
+    api.data.providers()
       .then(setData)
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
@@ -88,11 +121,27 @@ function DataHealthSection() {
                   key={p.provider}
                   className="bg-gray-800/30 border border-gray-700/40 rounded-lg px-4 py-3 flex items-start gap-3"
                 >
-                  <StatusIcon status={p.status} />
+                  <StatusIcon status={p.health_status} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-gray-200">{p.provider}</span>
-                      <StatusBadge status={p.status} />
+                      <span className="text-sm font-medium text-gray-200 capitalize">{p.provider}</span>
+                      <StatusBadge status={p.health_status} />
+                      <LicenseBadge license={p.license_status} />
+                      <AccessBadge access={p.access_status} />
+                    </div>
+                    {p.datasets.length > 0 && (
+                      <div className="flex gap-1 mt-1 flex-wrap">
+                        {p.datasets.map(d => (
+                          <span key={d} className="text-[9px] px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400 border border-gray-700/30">
+                            {d}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex gap-3 mt-1 text-[10px] text-gray-600">
+                      <span>{p.granularity}</span>
+                      <span>·</span>
+                      <span>{p.freshness_policy}</span>
                     </div>
                     {p.last_success && (
                       <p className="text-xs text-gray-500 mt-0.5">Sukses terakhir: {fmtDate(p.last_success)}</p>
@@ -109,6 +158,129 @@ function DataHealthSection() {
             )}
           </div>
         </>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CSV Import section
+// ---------------------------------------------------------------------------
+function CSVImportSection() {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [instrumentId, setInstrumentId] = useState("");
+  const [provider, setProvider] = useState("csv_manual");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<CSVImportResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const file = fileRef.current?.files?.[0];
+    if (!file) { setError("Pilih file CSV terlebih dahulu"); return; }
+    if (!instrumentId.trim()) { setError("Instrument ID wajib diisi (contoh: BBCA.JK)"); return; }
+
+    setLoading(true);
+    setError(null);
+    setResult(null);
+
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("instrument_id", instrumentId.trim());
+    fd.append("provider", provider.trim() || "csv_manual");
+
+    try {
+      const r = await api.data.importCSV(fd);
+      setResult(r);
+      if (fileRef.current) fileRef.current.value = "";
+    } catch (ex) {
+      setError(ex instanceof Error ? ex.message : "Gagal import");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <h2 className="text-sm font-medium text-gray-300">Import Harga Historis (CSV)</h2>
+      <p className="text-xs text-gray-500">
+        Upload file CSV dengan kolom <code className="bg-gray-800 px-1 rounded">date, close</code> (minimal).
+        Kolom opsional: <code className="bg-gray-800 px-1 rounded">open, high, low, volume, adj_close</code>.
+        Import bersifat idempoten — file yang sama tidak akan diproses ulang.
+      </p>
+
+      <form onSubmit={handleSubmit} className="bg-gray-800/30 border border-gray-700/40 rounded-xl p-4 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Instrument ID <span className="text-red-400">*</span></label>
+            <input
+              type="text"
+              value={instrumentId}
+              onChange={e => setInstrumentId(e.target.value)}
+              placeholder="cth. BBCA.JK atau AAPL"
+              className="w-full bg-gray-900/60 border border-gray-700/50 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-700/60"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Label Provider</label>
+            <input
+              type="text"
+              value={provider}
+              onChange={e => setProvider(e.target.value)}
+              placeholder="csv_manual"
+              className="w-full bg-gray-900/60 border border-gray-700/50 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-700/60"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">File CSV <span className="text-red-400">*</span></label>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".csv"
+            className="block w-full text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:bg-gray-700 file:text-gray-200 hover:file:bg-gray-600 cursor-pointer"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex items-center gap-2 text-sm px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-lg disabled:opacity-50 transition-colors"
+        >
+          {loading ? <RefreshCw size={13} className="animate-spin" /> : <Upload size={13} />}
+          {loading ? "Mengimpor..." : "Import"}
+        </button>
+      </form>
+
+      {error && (
+        <div className="rounded-lg border border-red-800/40 bg-red-950/20 px-3 py-2 text-xs text-red-400">
+          {error}
+        </div>
+      )}
+
+      {result && (
+        <div className={`rounded-lg border px-4 py-3 space-y-1.5 ${
+          result.skipped_existing_source
+            ? "border-amber-800/40 bg-amber-950/20"
+            : "border-emerald-800/40 bg-emerald-950/20"
+        }`}>
+          {result.skipped_existing_source ? (
+            <p className="text-xs text-amber-400">File ini sudah pernah diimpor sebelumnya — tidak ada perubahan.</p>
+          ) : (
+            <p className="text-xs text-emerald-400">
+              ✓ {result.inserted} baris diimpor · {result.skipped_duplicate} duplikat dilewati
+            </p>
+          )}
+          {result.parse_errors.length > 0 && (
+            <div>
+              <p className="text-xs text-amber-400 mb-1">{result.parse_errors.length} baris bermasalah:</p>
+              <ul className="text-[10px] text-amber-500/80 space-y-0.5 max-h-32 overflow-y-auto">
+                {result.parse_errors.map((e, i) => <li key={i}>{e}</li>)}
+              </ul>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -293,6 +465,7 @@ export default function SettingsPage() {
       </div>
 
       <DataHealthSection />
+      <CSVImportSection />
       <BootstrapSection />
       <AboutSection />
     </div>
