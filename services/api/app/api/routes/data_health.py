@@ -14,10 +14,13 @@ from app.api.schemas import (
     InstrumentFreshnessResponse,
     MarkStaleResponse,
     ProviderHealthResponse,
+    ProviderQuotaResponse,
+    ProviderQuotaRow,
     RefreshStaleResponse,
     ResetQuotaResponse,
 )
 from app.db.session import get_db
+from app.providers.quota_tracker import get_quota_tracker
 from app.providers.registry import get_provider_registry
 
 router = APIRouter(prefix="/data", tags=["data"])
@@ -274,6 +277,44 @@ async def get_coverage_status(db=Depends(get_db)) -> CoverageStatusResponse:
         stale_pct=round(stale / total * 100, 1) if total else 0.0,
         unavailable_instruments=uniq_unavail.scalar_one() or 0,
         quota_instruments=uniq_quota.scalar_one() or 0,
+    )
+
+
+@router.get("/provider-quota", response_model=ProviderQuotaResponse)
+async def get_provider_quota() -> ProviderQuotaResponse:
+    """
+    Daily call stats per provider dari in-process quota tracker.
+
+    Berguna untuk memantau seberapa banyak panggilan ke yfinance / openbb hari ini
+    dan apakah ada yang sudah mencapai batas harian (quota_exhausted=true).
+    Counter reset otomatis setiap pergantian hari.
+    """
+    registry = get_provider_registry()
+    tracker = get_quota_tracker()
+    stats = tracker.all_stats()
+
+    rows: list[ProviderQuotaRow] = []
+    for s in stats:
+        try:
+            provider = registry.get_by_name(s.provider_name)
+            cap = provider.capability() if provider else None
+        except Exception:
+            cap = None
+        quota_per_day = cap.quota_per_day if cap else None
+        exhausted = tracker.is_quota_exhausted(s.provider_name, cap)
+        rows.append(ProviderQuotaRow(
+            provider_name=s.provider_name,
+            calls_today=s.calls_today,
+            quota_per_day=quota_per_day,
+            quota_exhausted=exhausted,
+            date_str=s.date_str,
+        ))
+
+    total = sum(r.calls_today for r in rows)
+    return ProviderQuotaResponse(
+        providers=rows,
+        total_calls_today=total,
+        as_of=datetime.now(tz=timezone.utc),
     )
 
 

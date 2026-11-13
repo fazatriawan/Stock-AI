@@ -25,6 +25,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ingestion.ohlcv import OHLCVIngestionResult, ingest_ohlcv
 from app.providers.base import MarketDataProvider
+from app.providers.quota_tracker import get_quota_tracker
 from app.providers.registry import get_provider_registry
 
 log = structlog.get_logger(__name__)
@@ -65,6 +66,7 @@ async def ingest_with_fallback(
     """
     registry = get_provider_registry()
     providers: list[MarketDataProvider] = registry.get_ordered(market)
+    quota_tracker = get_quota_tracker()
 
     if not providers:
         log.warning("fallback.no_providers", market=market, symbol=instrument.canonical_symbol)
@@ -80,9 +82,23 @@ async def ingest_with_fallback(
             log.debug("fallback.skip_mock", provider=provider_name)
             continue
 
+        # Skip provider yang sudah mencapai daily quota
+        try:
+            cap = provider.capability()
+        except Exception:
+            cap = None
+        if quota_tracker.is_quota_exhausted(provider_name, cap):
+            log.info(
+                "fallback.skip_quota_exhausted",
+                provider=provider_name,
+                symbol=instrument.canonical_symbol,
+            )
+            continue
+
         tried.append(provider_name)
 
         try:
+            quota_tracker.record_call(provider_name)
             result = await ingest_ohlcv(db, instrument, provider, start, end, force=force)
 
             if result.inserted > 0 or result.skipped > 0:

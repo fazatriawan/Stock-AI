@@ -211,6 +211,22 @@ class ResetQuotaResponse(BaseModel):
     ran_at: datetime
 
 
+class ProviderQuotaRow(BaseModel):
+    """Statistik quota satu provider hari ini."""
+    provider_name: str
+    calls_today: int
+    quota_per_day: Optional[int]
+    quota_exhausted: bool
+    date_str: str
+
+
+class ProviderQuotaResponse(BaseModel):
+    """Daftar per-provider daily call stats dari quota tracker."""
+    providers: list[ProviderQuotaRow]
+    total_calls_today: int
+    as_of: datetime
+
+
 # ---------------------------------------------------------------------------
 # Market status
 # ---------------------------------------------------------------------------
