@@ -8,6 +8,8 @@ from app.api.schemas import (
     DataHealthResponse,
     DataProviderResponse,
     DataProvidersResponse,
+    FreshnessBreakdown,
+    InstrumentFreshnessResponse,
     ProviderHealthResponse,
 )
 from app.db.session import get_db
@@ -112,4 +114,60 @@ async def import_ohlcv_csv_endpoint(
         skipped_existing_source=result.skipped_existing_source,
         parse_errors=result.parse_errors,
         source_id=result.source_id,
+    )
+
+
+@router.get("/freshness/{instrument_id}", response_model=InstrumentFreshnessResponse)
+async def get_instrument_freshness(
+    instrument_id: str,
+    db=Depends(get_db),
+) -> InstrumentFreshnessResponse:
+    """
+    Ringkasan kualitas data harga untuk satu instrumen.
+    Menghitung distribusi freshness_status dari price_bars.
+    """
+    from sqlalchemy import func, select
+    from app.db.models import PriceBar
+
+    # Distribusi per status
+    rows = await db.execute(
+        select(PriceBar.freshness_status, func.count().label("cnt"))
+        .where(PriceBar.instrument_id == instrument_id)
+        .group_by(PriceBar.freshness_status)
+    )
+    breakdown_raw = {r.freshness_status: r.cnt for r in rows}
+
+    total = sum(breakdown_raw.values())
+    fresh = breakdown_raw.get("FRESH", 0)
+    stale = breakdown_raw.get("STALE", 0)
+    other = total - fresh - stale
+
+    # Tanggal bar terakhir dan tanggal FRESH terakhir
+    last_bar = await db.scalar(
+        select(func.max(PriceBar.session_date))
+        .where(PriceBar.instrument_id == instrument_id)
+    )
+    last_fresh = await db.scalar(
+        select(func.max(PriceBar.session_date))
+        .where(
+            PriceBar.instrument_id == instrument_id,
+            PriceBar.freshness_status == "FRESH",
+        )
+    )
+
+    quality_pct = round(fresh / total * 100, 1) if total > 0 else 0.0
+
+    return InstrumentFreshnessResponse(
+        instrument_id=instrument_id,
+        total_bars=total,
+        fresh_bars=fresh,
+        stale_bars=stale,
+        other_bars=other,
+        data_quality_pct=quality_pct,
+        last_fresh_date=last_fresh,
+        last_bar_date=last_bar,
+        breakdown=[
+            FreshnessBreakdown(status=s, count=c)
+            for s, c in sorted(breakdown_raw.items())
+        ],
     )

@@ -72,6 +72,7 @@ class PriceBarResponse(BaseModel):
     volume: Optional[int]
     provider: str
     is_adjusted: bool
+    freshness_status: str = "FRESH"
 
     model_config = {"from_attributes": True}
 
@@ -157,6 +158,23 @@ class CSVImportResponse(BaseModel):
     skipped_existing_source: bool
     parse_errors: list[str]
     source_id: Optional[str] = None
+
+
+class FreshnessBreakdown(BaseModel):
+    status: str
+    count: int
+
+
+class InstrumentFreshnessResponse(BaseModel):
+    instrument_id: str
+    total_bars: int
+    fresh_bars: int
+    stale_bars: int
+    other_bars: int
+    data_quality_pct: float
+    last_fresh_date: Optional[date] = None
+    last_bar_date: Optional[date] = None
+    breakdown: list[FreshnessBreakdown]
 
 
 # ---------------------------------------------------------------------------

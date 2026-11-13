@@ -1,17 +1,41 @@
 "use client";
 
 import { useState } from "react";
-import { Search } from "lucide-react";
-import { api, type StockOverview, type Recommendation } from "@/lib/api";
+import { Search, DatabaseZap } from "lucide-react";
+import { api, type StockOverview, type Recommendation, type InstrumentFreshness } from "@/lib/api";
 import { StockOverviewCard } from "@/components/stock/StockOverviewCard";
 import { RecommendationCard } from "@/components/stock/RecommendationCard";
 import { TechnicalCard } from "@/components/stock/TechnicalCard";
 import { FundamentalCard } from "@/components/stock/FundamentalCard";
 
+function FreshnessChip({ freshness }: { freshness: InstrumentFreshness }) {
+  const q = freshness.data_quality_pct;
+  const isGood = q >= 95;
+  const isMid = q >= 70 && q < 95;
+  const color = isGood
+    ? "text-emerald-400 border-emerald-800/40 bg-emerald-950/20"
+    : isMid
+    ? "text-amber-400 border-amber-800/40 bg-amber-950/20"
+    : "text-red-400 border-red-800/40 bg-red-950/20";
+
+  if (q >= 100) return null;  // semua FRESH — tidak perlu chip
+
+  return (
+    <div className={`inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-lg border ${color}`}>
+      <DatabaseZap size={11} />
+      <span>Kualitas data: {q}%</span>
+      {freshness.last_fresh_date && (
+        <span className="opacity-70">· FRESH terakhir {freshness.last_fresh_date}</span>
+      )}
+    </div>
+  );
+}
+
 export default function ExplorerPage() {
   const [query, setQuery] = useState("");
   const [overview, setOverview] = useState<StockOverview | null>(null);
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
+  const [freshness, setFreshness] = useState<InstrumentFreshness | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,6 +51,7 @@ export default function ExplorerPage() {
     setError(null);
     setOverview(null);
     setRecommendation(null);
+    setFreshness(null);
 
     try {
       const [ov, rec] = await Promise.all([
@@ -35,6 +60,10 @@ export default function ExplorerPage() {
       ]);
       setOverview(ov);
       setRecommendation(rec);
+      // Freshness best-effort — jangan blokir tampilan utama jika gagal
+      api.data.freshness(ov.instrument.id)
+        .then(setFreshness)
+        .catch(() => {});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal memuat data");
     } finally {
@@ -100,11 +129,14 @@ export default function ExplorerPage() {
 
       {/* Results */}
       {overview && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <StockOverviewCard overview={overview} />
-          {recommendation && <RecommendationCard recommendation={recommendation} />}
-          {overview.technical && <TechnicalCard technical={overview.technical} />}
-          {overview.fundamental && <FundamentalCard fundamental={overview.fundamental} />}
+        <div className="space-y-3">
+          {freshness && <FreshnessChip freshness={freshness} />}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <StockOverviewCard overview={overview} />
+            {recommendation && <RecommendationCard recommendation={recommendation} />}
+            {overview.technical && <TechnicalCard technical={overview.technical} />}
+            {overview.fundamental && <FundamentalCard fundamental={overview.fundamental} />}
+          </div>
         </div>
       )}
 

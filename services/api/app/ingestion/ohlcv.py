@@ -106,6 +106,7 @@ async def ingest_ohlcv(
             "is_adjusted": bar.is_adjusted,
             "adjustment_version": bar.adjustment_version,
             "ingested_at": datetime.utcnow(),
+            "freshness_status": "FRESH",
         })
 
     if to_insert:

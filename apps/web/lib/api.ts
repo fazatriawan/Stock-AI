@@ -186,6 +186,23 @@ export interface CSVImportResult {
   source_id: string | null;
 }
 
+export interface FreshnessBreakdown {
+  status: string;
+  count: number;
+}
+
+export interface InstrumentFreshness {
+  instrument_id: string;
+  total_bars: number;
+  fresh_bars: number;
+  stale_bars: number;
+  other_bars: number;
+  data_quality_pct: number;
+  last_fresh_date: string | null;
+  last_bar_date: string | null;
+  breakdown: FreshnessBreakdown[];
+}
+
 export interface MarketStatus {
   exchange: string;
   timezone: string;
@@ -928,6 +945,8 @@ export const api = {
   data: {
     health: () => apiFetch<DataHealth>("/data/health"),
     providers: () => apiFetch<DataProvidersResponse>("/data/providers"),
+    freshness: (instrumentId: string) =>
+      apiFetch<InstrumentFreshness>(`/data/freshness/${instrumentId}`),
     importCSV: (formData: FormData) =>
       apiFetch<CSVImportResult>("/data/import/csv", {
         method: "POST",
