@@ -173,6 +173,7 @@ class YFinanceProvider:
                     validation_status="ESTIMATED",
                 ))
             except Exception:
+                logger.debug("yfinance.metric_parse_failed", metric=metric_name, yf_key=yf_key, exc_info=True)
                 continue
 
         return facts

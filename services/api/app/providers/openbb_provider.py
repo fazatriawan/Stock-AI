@@ -145,6 +145,7 @@ class OpenBBProvider:
                         is_adjusted=False,
                     ))
                 except Exception:
+                    logger.debug("openbb.bar_row_parse_failed", symbol=symbol, date=str(idx_date), exc_info=True)
                     continue
             return bars
         except Exception as exc:
@@ -190,6 +191,7 @@ class OpenBBProvider:
                                 provider=self.name,
                             ))
                         except Exception:
+                            logger.debug("openbb.metric_parse_failed", symbol=symbol, metric=metric_name, exc_info=True)
                             continue
         except Exception as exc:
             logger.warning("openbb.fundamentals_error", symbol=symbol, error=str(exc))

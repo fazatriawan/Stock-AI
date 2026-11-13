@@ -275,6 +275,7 @@ def parse_csv(content: bytes, broker_hint: Optional[str] = None) -> ImportResult
             df = pd.read_csv(io.BytesIO(content), encoding=encoding, dtype=str)
             break
         except Exception:
+            log.debug("csv_importer.encoding_failed", encoding=encoding, exc_info=True)
             continue
 
     if df is None:
