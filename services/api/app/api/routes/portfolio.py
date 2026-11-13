@@ -601,7 +601,7 @@ async def quick_add_position(
         asyncio.create_task(_refresh())
         price_refresh_ok = True
     except Exception:
-        pass
+        log.warning("portfolio.price_refresh_task_failed", exc_info=True)
 
     return QuickPositionResponse(
         trade_id=trade.id,

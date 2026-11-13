@@ -170,15 +170,22 @@ function PortfolioKpis() {
 function TopPositions() {
   const [portfolio, setPortfolio] = useState<PortfolioSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     api.portfolio.summary()
       .then(setPortfolio)
-      .catch(() => {})
+      .catch(() => setFetchError(true))
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="h-24 bg-gray-800 rounded-xl animate-pulse" />;
+
+  if (fetchError) return (
+    <div className="text-center py-6 text-gray-600 text-sm">
+      Gagal memuat posisi — pastikan API berjalan
+    </div>
+  );
 
   const positions = portfolio?.positions ?? [];
   if (positions.length === 0) return (

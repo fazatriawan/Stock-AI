@@ -10,11 +10,14 @@ Prinsip: deterministik, tidak ada LLM, gagal graceful.
 """
 from __future__ import annotations
 
+import structlog
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from typing import Optional
 
 from app.domain.calendar import MarketCalendar
+
+log = structlog.get_logger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +112,7 @@ def get_market_sessions(as_of: datetime) -> list[MarketSessionSummary]:
                 next_trading_day=next_td,
             ))
         except Exception:
-            pass
+            log.warning("market_session_build_failed", exchange=exchange, exc_info=True)
     return summaries
 
 
@@ -188,6 +191,7 @@ def build_digest(
             cal = MarketCalendar(exchange if exchange in ("IDX", "NYSE", "NASDAQ") else "IDX")
             is_trading_today = cal.is_trading_day(today)
         except Exception:
+            log.warning("calendar_fallback_to_weekday", exchange=exchange, exc_info=True)
             is_trading_today = today.weekday() < 5
 
         changes.append(PositionChange(

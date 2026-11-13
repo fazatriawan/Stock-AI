@@ -96,7 +96,7 @@ def _fetch_latest_prices_sync(symbols_jk: list[str]) -> dict[str, float]:
                 if price and price > 0:
                     prices[sym] = float(price)
             except Exception:
-                pass
+                log.warning("intraday.price_parse_failed", symbol=sym, exc_info=True)
         return prices
     except Exception as exc:
         log.warning("intraday.fetch_failed", error=str(exc))

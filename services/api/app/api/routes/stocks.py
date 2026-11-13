@@ -3,7 +3,9 @@ from __future__ import annotations
 from datetime import date, datetime, timezone, timedelta
 from typing import Optional
 
+import structlog
 import pandas as pd
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,6 +48,8 @@ from app.domain.instruments import resolve_instrument
 from app.domain.investment_policy import get_or_create_default as get_policy
 from app.ingestion.ohlcv import check_data_staleness, ingest_ohlcv
 from app.providers.registry import get_provider_registry
+
+log = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/stocks", tags=["stocks"])
 
@@ -305,7 +309,7 @@ async def get_analysis(
             _peer_roe = _median(_roe_vals) if _roe_vals else None
             _peer_count = len(_peer_instruments)
     except Exception:
-        pass  # peer context best-effort
+        log.warning("stocks.peer_context_failed", exc_info=True)
 
     bundle = EvidenceBundle(
         instrument_id=instrument.id,
