@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Search, DatabaseZap, RefreshCw, Download } from "lucide-react";
-import { api, type StockOverview, type Recommendation, type InstrumentFreshness, type StockRefreshResult, type Instrument } from "@/lib/api";
+import { api, type StockOverview, type Recommendation, type InstrumentFreshness, type StockRefreshResult, type Instrument, type PriceBar } from "@/lib/api";
 import { StockOverviewCard } from "@/components/stock/StockOverviewCard";
 import { RecommendationCard } from "@/components/stock/RecommendationCard";
 import { TechnicalCard } from "@/components/stock/TechnicalCard";
 import { FundamentalCard } from "@/components/stock/FundamentalCard";
+import { PriceChart } from "@/components/stock/PriceChart";
 
 function FreshnessChip({ freshness }: { freshness: InstrumentFreshness }) {
   const q = freshness.data_quality_pct;
@@ -40,6 +41,12 @@ export default function ExplorerPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshResult, setRefreshResult] = useState<StockRefreshResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Chart state
+  const [priceBars, setPriceBars] = useState<PriceBar[]>([]);
+  const [priceRange, setPriceRange] = useState<"1m" | "3m" | "6m" | "1y" | "2y" | "5y">("1y");
+  const [chartType, setChartType] = useState<"area" | "candlestick">("area");
+  const [chartLoading, setChartLoading] = useState(false);
 
   // Autocomplete state
   const [suggestions, setSuggestions] = useState<Instrument[]>([]);
@@ -116,6 +123,7 @@ export default function ExplorerPage() {
     setRecommendation(null);
     setFreshness(null);
     setRefreshResult(null);
+    setPriceBars([]);
     setShowSuggestions(false);
 
     try {
@@ -126,12 +134,26 @@ export default function ExplorerPage() {
       setOverview(ov);
       setRecommendation(rec);
       api.data.freshness(ov.instrument.id).then(setFreshness).catch(() => {});
+      // load price chart non-blocking
+      api.stocks.prices(ticker, priceRange)
+        .then((r) => setPriceBars(r.bars))
+        .catch(() => {});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal memuat data");
     } finally {
       setLoading(false);
     }
   }
+
+  // Reload price bars when range changes (after a symbol is loaded)
+  useEffect(() => {
+    if (!overview) return;
+    setChartLoading(true);
+    api.stocks.prices(overview.instrument.canonical_symbol, priceRange)
+      .then((r) => setPriceBars(r.bars))
+      .catch(() => {})
+      .finally(() => setChartLoading(false));
+  }, [priceRange, overview?.instrument.canonical_symbol]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleSuggestionClick(instr: Instrument) {
     setQuery(instr.canonical_symbol);
@@ -287,6 +309,56 @@ export default function ExplorerPage() {
               )}
             </div>
           )}
+
+          {/* Price chart */}
+          <div className="rounded-xl border border-gray-800 bg-gray-900/40 p-4 space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <span className="text-xs font-medium text-gray-400">
+                {overview.instrument.canonical_symbol} · Harga Penutupan
+                {chartLoading && <span className="ml-2 opacity-50">memuat…</span>}
+              </span>
+              <div className="flex items-center gap-2">
+                {/* Chart type toggle */}
+                <div className="flex rounded-md overflow-hidden border border-gray-700 text-[10px]">
+                  {(["area", "candlestick"] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setChartType(t)}
+                      className={`px-2 py-1 transition-colors ${
+                        chartType === t
+                          ? "bg-gray-700 text-gray-100"
+                          : "bg-transparent text-gray-500 hover:text-gray-300"
+                      }`}
+                    >
+                      {t === "area" ? "Area" : "Candle"}
+                    </button>
+                  ))}
+                </div>
+                {/* Period selector */}
+                <div className="flex rounded-md overflow-hidden border border-gray-700 text-[10px]">
+                  {(["1m", "3m", "6m", "1y", "2y", "5y"] as const).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setPriceRange(r)}
+                      className={`px-2 py-1 transition-colors ${
+                        priceRange === r
+                          ? "bg-blue-600 text-white"
+                          : "bg-transparent text-gray-500 hover:text-gray-300"
+                      }`}
+                    >
+                      {r.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <PriceChart bars={priceBars} symbol={overview.instrument.canonical_symbol} chartType={chartType} />
+            {priceBars.length > 0 && (
+              <p className="text-[10px] text-gray-600">
+                {priceBars.length} bar · sumber: {priceBars[0]?.provider ?? "—"} · {priceBars[0]?.session_date} – {priceBars[priceBars.length - 1]?.session_date}
+              </p>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <StockOverviewCard overview={overview} />
