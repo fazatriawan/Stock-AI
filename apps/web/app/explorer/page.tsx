@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Search, DatabaseZap, RefreshCw, Download } from "lucide-react";
-import { api, type StockOverview, type Recommendation, type InstrumentFreshness, type StockRefreshResult } from "@/lib/api";
+import { api, type StockOverview, type Recommendation, type InstrumentFreshness, type StockRefreshResult, type Instrument } from "@/lib/api";
 import { StockOverviewCard } from "@/components/stock/StockOverviewCard";
 import { RecommendationCard } from "@/components/stock/RecommendationCard";
 import { TechnicalCard } from "@/components/stock/TechnicalCard";
@@ -41,6 +41,50 @@ export default function ExplorerPage() {
   const [refreshResult, setRefreshResult] = useState<StockRefreshResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Autocomplete state
+  const [suggestions, setSuggestions] = useState<Instrument[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
+  const [searching, setSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  // Debounced search as user types
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (query.trim().length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const r = await api.instruments.search(query.trim(), 8);
+        setSuggestions(r.results);
+        setShowSuggestions(r.results.length > 0);
+        setActiveSuggestion(-1);
+      } catch {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query]);
+
   async function handleRefresh() {
     if (!overview) return;
     setRefreshing(true);
@@ -48,12 +92,11 @@ export default function ExplorerPage() {
     try {
       const r = await api.stocks.refreshData(overview.instrument.canonical_symbol);
       setRefreshResult(r);
-      // Reload overview + freshness after refresh
       const [ov] = await Promise.all([api.stocks.overview(overview.instrument.canonical_symbol)]);
       setOverview(ov);
       api.data.freshness(ov.instrument.id).then(setFreshness).catch(() => {});
     } catch {
-      // non-blocking — show nothing on error, user can retry
+      // non-blocking
     } finally {
       setRefreshing(false);
     }
@@ -61,17 +104,19 @@ export default function ExplorerPage() {
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
+    setShowSuggestions(false);
     await searchTicker(query.trim());
   }
 
   async function searchTicker(ticker: string) {
     if (!ticker) return;
-
     setLoading(true);
     setError(null);
     setOverview(null);
     setRecommendation(null);
     setFreshness(null);
+    setRefreshResult(null);
+    setShowSuggestions(false);
 
     try {
       const [ov, rec] = await Promise.all([
@@ -80,14 +125,34 @@ export default function ExplorerPage() {
       ]);
       setOverview(ov);
       setRecommendation(rec);
-      // Freshness best-effort — jangan blokir tampilan utama jika gagal
-      api.data.freshness(ov.instrument.id)
-        .then(setFreshness)
-        .catch(() => {});
+      api.data.freshness(ov.instrument.id).then(setFreshness).catch(() => {});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal memuat data");
     } finally {
       setLoading(false);
+    }
+  }
+
+  function handleSuggestionClick(instr: Instrument) {
+    setQuery(instr.canonical_symbol);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    searchTicker(instr.canonical_symbol);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!showSuggestions || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveSuggestion((i) => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveSuggestion((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter" && activeSuggestion >= 0) {
+      e.preventDefault();
+      handleSuggestionClick(suggestions[activeSuggestion]);
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
     }
   }
 
@@ -100,17 +165,48 @@ export default function ExplorerPage() {
         </p>
       </div>
 
-      {/* Search */}
+      {/* Search with autocomplete */}
       <form onSubmit={handleSearch} className="flex gap-2 max-w-md">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+        <div className="relative flex-1" ref={wrapperRef}>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 z-10" size={14} />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
             placeholder="Cari ticker: BBCA, IDX:BMRI, AAPL..."
+            autoComplete="off"
             className="w-full pl-9 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-gray-500"
           />
+
+          {/* Autocomplete dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden">
+              {suggestions.map((instr, idx) => (
+                <button
+                  key={instr.id}
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); handleSuggestionClick(instr); }}
+                  onMouseEnter={() => setActiveSuggestion(idx)}
+                  className={`w-full flex items-center justify-between px-3 py-2 text-left transition-colors ${
+                    idx === activeSuggestion ? "bg-gray-700/70" : "hover:bg-gray-700/40"
+                  }`}
+                >
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm font-mono text-gray-100 shrink-0">{instr.canonical_symbol}</span>
+                    {instr.company_name && (
+                      <span className="text-xs text-gray-500 truncate">{instr.company_name}</span>
+                    )}
+                  </span>
+                  <span className="text-[10px] text-gray-600 shrink-0 ml-2">{instr.exchange}</span>
+                </button>
+              ))}
+              {searching && (
+                <div className="px-3 py-1.5 text-[11px] text-gray-600">Mencari…</div>
+              )}
+            </div>
+          )}
         </div>
         <button
           type="submit"

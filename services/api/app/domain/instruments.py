@@ -95,19 +95,37 @@ async def search_instruments(
     query: str,
     limit: int = 20,
 ) -> list[Instrument]:
-    """Full-text search sederhana pada canonical_symbol, local_symbol, company_name."""
-    q = f"%{query.strip().upper()}%"
+    """
+    Full-text search pada canonical_symbol, local_symbol, company_name.
+    Hasil diurutkan: prefix match canonical_symbol → prefix local_symbol → lainnya.
+    """
+    q_contains = f"%{query.strip().upper()}%"
     result = await db.execute(
         select(Instrument)
         .where(
-            (Instrument.canonical_symbol.ilike(q)) |
-            (Instrument.local_symbol.ilike(q)) |
-            (Instrument.company_name.ilike(q))
+            (Instrument.canonical_symbol.ilike(q_contains)) |
+            (Instrument.local_symbol.ilike(q_contains)) |
+            (Instrument.company_name.ilike(q_contains))
         )
         .where(Instrument.status == "ACTIVE")
-        .limit(limit)
+        .limit(limit * 3)  # ambil lebih banyak sebelum sort, lalu trim
     )
-    return list(result.scalars().all())
+    rows = list(result.scalars().all())
+
+    # Prefix-first sort (Python-side, result set kecil)
+    prefix = query.strip().upper()
+
+    def _rank(instr: Instrument) -> int:
+        sym = (instr.canonical_symbol or "").upper()
+        local = (instr.local_symbol or "").upper()
+        if sym.startswith(prefix) or sym.replace("IDX:", "").startswith(prefix):
+            return 0
+        if local.startswith(prefix):
+            return 1
+        return 2
+
+    rows.sort(key=_rank)
+    return rows[:limit]
 
 
 async def upsert_instrument(

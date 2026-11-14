@@ -1061,9 +1061,9 @@ export const api = {
     status: () => apiFetch<MarketStatus[]>("/markets/status"),
   },
   instruments: {
-    search: (q: string) =>
+    search: (q: string, limit = 20) =>
       apiFetch<{ results: Instrument[]; query: string; count: number }>(
-        `/instruments/search?q=${encodeURIComponent(q)}`
+        `/instruments/search?q=${encodeURIComponent(q)}&limit=${limit}`
       ),
     get: (symbol: string) => apiFetch<Instrument>(`/instruments/${symbol}`),
   },
