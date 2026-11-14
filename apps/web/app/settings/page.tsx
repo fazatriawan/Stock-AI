@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { api, type DataProvidersResponse, type CSVImportResult, type CoverageStatus, type ProviderQuotaStatus, type DataGapsStatus, type GapReportRow, type HealGapsResult } from "@/lib/api";
+import { api, type DataProvidersResponse, type CSVImportResult, type CoverageStatus, type ProviderQuotaStatus, type DataGapsStatus, type GapReportRow, type HealGapsResult, type JobHistoryStatus, type JobRunRow } from "@/lib/api";
 import { CheckCircle, XCircle, AlertCircle, RefreshCw, Database, Wifi, WifiOff, ChevronRight, Upload, ShieldCheck, Lock } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -975,6 +975,125 @@ function ProviderQuotaSection() {
 }
 
 // ---------------------------------------------------------------------------
+// Scheduler jobs section — FREE-20
+// ---------------------------------------------------------------------------
+function StatusDot({ status }: { status: string }) {
+  if (status === "ok") return <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />;
+  if (status === "error") return <span className="inline-block w-2 h-2 rounded-full bg-red-500" />;
+  if (status === "running") return <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse" />;
+  return <span className="inline-block w-2 h-2 rounded-full bg-gray-600" />;
+}
+
+function SchedulerJobsSection() {
+  const [status, setStatus] = useState<JobHistoryStatus | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await api.admin.jobHistory();
+      setStatus(r);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Gagal memuat riwayat job");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, []);
+
+  function fmtDuration(ms: number | null) {
+    if (ms === null) return "—";
+    if (ms < 1000) return `${ms}ms`;
+    return `${(ms / 1000).toFixed(1)}s`;
+  }
+
+  function summaryText(row: JobRunRow) {
+    const s = row.summary;
+    if (!s || Object.keys(s).length === 0) return null;
+    return Object.entries(s)
+      .filter(([, v]) => v !== undefined && v !== null)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(" · ");
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-gray-300">Riwayat Scheduler</h2>
+        <button
+          onClick={load}
+          disabled={loading}
+          className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-gray-700/60 bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:border-gray-600 disabled:opacity-40 transition-colors"
+        >
+          <RefreshCw size={10} className={loading ? "animate-spin" : ""} />
+          Muat ulang
+        </button>
+      </div>
+
+      {error && (
+        <p className="text-xs text-red-400 px-3 py-2 rounded-lg bg-red-950/20 border border-red-800/40">{error}</p>
+      )}
+
+      {!status && !loading && !error && (
+        <p className="text-xs text-gray-600">Belum ada data. Klik "Muat ulang".</p>
+      )}
+
+      {status && status.jobs.length === 0 && (
+        <p className="text-xs text-gray-600">
+          Belum ada job yang berjalan sejak server terakhir start.
+        </p>
+      )}
+
+      {status && status.jobs.length > 0 && (
+        <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl overflow-hidden">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-gray-700/40">
+                <th className="text-left px-3 py-2 text-gray-500 font-normal">Job</th>
+                <th className="text-left px-3 py-2 text-gray-500 font-normal">Status</th>
+                <th className="text-left px-3 py-2 text-gray-500 font-normal">Durasi</th>
+                <th className="text-left px-3 py-2 text-gray-500 font-normal">Terakhir</th>
+                <th className="text-left px-3 py-2 text-gray-500 font-normal">Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              {status.jobs.map((row) => (
+                <tr key={row.job_name} className="border-b border-gray-700/20 last:border-0">
+                  <td className="px-3 py-2 font-mono text-gray-300">{row.job_name}</td>
+                  <td className="px-3 py-2">
+                    <span className="inline-flex items-center gap-1.5">
+                      <StatusDot status={row.status} />
+                      <span className={
+                        row.status === "ok" ? "text-emerald-400" :
+                        row.status === "error" ? "text-red-400" :
+                        row.status === "running" ? "text-amber-400" : "text-gray-500"
+                      }>
+                        {row.status}
+                      </span>
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-gray-400">{fmtDuration(row.duration_ms)}</td>
+                  <td className="px-3 py-2 text-gray-500">{fmtDate(row.started_at)}</td>
+                  <td className="px-3 py-2 text-gray-500 max-w-[200px] truncate">
+                    {row.error
+                      ? <span className="text-red-400">{row.error}</span>
+                      : <span>{summaryText(row) ?? "—"}</span>
+                    }
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // About section
 // ---------------------------------------------------------------------------
 function AboutSection() {
@@ -1024,6 +1143,7 @@ export default function SettingsPage() {
       <CoverageSection />
       <DataGapsSection />
       <ProviderQuotaSection />
+      <SchedulerJobsSection />
       <CSVImportSection />
       <MarketBootstrapSection />
       <BootstrapSection />

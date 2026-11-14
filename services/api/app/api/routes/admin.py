@@ -101,6 +101,37 @@ async def reset_quota_tracker() -> dict:
     }
 
 
+@router.get("/jobs")
+async def get_job_history() -> dict:
+    """
+    Kembalikan satu record terakhir per scheduler job.
+    Data in-process — reset setelah server restart.
+    """
+    from datetime import datetime, timezone
+    from app.scheduling.job_history import get_job_history_tracker
+    from app.api.schemas import JobRunRow, JobHistoryResponse
+
+    tracker = get_job_history_tracker()
+    records = tracker.all_last_runs()
+    rows = [
+        JobRunRow(
+            job_name=r.job_name,
+            started_at=r.started_at,
+            finished_at=r.finished_at,
+            status=r.status,
+            duration_ms=r.duration_ms,
+            summary=r.summary,
+            error=r.error,
+        )
+        for r in records
+    ]
+    return JobHistoryResponse(
+        jobs=rows,
+        total_jobs_known=len(rows),
+        as_of=datetime.now(tz=timezone.utc),
+    ).model_dump()
+
+
 @router.post("/backup/trigger")
 async def trigger_backup() -> dict:
     """

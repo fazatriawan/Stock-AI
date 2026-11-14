@@ -29,6 +29,11 @@ log = structlog.get_logger(__name__)
 BACKUP_SENTINEL_PATH = Path(os.environ.get("BACKUP_DIR", "backups")) / ".last_backup"
 BACKUP_SCRIPT_PATH = Path(__file__).resolve().parents[4] / "scripts" / "backup.sh"
 
+# Lazy import agar tidak memperkenalkan circular import saat modul dimuat
+def _tracker():
+    from app.scheduling.job_history import get_job_history_tracker
+    return get_job_history_tracker()
+
 
 async def _run_backup() -> None:
     """
@@ -36,13 +41,16 @@ async def _run_backup() -> None:
     Tulis sentinel file setelah sukses.
     Gagal graceful — tidak crash server.
     """
+    rec = _tracker().start_run("backup")
     if not BACKUP_SCRIPT_PATH.exists():
         log.warning("backup.job.script_not_found", path=str(BACKUP_SCRIPT_PATH))
+        _tracker().finish_run(rec, status="error", error="script_not_found")
         return
 
     db_url = os.environ.get("DATABASE_URL_SYNC", "")
     if not db_url.startswith("postgres"):
         log.info("backup.job.skip", reason="DATABASE_URL_SYNC bukan PostgreSQL")
+        _tracker().finish_run(rec, status="ok", summary={"skipped": True, "reason": "not_postgres"})
         return
 
     try:
@@ -58,16 +66,21 @@ async def _run_backup() -> None:
             BACKUP_SENTINEL_PATH.parent.mkdir(parents=True, exist_ok=True)
             BACKUP_SENTINEL_PATH.write_text(datetime.utcnow().isoformat() + "+00:00")
             log.info("backup.job.success")
+            _tracker().finish_run(rec, status="ok", summary={"returncode": 0})
         else:
             log.error("backup.job.failed", returncode=result.returncode, stderr=result.stderr[:500])
+            _tracker().finish_run(rec, status="error", error=f"returncode={result.returncode}")
     except subprocess.TimeoutExpired:
         log.error("backup.job.timeout")
+        _tracker().finish_run(rec, status="error", error="timeout")
     except Exception as exc:
         log.error("backup.job.error", error=str(exc))
+        _tracker().finish_run(rec, status="error", error=str(exc))
 
 
 async def _run_health_probe() -> None:
     """Probe semua provider — update circuit breaker state."""
+    rec = _tracker().start_run("health_probe")
     try:
         from app.providers.registry import get_provider_registry
         registry = get_provider_registry()
@@ -77,8 +90,10 @@ async def _run_health_probe() -> None:
             log.warning("health_probe.degraded", providers=degraded)
         else:
             log.debug("health_probe.all_ok", count=len(results))
+        _tracker().finish_run(rec, status="ok", summary={"total": len(results), "degraded": len(degraded)})
     except Exception as exc:
         log.error("health_probe.error", error=str(exc))
+        _tracker().finish_run(rec, status="error", error=str(exc))
 
 
 async def _run_intraday_poll() -> None:
@@ -106,6 +121,7 @@ async def _run_weekly_fundamental_refresh() -> None:
     Refresh fundamental IDX setiap Minggu pagi 08:00 WIB.
     Hanya jika Sectors API atau yfinance tersedia.
     """
+    rec = _tracker().start_run("weekly_fundamental")
     try:
         from app.providers.registry import get_provider_registry
         from app.db.session import AsyncSessionLocal
@@ -123,23 +139,28 @@ async def _run_weekly_fundamental_refresh() -> None:
 
         if not instruments:
             log.info("weekly_fundamental.skip", reason="no_instruments")
+            _tracker().finish_run(rec, status="ok", summary={"skipped": True, "reason": "no_instruments"})
             return
 
         log.info("weekly_fundamental.start", count=len(instruments))
 
         from app.ingestion.fundamentals import ingest_fundamentals
+        errors = 0
         async with AsyncSessionLocal() as db:
             for instr in instruments:
                 try:
                     await ingest_fundamentals(db, instr, provider)
                 except Exception as exc:
+                    errors += 1
                     log.warning("weekly_fundamental.instrument_error",
                                 symbol=instr.canonical_symbol, error=str(exc))
             await db.commit()
 
         log.info("weekly_fundamental.done", count=len(instruments))
+        _tracker().finish_run(rec, status="ok", summary={"instruments": len(instruments), "errors": errors})
     except Exception as exc:
         log.error("weekly_fundamental.error", error=str(exc))
+        _tracker().finish_run(rec, status="error", error=str(exc))
 
 
 async def _run_staleness_mark() -> None:
@@ -147,6 +168,7 @@ async def _run_staleness_mark() -> None:
     Harian 06:30 WIB: tandai price_bars kadaluarsa sebagai STALE.
     Menggunakan max_staleness_days dari investment policy (default 3).
     """
+    rec = _tracker().start_run("staleness_mark")
     try:
         from app.db.session import AsyncSessionLocal
         from app.ingestion.staleness import mark_stale_from_policy
@@ -155,8 +177,10 @@ async def _run_staleness_mark() -> None:
             result = await mark_stale_from_policy(db)
             await db.commit()
         log.info("staleness_job.done", marked=result.marked_stale, cutoff=result.cutoff_date.isoformat())
+        _tracker().finish_run(rec, status="ok", summary={"marked_stale": result.marked_stale, "cutoff": result.cutoff_date.isoformat()})
     except Exception as exc:
         log.error("staleness_job.error", error=str(exc))
+        _tracker().finish_run(rec, status="error", error=str(exc))
 
 
 async def _run_refresh_stale() -> None:
@@ -164,9 +188,11 @@ async def _run_refresh_stale() -> None:
     Harian 06:35 WIB (5 menit setelah mark-stale): re-ingest instrumen dengan bar STALE.
     Hanya jalan jika yfinance diaktifkan — tidak ada biaya tambahan.
     """
+    rec = _tracker().start_run("refresh_stale")
     settings = _get_settings()
     if not settings.yfinance_enabled:
         log.info("refresh_stale_job.skip", reason="yfinance_disabled")
+        _tracker().finish_run(rec, status="ok", summary={"skipped": True, "reason": "yfinance_disabled"})
         return
     try:
         from app.db.session import AsyncSessionLocal
@@ -181,8 +207,14 @@ async def _run_refresh_stale() -> None:
             refreshed=result.instruments_refreshed,
             bars_added=result.bars_added,
         )
+        _tracker().finish_run(rec, status="ok", summary={
+            "instruments_found": result.instruments_found,
+            "instruments_refreshed": result.instruments_refreshed,
+            "bars_added": result.bars_added,
+        })
     except Exception as exc:
         log.error("refresh_stale_job.error", error=str(exc))
+        _tracker().finish_run(rec, status="error", error=str(exc))
 
 
 async def _run_idx_intraday_close() -> None:
@@ -229,6 +261,7 @@ async def _run_idx_bootstrap_check() -> None:
     Senin pagi 06:00 WIB: cek apakah ada instrumen IDX baru yang perlu ditambah.
     Hanya run jika jumlah instrumen di DB < 50 (bootstrap awal).
     """
+    rec = _tracker().start_run("idx_bootstrap_check")
     try:
         from sqlalchemy import select, func
         from app.db.models import Instrument
@@ -244,6 +277,7 @@ async def _run_idx_bootstrap_check() -> None:
 
         if count >= 50:
             log.debug("idx_bootstrap_check.skip", reason="enough_instruments", count=count)
+            _tracker().finish_run(rec, status="ok", summary={"skipped": True, "count": count})
             return
 
         log.info("idx_bootstrap_check.running", current_count=count)
@@ -251,8 +285,10 @@ async def _run_idx_bootstrap_check() -> None:
         async with AsyncSessionLocal() as db:
             summary = await run_idx_full_bootstrap(db)
         log.info("idx_bootstrap_check.done", **summary)
+        _tracker().finish_run(rec, status="ok", summary={"count_before": count, **summary})
     except Exception as exc:
         log.error("idx_bootstrap_check.error", error=str(exc))
+        _tracker().finish_run(rec, status="error", error=str(exc))
 
 
 async def _run_us_bootstrap_check() -> None:
@@ -260,9 +296,11 @@ async def _run_us_bootstrap_check() -> None:
     Senin 06:15 WIB: cek apakah ada instrumen US yang perlu di-bootstrap.
     Hanya run jika jumlah instrumen US di DB < 20 (bootstrap awal).
     """
+    rec = _tracker().start_run("us_bootstrap_check")
     settings = _get_settings()
     if not settings.us_bootstrap_enabled:
         log.debug("us_bootstrap_check.skip", reason="us_bootstrap_disabled")
+        _tracker().finish_run(rec, status="ok", summary={"skipped": True, "reason": "us_bootstrap_disabled"})
         return
     try:
         from sqlalchemy import select, func
@@ -280,6 +318,7 @@ async def _run_us_bootstrap_check() -> None:
 
         if count >= 20:
             log.debug("us_bootstrap_check.skip", reason="enough_instruments", count=count)
+            _tracker().finish_run(rec, status="ok", summary={"skipped": True, "count": count})
             return
 
         log.info("us_bootstrap_check.running", current_count=count)
@@ -287,8 +326,10 @@ async def _run_us_bootstrap_check() -> None:
         async with AsyncSessionLocal() as db:
             summary = await run_us_bootstrap(db)
         log.info("us_bootstrap_check.done", **summary)
+        _tracker().finish_run(rec, status="ok", summary={"count_before": count, **summary})
     except Exception as exc:
         log.error("us_bootstrap_check.error", error=str(exc))
+        _tracker().finish_run(rec, status="error", error=str(exc))
 
 
 _scheduler: Optional[AsyncIOScheduler] = None

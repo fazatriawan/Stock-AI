@@ -1650,3 +1650,23 @@ class EditPositionResponse(BaseModel):
     avg_price: float
     total_cost: float
     trade_date: date
+
+
+# ---------------------------------------------------------------------------
+# FREE-20 — Scheduler job history
+# ---------------------------------------------------------------------------
+
+class JobRunRow(BaseModel):
+    job_name: str
+    started_at: datetime
+    finished_at: Optional[datetime]
+    status: str
+    duration_ms: Optional[int]
+    summary: dict
+    error: Optional[str]
+
+
+class JobHistoryResponse(BaseModel):
+    jobs: list[JobRunRow]
+    total_jobs_known: int
+    as_of: datetime

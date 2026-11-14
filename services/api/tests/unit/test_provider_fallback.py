@@ -11,6 +11,18 @@ import pytest
 from app.ingestion.provider_fallback import FallbackIngestResult, ingest_with_fallback
 
 
+# Patch quota tracker globally so MagicMock providers don't trigger quota checks
+@pytest.fixture(autouse=True)
+def _no_quota(monkeypatch):
+    tracker = MagicMock()
+    tracker.is_quota_exhausted.return_value = False
+    tracker.record_call.return_value = 1
+    monkeypatch.setattr(
+        "app.ingestion.provider_fallback.get_quota_tracker",
+        lambda: tracker,
+    )
+
+
 # ---------------------------------------------------------------------------
 # FallbackIngestResult dataclass
 # ---------------------------------------------------------------------------

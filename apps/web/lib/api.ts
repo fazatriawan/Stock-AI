@@ -280,6 +280,23 @@ export interface MarketStatus {
   as_of: string;
 }
 
+// FREE-20 — Scheduler job history
+export interface JobRunRow {
+  job_name: string;
+  started_at: string;
+  finished_at: string | null;
+  status: string; // "running" | "ok" | "error"
+  duration_ms: number | null;
+  summary: Record<string, unknown>;
+  error: string | null;
+}
+
+export interface JobHistoryStatus {
+  jobs: JobRunRow[];
+  total_jobs_known: number;
+  as_of: string;
+}
+
 // ---------------------------------------------------------------------------
 // Portfolio types (Phase 1)
 // ---------------------------------------------------------------------------
@@ -1203,6 +1220,8 @@ export const api = {
       apiFetch<{ status: string; message: string }>("/admin/bootstrap/us", { method: "POST" }),
     resetQuotaTracker: () =>
       apiFetch<{ status: string; message: string; reset_at: string }>("/admin/quota-tracker/reset", { method: "POST" }),
+    jobHistory: () =>
+      apiFetch<JobHistoryStatus>("/admin/jobs"),
   },
 
   // R20 — Watchlist
