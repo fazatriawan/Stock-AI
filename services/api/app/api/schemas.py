@@ -1753,3 +1753,25 @@ class BatchRefreshResponse(BaseModel):
     failed: int
     total_bars_added: int
     ran_at: datetime
+
+
+# ---------------------------------------------------------------------------
+# FREE-26: Provider success rate
+# ---------------------------------------------------------------------------
+
+class ProviderSuccessRow(BaseModel):
+    provider_name: str
+    date_str: str
+    calls_succeeded: int
+    calls_failed: int
+    total_calls: int
+    success_rate: float
+    bars_fetched: int
+    last_success_at: Optional[datetime]
+    last_failure_at: Optional[datetime]
+    last_error: Optional[str]
+
+
+class ProviderSuccessResponse(BaseModel):
+    providers: list[ProviderSuccessRow]
+    as_of: datetime

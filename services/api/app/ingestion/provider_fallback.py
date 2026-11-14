@@ -27,6 +27,7 @@ from app.ingestion.ohlcv import OHLCVIngestionResult, ingest_ohlcv
 from app.providers.base import MarketDataProvider
 from app.providers.quota_tracker import get_quota_tracker
 from app.providers.registry import get_provider_registry
+from app.providers.success_tracker import get_success_tracker
 
 log = structlog.get_logger(__name__)
 
@@ -73,6 +74,7 @@ async def ingest_with_fallback(
         return None
 
     tried: list[str] = []
+    success_tracker = get_success_tracker()
 
     for idx, provider in enumerate(providers):
         provider_name = getattr(provider, "name", type(provider).__name__)
@@ -110,6 +112,9 @@ async def ingest_with_fallback(
                     skipped=result.skipped,
                     attempt=idx + 1,
                 )
+                success_tracker.record_success(
+                    provider_name, bars=result.inserted + result.skipped
+                )
                 return FallbackIngestResult(
                     ohlcv=result,
                     provider_used=provider_name,
@@ -132,6 +137,7 @@ async def ingest_with_fallback(
                 error=str(exc),
                 attempt=idx + 1,
             )
+            success_tracker.record_failure(provider_name, error=str(exc))
 
     log.warning(
         "fallback.all_failed",

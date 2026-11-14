@@ -1217,6 +1217,101 @@ function StaleInstrumentsSection() {
   );
 }
 
+function ProviderStatsSection() {
+  const [data, setData] = useState<import("@/lib/api").ProviderSuccessResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      setData(await api.data.providerStats());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Gagal memuat provider stats");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, []);
+
+  if (!data && !loading && !error) return null;
+  if (data && data.providers.length === 0) return null;
+
+  function rateColor(rate: number) {
+    if (rate >= 90) return "text-emerald-400";
+    if (rate >= 60) return "text-amber-400";
+    return "text-red-400";
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-gray-300">Provider Success Rate</h2>
+        <button
+          onClick={load}
+          disabled={loading}
+          className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-gray-700/60 bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:border-gray-600 disabled:opacity-40 transition-colors"
+        >
+          <RefreshCw size={10} className={loading ? "animate-spin" : ""} />
+          Muat ulang
+        </button>
+      </div>
+
+      {error && (
+        <p className="text-xs text-red-400 px-3 py-2 rounded-lg bg-red-950/20 border border-red-800/40">{error}</p>
+      )}
+
+      {loading && !data && (
+        <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl h-20 animate-pulse" />
+      )}
+
+      {data && data.providers.length > 0 && (
+        <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl overflow-hidden">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-gray-700/40">
+                <th className="text-left px-3 py-2 text-gray-500 font-normal">Provider</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Panggilan</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Sukses</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Gagal</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Rate</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Bar</th>
+                <th className="text-left px-3 py-2 text-gray-500 font-normal">Error terakhir</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.providers.map((row) => (
+                <tr key={row.provider_name} className="border-b border-gray-700/20 last:border-0 hover:bg-gray-700/20 transition-colors">
+                  <td className="px-3 py-2 font-mono text-gray-300">{row.provider_name}</td>
+                  <td className="px-3 py-2 text-right text-gray-400">{row.total_calls}</td>
+                  <td className="px-3 py-2 text-right text-emerald-400">{row.calls_succeeded}</td>
+                  <td className="px-3 py-2 text-right text-red-400">{row.calls_failed}</td>
+                  <td className={`px-3 py-2 text-right font-medium ${rateColor(row.success_rate)}`}>
+                    {row.total_calls === 0 ? "—" : `${row.success_rate}%`}
+                  </td>
+                  <td className="px-3 py-2 text-right text-gray-500">{row.bars_fetched.toLocaleString()}</td>
+                  <td className="px-3 py-2 text-gray-600 max-w-[180px] truncate" title={row.last_error ?? undefined}>
+                    {row.last_error ? (
+                      <span className="text-red-400/70">{row.last_error}</span>
+                    ) : (
+                      <span className="text-gray-700">—</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="px-3 py-1.5 text-[10px] text-gray-700 border-t border-gray-700/20">
+            Reset otomatis setiap tengah malam · hanya exception dihitung sebagai gagal
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SchedulerJobsSection() {
   const [status, setStatus] = useState<JobHistoryStatus | null>(null);
   const [loading, setLoading] = useState(false);
@@ -1378,6 +1473,7 @@ export default function SettingsPage() {
       <DataGapsSection />
       <StaleInstrumentsSection />
       <ProviderQuotaSection />
+      <ProviderStatsSection />
       <SchedulerJobsSection />
       <CSVImportSection />
       <MarketBootstrapSection />

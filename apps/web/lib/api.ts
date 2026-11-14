@@ -299,6 +299,25 @@ export interface StaleInstrumentsStatus {
   ran_at: string;
 }
 
+// FREE-26 — Provider success rate
+export interface ProviderSuccessRow {
+  provider_name: string;
+  date_str: string;
+  calls_succeeded: number;
+  calls_failed: number;
+  total_calls: number;
+  success_rate: number;
+  bars_fetched: number;
+  last_success_at: string | null;
+  last_failure_at: string | null;
+  last_error: string | null;
+}
+
+export interface ProviderSuccessResponse {
+  providers: ProviderSuccessRow[];
+  as_of: string;
+}
+
 // FREE-25 — Batch refresh
 export interface BatchRefreshItemResult {
   canonical_symbol: string;
@@ -1122,6 +1141,7 @@ export const api = {
       apiFetch<HealGapsResult>(`/data/gaps/heal?threshold_pct=${threshold}&min_history=${minHistory}&limit=${limit}`, { method: "POST" }),
     staleInstruments: (limit = 50) =>
       apiFetch<StaleInstrumentsStatus>(`/data/stale-instruments?limit=${limit}`),
+    providerStats: () => apiFetch<ProviderSuccessResponse>("/data/provider-stats"),
     refreshBatch: (symbols: string[] = [], limit = 10) => {
       const params = new URLSearchParams({ limit: String(limit) });
       symbols.forEach((s) => params.append("symbols", s));

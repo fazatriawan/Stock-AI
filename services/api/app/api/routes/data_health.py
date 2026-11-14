@@ -8,6 +8,8 @@ from app.api.schemas import (
     BatchRefreshItemResult,
     BatchRefreshResponse,
     CSVImportResponse,
+    ProviderSuccessResponse,
+    ProviderSuccessRow,
     CoverageStatusResponse,
     DataGapsResponse,
     DataHealthResponse,
@@ -323,6 +325,41 @@ async def get_provider_quota() -> ProviderQuotaResponse:
     return ProviderQuotaResponse(
         providers=rows,
         total_calls_today=total,
+        as_of=datetime.now(tz=timezone.utc),
+    )
+
+
+@router.get("/provider-stats", response_model=ProviderSuccessResponse)
+async def get_provider_stats() -> ProviderSuccessResponse:
+    """
+    Success/failure rate per provider hari ini.
+
+    Menunjukkan berapa kali tiap provider berhasil mengembalikan bar (success)
+    vs gagal dengan exception (failure). Berguna untuk mendeteksi provider
+    yang tidak reliabel tanpa harus cek log manual.
+    """
+    from app.providers.success_tracker import get_success_tracker
+
+    tracker = get_success_tracker()
+    stats = tracker.all_stats()
+
+    rows = [
+        ProviderSuccessRow(
+            provider_name=s.provider_name,
+            date_str=s.date_str,
+            calls_succeeded=s.calls_succeeded,
+            calls_failed=s.calls_failed,
+            total_calls=s.total_calls,
+            success_rate=s.success_rate,
+            bars_fetched=s.bars_fetched,
+            last_success_at=s.last_success_at,
+            last_failure_at=s.last_failure_at,
+            last_error=s.last_error,
+        )
+        for s in stats
+    ]
+    return ProviderSuccessResponse(
+        providers=rows,
         as_of=datetime.now(tz=timezone.utc),
     )
 
