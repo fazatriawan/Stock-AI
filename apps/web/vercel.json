@@ -2,5 +2,11 @@
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "rewrites": [
+    {
+      "source": "/api/v1/:path*",
+      "destination": "http://163.245.208.211:8000/api/v1/:path*"
+    }
+  ]
 }
