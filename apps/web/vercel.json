@@ -3,6 +3,9 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "outputDirectory": ".next",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "/api/v1"
+  },
   "rewrites": [
     {
       "source": "/api/v1/:path*",
