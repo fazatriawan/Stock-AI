@@ -243,6 +243,20 @@ export interface HealGapsResult {
   ran_at: string;
 }
 
+export interface StockRefreshResult {
+  symbol: string;
+  status: "ok" | "no_data";
+  provider_used: string | null;
+  fallback_used: boolean;
+  providers_tried: string[];
+  bars_added: number;
+  bars_skipped?: number;
+  gap_pct_before: number | null;
+  gap_pct_after: number | null;
+  message?: string;
+  date_range?: { start: string; end: string };
+}
+
 export interface ProviderQuotaRow {
   provider_name: string;
   calls_today: number;
@@ -995,6 +1009,8 @@ export const api = {
       ),
     overview: (symbol: string) => apiFetch<StockOverview>(`/stocks/${symbol}/overview`),
     analysis: (symbol: string) => apiFetch<Recommendation>(`/stocks/${symbol}/analysis`),
+    refreshData: (symbol: string, daysBack = 365) =>
+      apiFetch<StockRefreshResult>(`/stocks/${symbol}/data/refresh?days_back=${daysBack}`, { method: "POST" }),
   },
   data: {
     health: () => apiFetch<DataHealth>("/data/health"),

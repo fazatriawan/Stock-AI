@@ -46,7 +46,9 @@ from app.analytics.dividend_loader import load_dividend_analysis
 from app.decisions.feasibility import check_trade_feasibility
 from app.domain.instruments import resolve_instrument
 from app.domain.investment_policy import get_or_create_default as get_policy
+from app.analytics.gap_detector import detect_data_gaps
 from app.ingestion.ohlcv import check_data_staleness, ingest_ohlcv
+from app.ingestion.provider_fallback import ingest_with_fallback
 from app.providers.registry import get_provider_registry
 
 log = structlog.get_logger(__name__)
@@ -473,6 +475,70 @@ async def refresh_prices(
             "end": end.isoformat(),
         },
         "is_live_data": provider.name != "mock",
+    }
+
+
+@router.post("/{symbol}/data/refresh")
+async def refresh_data_with_fallback(
+    symbol: str,
+    days_back: int = Query(365, ge=1, le=1825, description="Hari ke belakang untuk di-fetch"),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Re-ingest OHLCV untuk satu instrumen menggunakan fallback chain (FREE-14).
+
+    Berbeda dengan /prices/refresh yang hanya pakai primary provider,
+    endpoint ini mencoba semua provider gratis secara berurutan hingga ada yang berhasil.
+    Force=True: bar yang sudah ada diperbarui freshness_status-nya ke FRESH.
+    Idempoten — bar yang identik tidak digandakan.
+    """
+    instrument = await _get_instrument_or_404(symbol, db)
+
+    end = date.today()
+    start = end - timedelta(days=days_back)
+    market = "IDX" if instrument.exchange in ("IDX", "BEI") else "US"
+
+    # Hitung gap sebelum refresh (opsional, untuk "before" stat)
+    gap_before_result = await detect_data_gaps(db, threshold_pct=0, min_days_history=1, limit=1)
+    gap_before = next(
+        (r for r in gap_before_result.reports if r.instrument_id == str(instrument.id)),
+        None,
+    )
+
+    fallback_result = await ingest_with_fallback(db, instrument, market, start, end, force=True)
+    await db.commit()
+
+    if fallback_result is None:
+        return {
+            "symbol": instrument.canonical_symbol,
+            "status": "no_data",
+            "provider_used": None,
+            "fallback_used": False,
+            "providers_tried": [],
+            "bars_added": 0,
+            "gap_pct_before": gap_before.gap_pct if gap_before else None,
+            "gap_pct_after": gap_before.gap_pct if gap_before else None,
+            "message": "Semua provider gratis tidak mengembalikan data untuk instrumen ini.",
+        }
+
+    # Hitung gap setelah refresh
+    gap_after_result = await detect_data_gaps(db, threshold_pct=0, min_days_history=1, limit=1)
+    gap_after = next(
+        (r for r in gap_after_result.reports if r.instrument_id == str(instrument.id)),
+        None,
+    )
+
+    return {
+        "symbol": instrument.canonical_symbol,
+        "status": "ok",
+        "provider_used": fallback_result.provider_used,
+        "fallback_used": fallback_result.fallback_used,
+        "providers_tried": fallback_result.providers_tried,
+        "bars_added": fallback_result.ohlcv.inserted,
+        "bars_skipped": fallback_result.ohlcv.skipped,
+        "gap_pct_before": gap_before.gap_pct if gap_before else None,
+        "gap_pct_after": gap_after.gap_pct if gap_after else None,
+        "date_range": {"start": start.isoformat(), "end": end.isoformat()},
     }
 
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Search, DatabaseZap } from "lucide-react";
-import { api, type StockOverview, type Recommendation, type InstrumentFreshness } from "@/lib/api";
+import { Search, DatabaseZap, RefreshCw } from "lucide-react";
+import { api, type StockOverview, type Recommendation, type InstrumentFreshness, type StockRefreshResult } from "@/lib/api";
 import { StockOverviewCard } from "@/components/stock/StockOverviewCard";
 import { RecommendationCard } from "@/components/stock/RecommendationCard";
 import { TechnicalCard } from "@/components/stock/TechnicalCard";
@@ -37,7 +37,27 @@ export default function ExplorerPage() {
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [freshness, setFreshness] = useState<InstrumentFreshness | null>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshResult, setRefreshResult] = useState<StockRefreshResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  async function handleRefresh() {
+    if (!overview) return;
+    setRefreshing(true);
+    setRefreshResult(null);
+    try {
+      const r = await api.stocks.refreshData(overview.instrument.canonical_symbol);
+      setRefreshResult(r);
+      // Reload overview + freshness after refresh
+      const [ov] = await Promise.all([api.stocks.overview(overview.instrument.canonical_symbol)]);
+      setOverview(ov);
+      api.data.freshness(ov.instrument.id).then(setFreshness).catch(() => {});
+    } catch {
+      // non-blocking — show nothing on error, user can retry
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -130,7 +150,39 @@ export default function ExplorerPage() {
       {/* Results */}
       {overview && (
         <div className="space-y-3">
-          {freshness && <FreshnessChip freshness={freshness} />}
+          <div className="flex items-center gap-3">
+            {freshness && <FreshnessChip freshness={freshness} />}
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-lg border border-gray-700/60 bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:border-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              title="Re-ingest data via fallback chain"
+            >
+              <RefreshCw size={11} className={refreshing ? "animate-spin" : ""} />
+              {refreshing ? "Menyegarkan…" : "Refresh Data"}
+            </button>
+          </div>
+
+          {refreshResult && (
+            <div className={`text-[11px] px-3 py-2 rounded-lg border ${
+              refreshResult.status === "ok"
+                ? "bg-emerald-900/15 border-emerald-800/40 text-emerald-400"
+                : "bg-amber-900/15 border-amber-800/40 text-amber-400"
+            }`}>
+              {refreshResult.status === "ok" ? (
+                <span>
+                  +{refreshResult.bars_added} bar via <strong>{refreshResult.provider_used}</strong>
+                  {refreshResult.fallback_used && " (fallback)"}
+                  {refreshResult.gap_pct_before !== null && refreshResult.gap_pct_after !== null && refreshResult.gap_pct_before > refreshResult.gap_pct_after && (
+                    <span className="ml-1.5 opacity-70">· gap {refreshResult.gap_pct_before}% → {refreshResult.gap_pct_after}%</span>
+                  )}
+                </span>
+              ) : (
+                <span>{refreshResult.message ?? "Tidak ada data baru dari provider."}</span>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <StockOverviewCard overview={overview} />
             {recommendation && <RecommendationCard recommendation={recommendation} />}
