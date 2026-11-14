@@ -95,27 +95,26 @@ export function OnboardingBanner() {
   const completedCount = STEPS.filter((s) => done[s.id]).length;
 
   return (
-    <div className="rounded-xl border border-blue-800/40 bg-blue-950/15 p-4 space-y-4">
+    <div className="rounded-xl border border-blue-700/30 bg-gradient-to-br from-blue-950/30 to-blue-900/10 p-5 space-y-4">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-semibold text-blue-300">Selamat datang di Stock Intelligence</p>
-          <p className="text-xs text-blue-400/60 mt-0.5">
-            Selesaikan {STEPS.length} langkah berikut untuk mulai menggunakan semua fitur
-            · {completedCount}/{STEPS.length} selesai
+          <p className="text-sm font-semibold text-blue-200">Selamat datang di Stock Intelligence</p>
+          <p className="text-xs text-blue-400/80 mt-0.5">
+            Selesaikan {STEPS.length} langkah berikut untuk mulai · {completedCount}/{STEPS.length} selesai
           </p>
         </div>
         <button
           onClick={dismiss}
-          className="text-blue-400/40 hover:text-blue-400/80 transition-colors ml-3 shrink-0"
+          className="text-blue-400/50 hover:text-blue-300 transition-colors ml-3 shrink-0 p-1 rounded hover:bg-blue-900/30"
           title="Sembunyikan panduan"
         >
-          <X size={14} />
+          <X size={13} />
         </button>
       </div>
 
       {/* Progress bar */}
-      <div className="h-1 bg-blue-900/40 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-blue-900/50 rounded-full overflow-hidden">
         <div
           className="h-full bg-blue-500 rounded-full transition-all duration-500"
           style={{ width: `${(completedCount / STEPS.length) * 100}%` }}
@@ -123,34 +122,34 @@ export function OnboardingBanner() {
       </div>
 
       {/* Steps */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
         {STEPS.map((step, i) => {
           const isDone = done[step.id];
           const Icon = step.icon;
           return (
             <div
               key={step.id}
-              className={`rounded-lg p-3 border transition-colors ${
+              className={`rounded-lg p-3.5 border transition-colors ${
                 isDone
-                  ? "border-emerald-800/30 bg-emerald-950/10"
-                  : "border-blue-800/30 bg-blue-950/10"
+                  ? "border-emerald-700/40 bg-emerald-950/20"
+                  : "border-blue-700/30 bg-blue-950/20 hover:bg-blue-950/30"
               }`}
             >
               <div className="flex items-start gap-2.5">
                 <div className="mt-0.5 shrink-0">
                   {isDone
-                    ? <CheckCircle size={14} className="text-emerald-400" />
-                    : <Circle size={14} className="text-blue-400/40" />}
+                    ? <CheckCircle size={15} className="text-emerald-400" />
+                    : <Circle size={15} className="text-blue-500/60" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-xs font-medium ${isDone ? "text-emerald-300 line-through opacity-60" : "text-blue-200"}`}>
+                  <p className={`text-xs font-semibold ${isDone ? "text-emerald-400/70 line-through" : "text-blue-100"}`}>
                     {i + 1}. {step.title}
                   </p>
-                  <p className="text-xs text-blue-400/50 mt-0.5 leading-relaxed">{step.desc}</p>
+                  <p className="text-xs text-blue-300/60 mt-1 leading-relaxed">{step.desc}</p>
                   {!isDone && (
                     <Link
                       href={step.href}
-                      className="inline-flex items-center gap-1 mt-2 text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                      className="inline-flex items-center gap-1 mt-2.5 text-xs text-blue-400 hover:text-blue-200 font-medium transition-colors"
                     >
                       {step.cta} <ChevronRight size={10} />
                     </Link>

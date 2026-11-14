@@ -6,7 +6,7 @@ import { api, type PortfolioSummary, type DailyIntelligence } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
 import { MarketStatusGrid } from "@/components/dashboard/MarketStatusGrid";
 import { DataHealthStatus } from "@/components/dashboard/DataHealthStatus";
-import { TrendingUp, TrendingDown, AlertTriangle, ChevronRight, Target, Settings } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertTriangle, ChevronRight, Target, Settings, Zap, SlidersHorizontal, RefreshCw, BarChart3 } from "lucide-react";
 import { OnboardingBanner } from "@/components/onboarding/OnboardingBanner";
 
 // ---------------------------------------------------------------------------
@@ -32,10 +32,10 @@ function KpiCard({
     : highlight === "red" ? "text-red-400"
     : "text-gray-100";
   return (
-    <div className="bg-gray-800/40 border border-gray-700/40 rounded-xl p-4">
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
-      <p className={`text-xl font-bold ${valueColor}`}>{value}</p>
-      {sub && <p className="text-xs text-gray-600 mt-0.5">{sub}</p>}
+    <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4 hover:border-gray-600/60 transition-colors">
+      <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-2">{label}</p>
+      <p className={`text-2xl font-bold tracking-tight ${valueColor}`}>{value}</p>
+      {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
     </div>
   );
 }
@@ -204,7 +204,7 @@ function TopPositions() {
         const pct = pos.unrealized_pnl_pct ?? 0;
         const isUp = pct >= 0;
         return (
-          <div key={pos.canonical_symbol} className="flex items-center gap-3 rounded-lg bg-gray-800/30 border border-gray-700/30 px-3 py-2.5">
+          <div key={pos.canonical_symbol} className="flex items-center gap-3 rounded-xl bg-gray-800/40 border border-gray-700/40 px-4 py-3 hover:border-gray-600/50 transition-colors">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-100">{ticker}</span>
@@ -237,10 +237,10 @@ function TopPositions() {
 // Quick links
 // ---------------------------------------------------------------------------
 const QUICK_LINKS = [
-  { href: "/decisions", label: "Decision Center", desc: "Sinyal beli/jual/tahan" },
-  { href: "/screener", label: "Screener", desc: "Filter saham IDX & US" },
-  { href: "/portfolio/rebalance", label: "Rebalance", desc: "Simulasi rebalancing" },
-  { href: "/daily", label: "Daily Intelligence", desc: "Ringkasan hari ini" },
+  { href: "/decisions", label: "Decision Center", desc: "Sinyal beli/jual/tahan", icon: Zap },
+  { href: "/screener", label: "Screener", desc: "Filter saham IDX & US", icon: SlidersHorizontal },
+  { href: "/daily", label: "Daily Intelligence", desc: "Ringkasan hari ini", icon: BarChart3 },
+  { href: "/portfolio/rebalance", label: "Rebalance", desc: "Simulasi rebalancing", icon: RefreshCw },
 ];
 
 // ---------------------------------------------------------------------------
@@ -248,10 +248,10 @@ const QUICK_LINKS = [
 // ---------------------------------------------------------------------------
 export default function OverviewPage() {
   return (
-    <div className="p-6 space-y-6 max-w-3xl">
+    <div className="p-6 space-y-6 max-w-5xl">
       {/* Header */}
       <div>
-        <h1 className="text-lg font-semibold text-gray-100">Overview</h1>
+        <h1 className="text-xl font-bold text-gray-100">Overview</h1>
         <p className="text-sm text-gray-500 mt-0.5">Ringkasan portofolio & market hari ini</p>
       </div>
 
@@ -287,20 +287,23 @@ export default function OverviewPage() {
       {/* Quick links */}
       <section>
         <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Aksi Cepat</h2>
-        <div className="grid grid-cols-2 gap-2">
-          {QUICK_LINKS.map(link => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="bg-gray-800/30 border border-gray-700/30 hover:border-gray-600/50 rounded-xl px-4 py-3 flex items-center justify-between group transition-colors"
-            >
-              <div>
-                <p className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">{link.label}</p>
-                <p className="text-xs text-gray-600">{link.desc}</p>
-              </div>
-              <ChevronRight size={14} className="text-gray-600 group-hover:text-gray-400 transition-colors" />
-            </Link>
-          ))}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {QUICK_LINKS.map(link => {
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="bg-gray-800/40 border border-gray-700/40 hover:border-gray-500/60 hover:bg-gray-800/60 rounded-xl px-4 py-4 flex flex-col gap-2.5 group transition-all"
+              >
+                <Icon size={16} className="text-gray-500 group-hover:text-gray-300 transition-colors" />
+                <div>
+                  <p className="text-sm font-semibold text-gray-200 group-hover:text-white transition-colors">{link.label}</p>
+                  <p className="text-xs text-gray-600 mt-0.5">{link.desc}</p>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
