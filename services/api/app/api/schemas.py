@@ -1670,3 +1670,43 @@ class JobHistoryResponse(BaseModel):
     jobs: list[JobRunRow]
     total_jobs_known: int
     as_of: datetime
+
+
+# ---------------------------------------------------------------------------
+# FREE-21 — Platform health summary
+# ---------------------------------------------------------------------------
+
+class FreshnessHealthRow(BaseModel):
+    total_bars: int
+    fresh_bars: int
+    stale_bars: int
+    fresh_pct: float
+    score: int
+
+
+class GapsHealthRow(BaseModel):
+    critical_count: int
+    warning_count: int
+    score: int
+
+
+class QuotaHealthRow(BaseModel):
+    exhausted_providers: list[str]
+    score: int
+
+
+class JobsHealthRow(BaseModel):
+    total_known: int
+    error_count: int
+    last_error_job: Optional[str]
+    score: int
+
+
+class PlatformHealthResponse(BaseModel):
+    overall_score: int
+    grade: str
+    freshness: FreshnessHealthRow
+    gaps: GapsHealthRow
+    quota: QuotaHealthRow
+    jobs: JobsHealthRow
+    computed_at: datetime

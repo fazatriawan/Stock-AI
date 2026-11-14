@@ -101,6 +101,34 @@ async def reset_quota_tracker() -> dict:
     }
 
 
+@router.get("/health-summary")
+async def get_platform_health(db: AsyncSession = Depends(get_db)) -> dict:
+    """
+    Hitung skor kesehatan platform data secara real-time.
+    Menggabungkan freshness, gap severity, quota exhaustion, dan job error rate.
+    Tidak ada panggilan ke provider eksternal.
+    """
+    from app.analytics.platform_health import compute_platform_health
+    from app.api.schemas import (
+        PlatformHealthResponse,
+        FreshnessHealthRow,
+        GapsHealthRow,
+        QuotaHealthRow,
+        JobsHealthRow,
+    )
+
+    result = await compute_platform_health(db)
+    return PlatformHealthResponse(
+        overall_score=result.overall_score,
+        grade=result.grade,
+        freshness=FreshnessHealthRow(**result.freshness.__dict__),
+        gaps=GapsHealthRow(**result.gaps.__dict__),
+        quota=QuotaHealthRow(**result.quota.__dict__),
+        jobs=JobsHealthRow(**result.jobs.__dict__),
+        computed_at=result.computed_at,
+    ).model_dump()
+
+
 @router.get("/jobs")
 async def get_job_history() -> dict:
     """

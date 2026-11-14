@@ -280,6 +280,35 @@ export interface MarketStatus {
   as_of: string;
 }
 
+// FREE-21 — Platform health summary
+export interface PlatformHealthSummary {
+  overall_score: number;
+  grade: string;
+  freshness: {
+    total_bars: number;
+    fresh_bars: number;
+    stale_bars: number;
+    fresh_pct: number;
+    score: number;
+  };
+  gaps: {
+    critical_count: number;
+    warning_count: number;
+    score: number;
+  };
+  quota: {
+    exhausted_providers: string[];
+    score: number;
+  };
+  jobs: {
+    total_known: number;
+    error_count: number;
+    last_error_job: string | null;
+    score: number;
+  };
+  computed_at: string;
+}
+
 // FREE-20 — Scheduler job history
 export interface JobRunRow {
   job_name: string;
@@ -1222,6 +1251,8 @@ export const api = {
       apiFetch<{ status: string; message: string; reset_at: string }>("/admin/quota-tracker/reset", { method: "POST" }),
     jobHistory: () =>
       apiFetch<JobHistoryStatus>("/admin/jobs"),
+    healthSummary: () =>
+      apiFetch<PlatformHealthSummary>("/admin/health-summary"),
   },
 
   // R20 — Watchlist

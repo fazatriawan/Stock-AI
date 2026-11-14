@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { api, type DataProvidersResponse, type CSVImportResult, type CoverageStatus, type ProviderQuotaStatus, type DataGapsStatus, type GapReportRow, type HealGapsResult, type JobHistoryStatus, type JobRunRow } from "@/lib/api";
+import { api, type DataProvidersResponse, type CSVImportResult, type CoverageStatus, type ProviderQuotaStatus, type DataGapsStatus, type GapReportRow, type HealGapsResult, type JobHistoryStatus, type JobRunRow, type PlatformHealthSummary } from "@/lib/api";
 import { CheckCircle, XCircle, AlertCircle, RefreshCw, Database, Wifi, WifiOff, ChevronRight, Upload, ShieldCheck, Lock } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -67,6 +67,105 @@ function AccessBadge({ access }: { access: string }) {
   );
   return (
     <span className="text-[10px] px-1.5 py-0.5 rounded border bg-gray-800 text-gray-500 border-gray-700">{access}</span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Platform health widget — FREE-21
+// ---------------------------------------------------------------------------
+function GradeRing({ grade, score }: { grade: string; score: number }) {
+  const color =
+    grade === "A" ? "text-emerald-400 border-emerald-500/50" :
+    grade === "B" ? "text-blue-400 border-blue-500/50" :
+    grade === "C" ? "text-amber-400 border-amber-500/50" :
+    grade === "D" ? "text-orange-400 border-orange-500/50" :
+    "text-red-400 border-red-500/50";
+  return (
+    <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-full border-2 ${color}`}>
+      <span className={`text-xl font-bold ${color.split(" ")[0]}`}>{grade}</span>
+      <span className="text-[10px] text-gray-500">{score}/100</span>
+    </div>
+  );
+}
+
+function ScoreBar({ label, score, max, color }: { label: string; score: number; max: number; color: string }) {
+  const pct = Math.round((score / max) * 100);
+  return (
+    <div className="space-y-0.5">
+      <div className="flex justify-between text-[11px]">
+        <span className="text-gray-400">{label}</span>
+        <span className="text-gray-500">{score}/{max}</span>
+      </div>
+      <div className="h-1.5 bg-gray-700/60 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function PlatformHealthWidget() {
+  const [health, setHealth] = useState<PlatformHealthSummary | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const r = await api.admin.healthSummary();
+      setHealth(r);
+    } catch {
+      // best-effort — don't block page if DB empty
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, []);
+
+  if (!health && !loading) return null;
+  if (loading && !health) return (
+    <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl p-4 animate-pulse h-24" />
+  );
+  if (!health) return null;
+
+  const issues: string[] = [];
+  if (health.freshness.fresh_pct < 80) issues.push(`${health.freshness.fresh_pct}% bar fresh`);
+  if (health.gaps.critical_count > 0) issues.push(`${health.gaps.critical_count} gap CRITICAL`);
+  if (health.quota.exhausted_providers.length > 0) issues.push(`${health.quota.exhausted_providers.join(", ")} kuota habis`);
+  if (health.jobs.error_count > 0) issues.push(`${health.jobs.error_count} job error`);
+
+  return (
+    <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl p-4">
+      <div className="flex items-start gap-4">
+        <GradeRing grade={health.grade} score={health.overall_score} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-200">Kesehatan Platform</span>
+            <button
+              onClick={load}
+              disabled={loading}
+              className="text-[10px] text-gray-500 hover:text-gray-300 disabled:opacity-40 transition-colors"
+            >
+              <RefreshCw size={10} className={loading ? "animate-spin inline" : "inline"} />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+            <ScoreBar label="Freshness" score={health.freshness.score} max={40}
+              color={health.freshness.score >= 32 ? "bg-emerald-500" : health.freshness.score >= 20 ? "bg-amber-500" : "bg-red-500"} />
+            <ScoreBar label="Data Gaps" score={health.gaps.score} max={25}
+              color={health.gaps.score >= 20 ? "bg-emerald-500" : health.gaps.score >= 10 ? "bg-amber-500" : "bg-red-500"} />
+            <ScoreBar label="Quota" score={health.quota.score} max={20}
+              color={health.quota.score === 20 ? "bg-emerald-500" : "bg-amber-500"} />
+            <ScoreBar label="Jobs" score={health.jobs.score} max={15}
+              color={health.jobs.score === 15 ? "bg-emerald-500" : health.jobs.score >= 10 ? "bg-amber-500" : "bg-red-500"} />
+          </div>
+          {issues.length > 0 && (
+            <p className="text-[11px] text-amber-400/80 mt-2">
+              ⚠ {issues.join(" · ")}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1139,6 +1238,7 @@ export default function SettingsPage() {
         <p className="text-xs text-gray-500 mt-0.5">Status sistem, manajemen data, dan konfigurasi</p>
       </div>
 
+      <PlatformHealthWidget />
       <DataHealthSection />
       <CoverageSection />
       <DataGapsSection />
