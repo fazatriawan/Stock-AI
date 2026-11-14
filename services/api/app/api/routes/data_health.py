@@ -5,6 +5,8 @@ import structlog
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 
 from app.api.schemas import (
+    BatchRefreshItemResult,
+    BatchRefreshResponse,
     CSVImportResponse,
     CoverageStatusResponse,
     DataGapsResponse,
@@ -25,6 +27,8 @@ from app.api.schemas import (
     StaleInstrumentsResponse,
 )
 from app.db.session import get_db
+from app.domain.instruments import resolve_instrument
+from app.ingestion.provider_fallback import ingest_with_fallback
 from app.providers.quota_tracker import get_quota_tracker
 from app.providers.registry import get_provider_registry
 
@@ -466,6 +470,106 @@ async def list_stale_instruments(
         instruments=instruments,
         total_instruments=len(instruments),
         total_stale_bars=total_stale,
+        ran_at=datetime.now(tz=timezone.utc),
+    )
+
+
+@router.post("/refresh-batch", response_model=BatchRefreshResponse)
+async def refresh_batch(
+    symbols: list[str] = Query(default=[], description="Simbol yang ingin di-refresh. Kosong = ambil instrumen paling stale."),
+    limit: int = Query(default=10, ge=1, le=50, description="Maks instrumen saat symbols kosong"),
+    days_back: int = Query(default=365, ge=30, le=1825, description="Rentang tanggal re-ingest"),
+    db=Depends(get_db),
+) -> BatchRefreshResponse:
+    """
+    Re-ingest OHLCV untuk daftar simbol sekaligus via fallback chain.
+
+    Jika `symbols` diisi: refresh tepat simbol tersebut.
+    Jika kosong: ambil instrumen paling stale (urut stale_count desc) sampai `limit`.
+    Idempoten — bar FRESH yang sudah ada tidak digandakan.
+    """
+    from datetime import date, timedelta
+    from sqlalchemy import func, select, case
+    from app.db.models import Instrument, PriceBar
+
+    today = date.today()
+    start_date = today - timedelta(days=days_back)
+
+    # Kumpulkan instrument objects
+    instruments_to_refresh: list[tuple] = []  # (canonical_symbol, instrument | None)
+
+    if symbols:
+        for sym in symbols:
+            instr = await resolve_instrument(db, sym)
+            instruments_to_refresh.append((sym, instr))
+    else:
+        # Ambil instrumen paling stale dari DB
+        stmt = (
+            select(
+                Instrument.id,
+                Instrument.canonical_symbol,
+                Instrument.exchange,
+                func.sum(
+                    case((PriceBar.freshness_status == "STALE", 1), else_=0)
+                ).label("stale_count"),
+            )
+            .join(PriceBar, PriceBar.instrument_id == Instrument.id)
+            .group_by(Instrument.id, Instrument.canonical_symbol, Instrument.exchange)
+            .having(func.sum(case((PriceBar.freshness_status == "STALE", 1), else_=0)) > 0)
+            .order_by(func.sum(case((PriceBar.freshness_status == "STALE", 1), else_=0)).desc())
+            .limit(limit)
+        )
+        rows = (await db.execute(stmt)).all()
+        for row in rows:
+            instr = await resolve_instrument(db, row.canonical_symbol)
+            instruments_to_refresh.append((row.canonical_symbol, instr))
+
+    results: list[BatchRefreshItemResult] = []
+
+    for sym, instr in instruments_to_refresh:
+        if instr is None:
+            results.append(BatchRefreshItemResult(
+                canonical_symbol=sym,
+                status="not_found",
+                message=f"Instrumen '{sym}' tidak ditemukan di database",
+            ))
+            continue
+
+        market = instr.exchange if instr.exchange in ("IDX", "US") else "IDX"
+        try:
+            fallback_result = await ingest_with_fallback(
+                db, instr, market, start=start_date, end=today, force=True
+            )
+            if fallback_result and fallback_result.bars_added > 0:
+                results.append(BatchRefreshItemResult(
+                    canonical_symbol=instr.canonical_symbol,
+                    status="ok",
+                    bars_added=fallback_result.bars_added,
+                    provider_used=fallback_result.provider_used,
+                ))
+            else:
+                results.append(BatchRefreshItemResult(
+                    canonical_symbol=instr.canonical_symbol,
+                    status="no_data",
+                    message="Provider tidak mengembalikan bar baru",
+                ))
+        except Exception as exc:
+            log.warning("refresh_batch.error", symbol=sym, error=str(exc))
+            results.append(BatchRefreshItemResult(
+                canonical_symbol=instr.canonical_symbol,
+                status="error",
+                message=str(exc),
+            ))
+
+    await db.commit()
+
+    succeeded = sum(1 for r in results if r.status == "ok")
+    return BatchRefreshResponse(
+        results=results,
+        total_requested=len(results),
+        succeeded=succeeded,
+        failed=len(results) - succeeded,
+        total_bars_added=sum(r.bars_added for r in results),
         ran_at=datetime.now(tz=timezone.utc),
     )
 

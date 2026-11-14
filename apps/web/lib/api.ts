@@ -299,6 +299,24 @@ export interface StaleInstrumentsStatus {
   ran_at: string;
 }
 
+// FREE-25 — Batch refresh
+export interface BatchRefreshItemResult {
+  canonical_symbol: string;
+  status: "ok" | "no_data" | "error" | "not_found";
+  bars_added: number;
+  provider_used: string | null;
+  message: string | null;
+}
+
+export interface BatchRefreshResponse {
+  results: BatchRefreshItemResult[];
+  total_requested: number;
+  succeeded: number;
+  failed: number;
+  total_bars_added: number;
+  ran_at: string;
+}
+
 // FREE-21 — Platform health summary
 export interface PlatformHealthSummary {
   overall_score: number;
@@ -1104,6 +1122,11 @@ export const api = {
       apiFetch<HealGapsResult>(`/data/gaps/heal?threshold_pct=${threshold}&min_history=${minHistory}&limit=${limit}`, { method: "POST" }),
     staleInstruments: (limit = 50) =>
       apiFetch<StaleInstrumentsStatus>(`/data/stale-instruments?limit=${limit}`),
+    refreshBatch: (symbols: string[] = [], limit = 10) => {
+      const params = new URLSearchParams({ limit: String(limit) });
+      symbols.forEach((s) => params.append("symbols", s));
+      return apiFetch<BatchRefreshResponse>(`/data/refresh-batch?${params.toString()}`, { method: "POST" });
+    },
   },
   portfolio: {
     summary: () => apiFetch<PortfolioSummary>("/portfolio"),

@@ -1090,6 +1090,8 @@ function StaleInstrumentsSection() {
   const [data, setData] = useState<import("@/lib/api").StaleInstrumentsStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshResult, setRefreshResult] = useState<import("@/lib/api").BatchRefreshResponse | null>(null);
 
   async function load() {
     setLoading(true);
@@ -1101,6 +1103,23 @@ function StaleInstrumentsSection() {
       setError(e instanceof Error ? e.message : "Gagal memuat daftar instrumen stale");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleRefreshAll() {
+    if (!data) return;
+    setRefreshing(true);
+    setRefreshResult(null);
+    try {
+      const symbols = data.instruments.map((i) => i.canonical_symbol);
+      const r = await api.data.refreshBatch(symbols, symbols.length);
+      setRefreshResult(r);
+      // reload stale list to reflect changes
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Gagal menjalankan batch refresh");
+    } finally {
+      setRefreshing(false);
     }
   }
 
@@ -1120,15 +1139,37 @@ function StaleInstrumentsSection() {
             </span>
           )}
         </h2>
-        <button
-          onClick={load}
-          disabled={loading}
-          className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-gray-700/60 bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:border-gray-600 disabled:opacity-40 transition-colors"
-        >
-          <RefreshCw size={10} className={loading ? "animate-spin" : ""} />
-          Muat ulang
-        </button>
+        <div className="flex items-center gap-2">
+          {data && data.total_instruments > 0 && (
+            <button
+              onClick={handleRefreshAll}
+              disabled={refreshing || loading}
+              className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-blue-700/60 bg-blue-900/20 text-blue-400 hover:text-blue-200 hover:border-blue-500 disabled:opacity-40 transition-colors"
+            >
+              <RefreshCw size={10} className={refreshing ? "animate-spin" : ""} />
+              {refreshing ? "Menyegarkan…" : "Segarkan Semua"}
+            </button>
+          )}
+          <button
+            onClick={load}
+            disabled={loading}
+            className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-gray-700/60 bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:border-gray-600 disabled:opacity-40 transition-colors"
+          >
+            <RefreshCw size={10} className={loading ? "animate-spin" : ""} />
+            Muat ulang
+          </button>
+        </div>
       </div>
+
+      {refreshResult && (
+        <div className={`text-[11px] px-3 py-2 rounded-lg border ${
+          refreshResult.failed === 0
+            ? "bg-emerald-900/15 border-emerald-800/40 text-emerald-400"
+            : "bg-amber-900/15 border-amber-800/40 text-amber-400"
+        }`}>
+          Selesai: {refreshResult.succeeded} berhasil · {refreshResult.failed} gagal · +{refreshResult.total_bars_added.toLocaleString()} bar baru
+        </div>
+      )}
 
       {error && (
         <p className="text-xs text-red-400 px-3 py-2 rounded-lg bg-red-950/20 border border-red-800/40">{error}</p>

@@ -1732,3 +1732,24 @@ class StaleInstrumentsResponse(BaseModel):
     total_instruments: int
     total_stale_bars: int
     ran_at: datetime
+
+
+# ---------------------------------------------------------------------------
+# FREE-25: Batch instrument refresh
+# ---------------------------------------------------------------------------
+
+class BatchRefreshItemResult(BaseModel):
+    canonical_symbol: str
+    status: str           # ok | no_data | error | not_found
+    bars_added: int = 0
+    provider_used: Optional[str] = None
+    message: Optional[str] = None
+
+
+class BatchRefreshResponse(BaseModel):
+    results: list[BatchRefreshItemResult]
+    total_requested: int
+    succeeded: int
+    failed: int
+    total_bars_added: int
+    ran_at: datetime
