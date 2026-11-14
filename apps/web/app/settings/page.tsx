@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { api, type DataProvidersResponse, type CSVImportResult, type CoverageStatus, type ProviderQuotaStatus, type DataGapsStatus, type GapReportRow } from "@/lib/api";
+import { api, type DataProvidersResponse, type CSVImportResult, type CoverageStatus, type ProviderQuotaStatus, type DataGapsStatus, type GapReportRow, type HealGapsResult } from "@/lib/api";
 import { CheckCircle, XCircle, AlertCircle, RefreshCw, Database, Wifi, WifiOff, ChevronRight, Upload, ShieldCheck, Lock } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -713,6 +713,8 @@ function SeverityBadge({ severity }: { severity: GapReportRow["severity"] }) {
 function DataGapsSection() {
   const [data, setData] = useState<DataGapsStatus | null>(null);
   const [loading, setLoading] = useState(false);
+  const [healing, setHealing] = useState(false);
+  const [healResult, setHealResult] = useState<HealGapsResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   function load() {
@@ -722,6 +724,21 @@ function DataGapsSection() {
       .then(setData)
       .catch(() => setError("Gagal memuat data gap"))
       .finally(() => setLoading(false));
+  }
+
+  async function handleHeal() {
+    setHealing(true);
+    setHealResult(null);
+    setError(null);
+    try {
+      const r = await api.data.healGaps();
+      setHealResult(r);
+      load(); // refresh gap list
+    } catch {
+      setError("Gagal menjalankan auto-heal");
+    } finally {
+      setHealing(false);
+    }
   }
 
   useEffect(() => { load(); }, []);
@@ -796,6 +813,34 @@ function DataGapsSection() {
           </div>
         )}
       </div>
+
+      {healResult && (
+        <div className="bg-emerald-900/20 border border-emerald-800/40 rounded-lg px-3 py-2.5 text-xs text-emerald-300 space-y-0.5">
+          <p className="font-medium">Auto-heal selesai</p>
+          <p className="text-emerald-400/70">
+            {healResult.instruments_healed}/{healResult.instruments_found} instrumen diperbaiki
+            · {healResult.bars_added.toLocaleString()} bar ditambahkan
+          </p>
+          {healResult.errors.length > 0 && (
+            <p className="text-amber-400/70">{healResult.errors.length} error (lihat log API)</p>
+          )}
+        </div>
+      )}
+
+      {data && data.with_gaps > 0 && (
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] text-gray-500">
+            {data.with_gaps} instrumen terdeteksi gap. Re-ingest via provider gratis tersedia.
+          </p>
+          <button
+            onClick={handleHeal}
+            disabled={healing || loading}
+            className="shrink-0 text-xs px-3 py-1.5 rounded-lg bg-sky-700/30 border border-sky-600/40 text-sky-300 hover:bg-sky-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {healing ? "Memperbaiki…" : "Perbaiki Otomatis"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

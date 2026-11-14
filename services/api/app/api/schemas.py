@@ -249,6 +249,15 @@ class DataGapsResponse(BaseModel):
     ran_at: datetime
 
 
+class HealGapsResponse(BaseModel):
+    """Hasil gap auto-heal — re-ingest instrumen dengan data tidak lengkap."""
+    instruments_found: int
+    instruments_healed: int
+    bars_added: int
+    errors: list[str]
+    ran_at: datetime
+
+
 # ---------------------------------------------------------------------------
 # Market status
 # ---------------------------------------------------------------------------

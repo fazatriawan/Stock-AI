@@ -235,6 +235,14 @@ export interface DataGapsStatus {
   ran_at: string;
 }
 
+export interface HealGapsResult {
+  instruments_found: number;
+  instruments_healed: number;
+  bars_added: number;
+  errors: string[];
+  ran_at: string;
+}
+
 export interface ProviderQuotaRow {
   provider_name: string;
   calls_today: number;
@@ -1009,6 +1017,8 @@ export const api = {
     providerQuota: () => apiFetch<ProviderQuotaStatus>("/data/provider-quota"),
     gaps: (threshold = 10, minHistory = 30, limit = 50) =>
       apiFetch<DataGapsStatus>(`/data/gaps?threshold_pct=${threshold}&min_history=${minHistory}&limit=${limit}`),
+    healGaps: (threshold = 10, minHistory = 30, limit = 20) =>
+      apiFetch<HealGapsResult>(`/data/gaps/heal?threshold_pct=${threshold}&min_history=${minHistory}&limit=${limit}`, { method: "POST" }),
   },
   portfolio: {
     summary: () => apiFetch<PortfolioSummary>("/portfolio"),

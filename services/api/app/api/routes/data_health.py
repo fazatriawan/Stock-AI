@@ -13,6 +13,7 @@ from app.api.schemas import (
     DataProvidersResponse,
     FreshnessBreakdown,
     GapReportRow,
+    HealGapsResponse,
     InstrumentFreshnessResponse,
     MarkStaleResponse,
     ProviderHealthResponse,
@@ -361,6 +362,39 @@ async def get_data_gaps(
         ],
         instruments_checked=result.instruments_checked,
         with_gaps=result.with_gaps,
+        ran_at=result.ran_at,
+    )
+
+
+@router.post("/gaps/heal", response_model=HealGapsResponse)
+async def heal_gaps_endpoint(
+    threshold_pct: float = Query(default=10.0, ge=0, le=100, description="Heal instrumen dengan gap >= nilai ini (%)"),
+    min_history: int = Query(default=30, ge=1, description="Abaikan instrumen baru"),
+    limit: int = Query(default=20, ge=1, le=100, description="Maks instrumen per panggilan"),
+    db=Depends(get_db),
+) -> HealGapsResponse:
+    """
+    Deteksi gap OHLCV lalu re-ingest instrumen terburuk secara otomatis.
+
+    Menggunakan fallback chain (FREE-14) untuk mencoba semua provider gratis.
+    Force=True memastikan bar yang sebelumnya hilang akan ditulis ke DB.
+    Idempoten — bar yang sudah ada tidak digandakan.
+    """
+    from app.analytics.gap_healer import heal_data_gaps
+
+    result = await heal_data_gaps(
+        db,
+        threshold_pct=threshold_pct,
+        min_days_history=min_history,
+        limit=limit,
+    )
+    await db.commit()
+
+    return HealGapsResponse(
+        instruments_found=result.instruments_found,
+        instruments_healed=result.instruments_healed,
+        bars_added=result.bars_added,
+        errors=result.errors,
         ran_at=result.ran_at,
     )
 
