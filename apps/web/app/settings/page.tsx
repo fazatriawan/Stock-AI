@@ -1217,6 +1217,142 @@ function StaleInstrumentsSection() {
   );
 }
 
+function SectorCoverageSection() {
+  const [data, setData] = useState<import("@/lib/api").CoverageBySectorResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<"exchange" | "sector">("exchange");
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      setData(await api.data.coverageBySector());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Gagal memuat coverage data");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, []);
+
+  if (!data && !loading && !error) return null;
+
+  function freshColor(pct: number) {
+    if (pct >= 90) return "text-emerald-400";
+    if (pct >= 60) return "text-amber-400";
+    return "text-red-400";
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-gray-300">Coverage Data</h2>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded border border-gray-700/60 overflow-hidden text-[11px]">
+            {(["exchange", "sector"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`px-2 py-0.5 capitalize transition-colors ${
+                  view === v
+                    ? "bg-gray-700 text-gray-100"
+                    : "bg-gray-800/50 text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                {v === "exchange" ? "Bursa" : "Sektor"}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={load}
+            disabled={loading}
+            className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-gray-700/60 bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:border-gray-600 disabled:opacity-40 transition-colors"
+          >
+            <RefreshCw size={10} className={loading ? "animate-spin" : ""} />
+            Muat ulang
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <p className="text-xs text-red-400 px-3 py-2 rounded-lg bg-red-950/20 border border-red-800/40">{error}</p>
+      )}
+
+      {loading && !data && (
+        <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl h-24 animate-pulse" />
+      )}
+
+      {data && view === "exchange" && data.by_exchange.length > 0 && (
+        <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl overflow-hidden">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-gray-700/40">
+                <th className="text-left px-3 py-2 text-gray-500 font-normal">Bursa</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Instrumen</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Ada FRESH</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Bar FRESH</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Total Bar</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Fresh%</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.by_exchange.map((row) => (
+                <tr key={row.exchange} className="border-b border-gray-700/20 last:border-0 hover:bg-gray-700/20 transition-colors">
+                  <td className="px-3 py-2 font-mono text-gray-300">{row.exchange}</td>
+                  <td className="px-3 py-2 text-right text-gray-400">{row.total_instruments}</td>
+                  <td className="px-3 py-2 text-right text-emerald-400">{row.instruments_with_fresh}</td>
+                  <td className="px-3 py-2 text-right text-gray-400">{row.fresh_bars.toLocaleString()}</td>
+                  <td className="px-3 py-2 text-right text-gray-500">{row.total_bars.toLocaleString()}</td>
+                  <td className={`px-3 py-2 text-right font-medium ${freshColor(row.fresh_pct)}`}>
+                    {row.fresh_pct}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {data && view === "sector" && data.by_sector.length > 0 && (
+        <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl overflow-hidden">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-gray-700/40">
+                <th className="text-left px-3 py-2 text-gray-500 font-normal">Sektor</th>
+                <th className="text-left px-3 py-2 text-gray-500 font-normal">Bursa</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Instrumen</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Bar FRESH</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Total Bar</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Fresh%</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.by_sector.map((row, i) => (
+                <tr key={`${row.sector}-${row.exchange}-${i}`} className="border-b border-gray-700/20 last:border-0 hover:bg-gray-700/20 transition-colors">
+                  <td className="px-3 py-2 text-gray-300 max-w-[160px] truncate" title={row.sector}>{row.sector}</td>
+                  <td className="px-3 py-2 text-gray-500 font-mono">{row.exchange}</td>
+                  <td className="px-3 py-2 text-right text-gray-400">{row.instrument_count}</td>
+                  <td className="px-3 py-2 text-right text-gray-400">{row.fresh_bars.toLocaleString()}</td>
+                  <td className="px-3 py-2 text-right text-gray-500">{row.total_bars.toLocaleString()}</td>
+                  <td className={`px-3 py-2 text-right font-medium ${freshColor(row.fresh_pct)}`}>
+                    {row.fresh_pct}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {data && (data.by_exchange.length === 0 && data.by_sector.length === 0) && (
+        <p className="text-xs text-gray-600 px-3 py-4 text-center">Belum ada data harga di database.</p>
+      )}
+    </div>
+  );
+}
+
 function ProviderStatsSection() {
   const [data, setData] = useState<import("@/lib/api").ProviderSuccessResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -1470,6 +1606,7 @@ export default function SettingsPage() {
       <PlatformHealthWidget />
       <DataHealthSection />
       <CoverageSection />
+      <SectorCoverageSection />
       <DataGapsSection />
       <StaleInstrumentsSection />
       <ProviderQuotaSection />

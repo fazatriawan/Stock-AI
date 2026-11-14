@@ -8,8 +8,11 @@ from app.api.schemas import (
     BatchRefreshItemResult,
     BatchRefreshResponse,
     CSVImportResponse,
+    CoverageBySectorResponse,
+    ExchangeCoverageRow,
     ProviderSuccessResponse,
     ProviderSuccessRow,
+    SectorCoverageRow,
     CoverageStatusResponse,
     DataGapsResponse,
     DataHealthResponse,
@@ -508,6 +511,100 @@ async def list_stale_instruments(
         total_instruments=len(instruments),
         total_stale_bars=total_stale,
         ran_at=datetime.now(tz=timezone.utc),
+    )
+
+
+@router.get("/coverage-by-sector", response_model=CoverageBySectorResponse)
+async def get_coverage_by_sector(db=Depends(get_db)) -> CoverageBySectorResponse:
+    """
+    Breakdown kualitas data per exchange dan per sektor.
+
+    Menghitung FRESH/STALE per exchange (selalu ada) lalu per sektor
+    (NULL sektor dikumpulkan sebagai 'Unknown'). Berguna sebagai
+    drilldown dari platform health score.
+    """
+    from sqlalchemy import func, select, case
+    from app.db.models import Instrument, PriceBar
+
+    # --- Per exchange ---
+    ex_stmt = (
+        select(
+            Instrument.exchange,
+            func.count(func.distinct(Instrument.id)).label("total_instruments"),
+            func.sum(case((PriceBar.freshness_status == "FRESH", 1), else_=0)).label("fresh_bars"),
+            func.sum(case((PriceBar.freshness_status == "STALE", 1), else_=0)).label("stale_bars"),
+            func.count(PriceBar.id).label("total_bars"),
+        )
+        .join(PriceBar, PriceBar.instrument_id == Instrument.id)
+        .group_by(Instrument.exchange)
+        .order_by(func.count(func.distinct(Instrument.id)).desc())
+    )
+    ex_rows = (await db.execute(ex_stmt)).all()
+
+    # Instruments with ≥1 FRESH bar per exchange (sub-query style in Python)
+    ex_fresh_subq = (
+        select(
+            Instrument.exchange,
+            func.count(func.distinct(Instrument.id)).label("with_fresh"),
+        )
+        .join(PriceBar, PriceBar.instrument_id == Instrument.id)
+        .where(PriceBar.freshness_status == "FRESH")
+        .group_by(Instrument.exchange)
+    )
+    ex_fresh_map: dict[str, int] = {
+        row.exchange: row.with_fresh
+        for row in (await db.execute(ex_fresh_subq)).all()
+    }
+
+    by_exchange: list[ExchangeCoverageRow] = []
+    for row in ex_rows:
+        total = int(row.total_bars or 0)
+        fresh = int(row.fresh_bars or 0)
+        by_exchange.append(ExchangeCoverageRow(
+            exchange=row.exchange,
+            total_instruments=int(row.total_instruments or 0),
+            instruments_with_fresh=ex_fresh_map.get(row.exchange, 0),
+            fresh_bars=fresh,
+            stale_bars=int(row.stale_bars or 0),
+            total_bars=total,
+            fresh_pct=round(fresh / total * 100, 1) if total else 0.0,
+        ))
+
+    # --- Per sector ---
+    sec_stmt = (
+        select(
+            func.coalesce(Instrument.sector, "Unknown").label("sector"),
+            Instrument.exchange,
+            func.count(func.distinct(Instrument.id)).label("instrument_count"),
+            func.sum(case((PriceBar.freshness_status == "FRESH", 1), else_=0)).label("fresh_bars"),
+            func.sum(case((PriceBar.freshness_status == "STALE", 1), else_=0)).label("stale_bars"),
+            func.count(PriceBar.id).label("total_bars"),
+        )
+        .join(PriceBar, PriceBar.instrument_id == Instrument.id)
+        .group_by(func.coalesce(Instrument.sector, "Unknown"), Instrument.exchange)
+        .order_by(func.count(PriceBar.id).desc())
+        .limit(50)
+    )
+    sec_rows = (await db.execute(sec_stmt)).all()
+
+    by_sector: list[SectorCoverageRow] = []
+    for row in sec_rows:
+        total = int(row.total_bars or 0)
+        fresh = int(row.fresh_bars or 0)
+        by_sector.append(SectorCoverageRow(
+            sector=row.sector or "Unknown",
+            exchange=row.exchange,
+            instrument_count=int(row.instrument_count or 0),
+            fresh_bars=fresh,
+            stale_bars=int(row.stale_bars or 0),
+            total_bars=total,
+            fresh_pct=round(fresh / total * 100, 1) if total else 0.0,
+        ))
+
+    return CoverageBySectorResponse(
+        by_exchange=by_exchange,
+        by_sector=by_sector,
+        checked_at=datetime.now(tz=timezone.utc),
     )
 
 

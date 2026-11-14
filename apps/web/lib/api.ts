@@ -299,6 +299,33 @@ export interface StaleInstrumentsStatus {
   ran_at: string;
 }
 
+// FREE-27 — Coverage by sector/exchange
+export interface ExchangeCoverageRow {
+  exchange: string;
+  total_instruments: number;
+  instruments_with_fresh: number;
+  fresh_bars: number;
+  stale_bars: number;
+  total_bars: number;
+  fresh_pct: number;
+}
+
+export interface SectorCoverageRow {
+  sector: string;
+  exchange: string;
+  instrument_count: number;
+  fresh_bars: number;
+  stale_bars: number;
+  total_bars: number;
+  fresh_pct: number;
+}
+
+export interface CoverageBySectorResponse {
+  by_exchange: ExchangeCoverageRow[];
+  by_sector: SectorCoverageRow[];
+  checked_at: string;
+}
+
 // FREE-26 — Provider success rate
 export interface ProviderSuccessRow {
   provider_name: string;
@@ -1142,6 +1169,7 @@ export const api = {
     staleInstruments: (limit = 50) =>
       apiFetch<StaleInstrumentsStatus>(`/data/stale-instruments?limit=${limit}`),
     providerStats: () => apiFetch<ProviderSuccessResponse>("/data/provider-stats"),
+    coverageBySector: () => apiFetch<CoverageBySectorResponse>("/data/coverage-by-sector"),
     refreshBatch: (symbols: string[] = [], limit = 10) => {
       const params = new URLSearchParams({ limit: String(limit) });
       symbols.forEach((s) => params.append("symbols", s));

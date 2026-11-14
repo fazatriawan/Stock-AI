@@ -1775,3 +1775,33 @@ class ProviderSuccessRow(BaseModel):
 class ProviderSuccessResponse(BaseModel):
     providers: list[ProviderSuccessRow]
     as_of: datetime
+
+
+# ---------------------------------------------------------------------------
+# FREE-27: Coverage by sector/exchange
+# ---------------------------------------------------------------------------
+
+class ExchangeCoverageRow(BaseModel):
+    exchange: str
+    total_instruments: int
+    instruments_with_fresh: int
+    fresh_bars: int
+    stale_bars: int
+    total_bars: int
+    fresh_pct: float
+
+
+class SectorCoverageRow(BaseModel):
+    sector: str           # "Unknown" jika NULL
+    exchange: str
+    instrument_count: int
+    fresh_bars: int
+    stale_bars: int
+    total_bars: int
+    fresh_pct: float
+
+
+class CoverageBySectorResponse(BaseModel):
+    by_exchange: list[ExchangeCoverageRow]
+    by_sector: list[SectorCoverageRow]
+    checked_at: datetime
