@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, DatabaseZap, RefreshCw } from "lucide-react";
+import { Search, DatabaseZap, RefreshCw, Download } from "lucide-react";
 import { api, type StockOverview, type Recommendation, type InstrumentFreshness, type StockRefreshResult } from "@/lib/api";
 import { StockOverviewCard } from "@/components/stock/StockOverviewCard";
 import { RecommendationCard } from "@/components/stock/RecommendationCard";
@@ -161,6 +161,15 @@ export default function ExplorerPage() {
               <RefreshCw size={11} className={refreshing ? "animate-spin" : ""} />
               {refreshing ? "Menyegarkan…" : "Refresh Data"}
             </button>
+            <a
+              href={api.stocks.exportCsvUrl(overview.instrument.canonical_symbol)}
+              download
+              className="inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-lg border border-gray-700/60 bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:border-gray-600 transition-colors"
+              title="Unduh OHLCV sebagai CSV"
+            >
+              <Download size={11} />
+              Export CSV
+            </a>
           </div>
 
           {refreshResult && (

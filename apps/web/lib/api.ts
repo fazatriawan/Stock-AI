@@ -1076,6 +1076,8 @@ export const api = {
     analysis: (symbol: string) => apiFetch<Recommendation>(`/stocks/${symbol}/analysis`),
     refreshData: (symbol: string, daysBack = 365) =>
       apiFetch<StockRefreshResult>(`/stocks/${symbol}/data/refresh?days_back=${daysBack}`, { method: "POST" }),
+    exportCsvUrl: (symbol: string, includeStale = false) =>
+      `${API_BASE}/stocks/${symbol}/ohlcv/export?include_stale=${includeStale}`,
   },
   data: {
     health: () => apiFetch<DataHealth>("/data/health"),

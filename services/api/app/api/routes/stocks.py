@@ -6,7 +6,7 @@ from typing import Optional
 import structlog
 import pandas as pd
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -792,4 +792,58 @@ async def get_dividend_analysis(
         ],
         notes=report.notes,
         data_gaps=report.data_gaps,
+    )
+
+
+@router.get("/{symbol}/ohlcv/export")
+async def export_ohlcv_csv(
+    symbol: str,
+    start: Optional[date] = Query(None, description="Tanggal mulai (YYYY-MM-DD)"),
+    end: Optional[date] = Query(None, description="Tanggal akhir (YYYY-MM-DD)"),
+    include_stale: bool = Query(False, description="Sertakan bar STALE (default: hanya FRESH)"),
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    """
+    Export OHLCV harian sebagai file CSV.
+
+    Kolom: session_date, open, high, low, close, adj_close, volume, provider, freshness_status
+    Default hanya bar FRESH — set include_stale=true untuk menyertakan STALE.
+    """
+    instrument = await _get_instrument_or_404(symbol, db)
+
+    stmt = select(PriceBar).where(PriceBar.instrument_id == instrument.id)
+    if not include_stale:
+        stmt = stmt.where(PriceBar.freshness_status == "FRESH")
+    if start:
+        stmt = stmt.where(PriceBar.session_date >= start)
+    if end:
+        stmt = stmt.where(PriceBar.session_date <= end)
+    stmt = stmt.order_by(PriceBar.session_date.asc())
+
+    result = await db.execute(stmt)
+    bars = result.scalars().all()
+
+    # Bangun CSV secara manual — tidak memakai pandas agar tidak ada DataFrame overhead
+    lines = ["session_date,open,high,low,close,adj_close,volume,provider,freshness_status"]
+    for bar in bars:
+        lines.append(",".join([
+            str(bar.session_date),
+            str(bar.open) if bar.open is not None else "",
+            str(bar.high) if bar.high is not None else "",
+            str(bar.low) if bar.low is not None else "",
+            str(bar.close),
+            str(bar.adj_close) if bar.adj_close is not None else "",
+            str(bar.volume) if bar.volume is not None else "",
+            bar.provider,
+            bar.freshness_status,
+        ]))
+
+    csv_content = "\n".join(lines)
+    safe_symbol = symbol.replace(":", "_").replace("/", "_")
+    filename = f"{safe_symbol}_ohlcv.csv"
+
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
