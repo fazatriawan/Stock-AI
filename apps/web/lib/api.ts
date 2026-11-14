@@ -280,6 +280,25 @@ export interface MarketStatus {
   as_of: string;
 }
 
+// FREE-22 — Stale instruments list
+export interface StaleInstrumentRow {
+  instrument_id: string;
+  canonical_symbol: string;
+  exchange: string;
+  stale_count: number;
+  fresh_count: number;
+  total_count: number;
+  stale_pct: number;
+  last_fresh_date: string | null;
+}
+
+export interface StaleInstrumentsStatus {
+  instruments: StaleInstrumentRow[];
+  total_instruments: number;
+  total_stale_bars: number;
+  ran_at: string;
+}
+
 // FREE-21 — Platform health summary
 export interface PlatformHealthSummary {
   overall_score: number;
@@ -1081,6 +1100,8 @@ export const api = {
       apiFetch<DataGapsStatus>(`/data/gaps?threshold_pct=${threshold}&min_history=${minHistory}&limit=${limit}`),
     healGaps: (threshold = 10, minHistory = 30, limit = 20) =>
       apiFetch<HealGapsResult>(`/data/gaps/heal?threshold_pct=${threshold}&min_history=${minHistory}&limit=${limit}`, { method: "POST" }),
+    staleInstruments: (limit = 50) =>
+      apiFetch<StaleInstrumentsStatus>(`/data/stale-instruments?limit=${limit}`),
   },
   portfolio: {
     summary: () => apiFetch<PortfolioSummary>("/portfolio"),

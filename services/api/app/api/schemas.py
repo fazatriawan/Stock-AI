@@ -1710,3 +1710,25 @@ class PlatformHealthResponse(BaseModel):
     quota: QuotaHealthRow
     jobs: JobsHealthRow
     computed_at: datetime
+
+
+# ---------------------------------------------------------------------------
+# FREE-22 — Stale instruments list
+# ---------------------------------------------------------------------------
+
+class StaleInstrumentRow(BaseModel):
+    instrument_id: str
+    canonical_symbol: str
+    exchange: str
+    stale_count: int
+    fresh_count: int
+    total_count: int
+    stale_pct: float
+    last_fresh_date: Optional[str]
+
+
+class StaleInstrumentsResponse(BaseModel):
+    instruments: list[StaleInstrumentRow]
+    total_instruments: int
+    total_stale_bars: int
+    ran_at: datetime

@@ -21,6 +21,8 @@ from app.api.schemas import (
     ProviderQuotaRow,
     RefreshStaleResponse,
     ResetQuotaResponse,
+    StaleInstrumentRow,
+    StaleInstrumentsResponse,
 )
 from app.db.session import get_db
 from app.providers.quota_tracker import get_quota_tracker
@@ -396,6 +398,75 @@ async def heal_gaps_endpoint(
         bars_added=result.bars_added,
         errors=result.errors,
         ran_at=result.ran_at,
+    )
+
+
+@router.get("/stale-instruments")
+async def list_stale_instruments(
+    limit: int = Query(50, ge=1, le=200),
+    db=Depends(get_db),
+) -> StaleInstrumentsResponse:
+    """
+    Daftar instrumen dengan bar STALE, diurutkan berdasarkan jumlah bar stale (desc).
+    Berguna untuk melihat instrumen mana yang perlu di-refresh segera.
+    """
+    from sqlalchemy import func, select, case
+    from app.db.models import Instrument, PriceBar
+
+    stmt = (
+        select(
+            Instrument.id.label("instrument_id"),
+            Instrument.canonical_symbol,
+            Instrument.exchange,
+            func.count(PriceBar.id).label("total_count"),
+            func.sum(
+                case((PriceBar.freshness_status == "STALE", 1), else_=0)
+            ).label("stale_count"),
+            func.sum(
+                case((PriceBar.freshness_status == "FRESH", 1), else_=0)
+            ).label("fresh_count"),
+            func.max(
+                case((PriceBar.freshness_status == "FRESH", PriceBar.session_date), else_=None)
+            ).label("last_fresh_date"),
+        )
+        .join(PriceBar, PriceBar.instrument_id == Instrument.id)
+        .group_by(Instrument.id, Instrument.canonical_symbol, Instrument.exchange)
+        .having(
+            func.sum(case((PriceBar.freshness_status == "STALE", 1), else_=0)) > 0
+        )
+        .order_by(func.sum(case((PriceBar.freshness_status == "STALE", 1), else_=0)).desc())
+        .limit(limit)
+    )
+
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    instruments = []
+    total_stale = 0
+    for row in rows:
+        stale = int(row.stale_count or 0)
+        fresh = int(row.fresh_count or 0)
+        total = int(row.total_count or 0)
+        stale_pct = round(stale / total * 100, 1) if total > 0 else 0.0
+        total_stale += stale
+        instruments.append(
+            StaleInstrumentRow(
+                instrument_id=str(row.instrument_id),
+                canonical_symbol=row.canonical_symbol,
+                exchange=row.exchange,
+                stale_count=stale,
+                fresh_count=fresh,
+                total_count=total,
+                stale_pct=stale_pct,
+                last_fresh_date=str(row.last_fresh_date) if row.last_fresh_date else None,
+            )
+        )
+
+    return StaleInstrumentsResponse(
+        instruments=instruments,
+        total_instruments=len(instruments),
+        total_stale_bars=total_stale,
+        ran_at=datetime.now(tz=timezone.utc),
     )
 
 

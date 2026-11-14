@@ -1083,6 +1083,99 @@ function StatusDot({ status }: { status: string }) {
   return <span className="inline-block w-2 h-2 rounded-full bg-gray-600" />;
 }
 
+// ---------------------------------------------------------------------------
+// Stale instruments section — FREE-22
+// ---------------------------------------------------------------------------
+function StaleInstrumentsSection() {
+  const [data, setData] = useState<import("@/lib/api").StaleInstrumentsStatus | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await api.data.staleInstruments(30);
+      setData(r);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Gagal memuat daftar instrumen stale");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, []);
+
+  if (!data && !loading && !error) return null;
+  if (data && data.total_instruments === 0) return null;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-gray-300">
+          Instrumen Stale
+          {data && data.total_instruments > 0 && (
+            <span className="ml-2 text-[11px] text-amber-400 font-normal">
+              ({data.total_instruments} instrumen · {data.total_stale_bars.toLocaleString()} bar)
+            </span>
+          )}
+        </h2>
+        <button
+          onClick={load}
+          disabled={loading}
+          className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-gray-700/60 bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:border-gray-600 disabled:opacity-40 transition-colors"
+        >
+          <RefreshCw size={10} className={loading ? "animate-spin" : ""} />
+          Muat ulang
+        </button>
+      </div>
+
+      {error && (
+        <p className="text-xs text-red-400 px-3 py-2 rounded-lg bg-red-950/20 border border-red-800/40">{error}</p>
+      )}
+
+      {loading && !data && (
+        <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl h-24 animate-pulse" />
+      )}
+
+      {data && data.instruments.length > 0 && (
+        <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl overflow-hidden">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-gray-700/40">
+                <th className="text-left px-3 py-2 text-gray-500 font-normal">Ticker</th>
+                <th className="text-left px-3 py-2 text-gray-500 font-normal">Bursa</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Stale</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Total</th>
+                <th className="text-right px-3 py-2 text-gray-500 font-normal">Stale%</th>
+                <th className="text-left px-3 py-2 text-gray-500 font-normal">FRESH terakhir</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.instruments.map((row) => (
+                <tr key={row.instrument_id} className="border-b border-gray-700/20 last:border-0 hover:bg-gray-700/20 transition-colors">
+                  <td className="px-3 py-2 font-mono text-gray-300">{row.canonical_symbol}</td>
+                  <td className="px-3 py-2 text-gray-500">{row.exchange}</td>
+                  <td className="px-3 py-2 text-right text-amber-400">{row.stale_count.toLocaleString()}</td>
+                  <td className="px-3 py-2 text-right text-gray-400">{row.total_count.toLocaleString()}</td>
+                  <td className="px-3 py-2 text-right">
+                    <span className={row.stale_pct >= 50 ? "text-red-400" : "text-amber-400"}>
+                      {row.stale_pct}%
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-gray-500">
+                    {row.last_fresh_date ?? <span className="text-red-400/70">tidak ada</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SchedulerJobsSection() {
   const [status, setStatus] = useState<JobHistoryStatus | null>(null);
   const [loading, setLoading] = useState(false);
@@ -1242,6 +1335,7 @@ export default function SettingsPage() {
       <DataHealthSection />
       <CoverageSection />
       <DataGapsSection />
+      <StaleInstrumentsSection />
       <ProviderQuotaSection />
       <SchedulerJobsSection />
       <CSVImportSection />

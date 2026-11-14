@@ -163,6 +163,37 @@ async def _run_weekly_fundamental_refresh() -> None:
         _tracker().finish_run(rec, status="error", error=str(exc))
 
 
+async def _run_gap_heal() -> None:
+    """
+    Harian 03:30 WIB: auto-heal gap data setelah backup selesai (02:00).
+    Memanggil heal_data_gaps() — maks 20 instrumen per run.
+    """
+    rec = _tracker().start_run("gap_heal")
+    try:
+        from app.analytics.gap_healer import heal_data_gaps
+        from app.db.session import AsyncSessionLocal
+
+        async with AsyncSessionLocal() as db:
+            result = await heal_data_gaps(db)
+            await db.commit()
+        log.info(
+            "gap_heal_job.done",
+            instruments_found=result.instruments_found,
+            instruments_healed=result.instruments_healed,
+            bars_added=result.bars_added,
+            errors=len(result.errors),
+        )
+        _tracker().finish_run(rec, status="ok", summary={
+            "instruments_found": result.instruments_found,
+            "instruments_healed": result.instruments_healed,
+            "bars_added": result.bars_added,
+            "errors": len(result.errors),
+        })
+    except Exception as exc:
+        log.error("gap_heal_job.error", error=str(exc))
+        _tracker().finish_run(rec, status="error", error=str(exc))
+
+
 async def _run_staleness_mark() -> None:
     """
     Harian 06:30 WIB: tandai price_bars kadaluarsa sebagai STALE.
@@ -430,6 +461,17 @@ def create_scheduler() -> AsyncIOScheduler:
         misfire_grace_time=3600,
     )
 
+    # Nightly gap heal — 03:30 WIB (setelah backup 02:00 selesai)
+    _scheduler.add_job(
+        _run_gap_heal,
+        trigger=CronTrigger(hour=3, minute=30, timezone="Asia/Jakarta"),
+        id="gap_heal",
+        name="Nightly Gap Heal",
+        coalesce=True,
+        max_instances=1,
+        misfire_grace_time=3600,
+    )
+
     # Staleness marking — harian 06:30 WIB
     _scheduler.add_job(
         _run_staleness_mark,
@@ -454,7 +496,8 @@ def create_scheduler() -> AsyncIOScheduler:
 
     all_jobs = [
         "daily_backup", "health_probe", "weekly_fundamental",
-        "idx_bootstrap_check", "us_bootstrap_check", "staleness_mark", "refresh_stale",
+        "idx_bootstrap_check", "us_bootstrap_check", "gap_heal",
+        "staleness_mark", "refresh_stale",
     ]
     if settings.intraday_polling_enabled:
         all_jobs.extend(["intraday_poll", "idx_intraday_close", "us_intraday_close"])
