@@ -1805,3 +1805,68 @@ class CoverageBySectorResponse(BaseModel):
     by_exchange: list[ExchangeCoverageRow]
     by_sector: list[SectorCoverageRow]
     checked_at: datetime
+
+
+# ---------------------------------------------------------------------------
+# Financial Bundle — integrasi plugin /comps /dcf /earnings
+# ---------------------------------------------------------------------------
+
+class FinancialBundleResponse(BaseModel):
+    """Bundle lengkap data keuangan untuk analisis komparatif dan valuasi."""
+    # Identitas
+    canonical_symbol: str
+    company_name: Optional[str]
+    exchange: str
+    sector: Optional[str]
+    currency: str
+    country: str
+
+    # Harga
+    last_price: Optional[float]
+    price_date: Optional[date]
+    high_52w: Optional[float]
+    low_52w: Optional[float]
+    return_1y: Optional[float]      # pct
+    return_ytd: Optional[float]     # pct
+    beta_1y: Optional[float]        # vs JCI/SPX
+
+    # Fundamental utama
+    market_cap: Optional[float]     # dalam currency lokal
+    enterprise_value: Optional[float]
+    revenue_ttm: Optional[float]
+    ebitda_ttm: Optional[float]
+    net_income_ttm: Optional[float]
+    gross_margin: Optional[float]   # pct
+    operating_margin: Optional[float]
+    net_margin: Optional[float]
+    roe: Optional[float]
+    roa: Optional[float]
+    debt_to_equity: Optional[float]
+    current_ratio: Optional[float]
+
+    # Valuasi multiples
+    pe_ratio: Optional[float]
+    pb_ratio: Optional[float]
+    ps_ratio: Optional[float]       # EV/Revenue proxy
+    ev_ebitda: Optional[float]
+    dividend_yield: Optional[float]
+
+    # Peer comps (sorted by market_cap desc)
+    peers: list[PeerFundamentalSnapshot]
+    peer_count: int
+    sector_median_pe: Optional[float]
+    sector_median_pb: Optional[float]
+    sector_median_roe: Optional[float]
+
+    # Teknikal untuk konteks
+    rsi_14: Optional[float]
+    sma_200: Optional[float]
+    above_sma_200: Optional[bool]
+
+    # Bank-specific (IDX perbankan)
+    nim: Optional[float]
+    npl_gross: Optional[float]
+    car: Optional[float]
+
+    data_period: Optional[date]
+    as_of: datetime

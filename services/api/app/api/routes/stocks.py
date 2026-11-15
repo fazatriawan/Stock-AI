@@ -18,6 +18,7 @@ from app.api.schemas import (
     DividendPointResponse,
     DividendSustainabilityResponse,
     FeasibilityCheckResponse,
+    FinancialBundleResponse,
     FundamentalSnapshotResponse,
     IntegrityReportResponse,
     MetricConflictResponse,
@@ -846,4 +847,171 @@ async def export_ohlcv_csv(
         content=csv_content,
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/{symbol}/financial-bundle", response_model=FinancialBundleResponse)
+async def get_financial_bundle(
+    symbol: str,
+    peer_limit: int = Query(8, ge=2, le=15),
+    db: AsyncSession = Depends(get_db),
+) -> FinancialBundleResponse:
+    """
+    Bundle lengkap data keuangan untuk plugin /comps /dcf /earnings.
+    Menggabungkan: overview, fundamental, peers, dan teknikal dalam satu call.
+    """
+    import asyncio
+    from statistics import median
+
+    instrument = await _get_instrument_or_404(symbol, db)
+    today = date.today()
+
+    # Load semua data secara paralel
+    fund_task = load_fundamental_snapshot(db, instrument, today)
+    df_task = _load_price_df(instrument.id, db, days=365)
+    results = await asyncio.gather(fund_task, df_task)
+    fund_snap, df = results[0], results[1]
+
+    # Teknikal
+    tech_snap = None
+    if not df.empty:
+        tech_snap = compute_technical_snapshot(instrument.id, df, today)
+
+    # Hitung return 1y dan beta
+    return_1y: Optional[float] = None
+    beta_1y: Optional[float] = None
+    high_52w: Optional[float] = None
+    low_52w: Optional[float] = None
+    if tech_snap:
+        high_52w = tech_snap.high_52w
+        low_52w = tech_snap.low_52w
+    if not df.empty and len(df) >= 2:
+        close_col = "adj_close" if "adj_close" in df.columns else "close"
+        first_close = float(df[close_col].iloc[0])
+        last_close = float(df[close_col].iloc[-1])
+        if first_close > 0:
+            return_1y = (last_close - first_close) / first_close * 100
+
+    # Harga terakhir
+    price_result = await db.execute(
+        select(PriceBar)
+        .where(PriceBar.instrument_id == instrument.id)
+        .order_by(PriceBar.session_date.desc())
+        .limit(1)
+    )
+    last_bar = price_result.scalar_one_or_none()
+
+    # EV proxy: market_cap + debt - cash (jika ada)
+    market_cap = fund_snap.market_cap
+    debt_to_equity = fund_snap.debt_to_equity
+    enterprise_value: Optional[float] = None
+    if market_cap and debt_to_equity and fund_snap.revenue:
+        # Estimasi kasar: EV = market_cap * (1 + D/E * 0.3)
+        enterprise_value = market_cap * (1.0 + (debt_to_equity or 0) * 0.3)
+
+    # EV/EBITDA proxy
+    ev_ebitda: Optional[float] = None
+    ebitda_ttm: Optional[float] = None
+    if fund_snap.operating_margin and fund_snap.revenue:
+        ebitda_ttm = fund_snap.revenue * (fund_snap.operating_margin / 100)
+        if enterprise_value and ebitda_ttm > 0:
+            ev_ebitda = enterprise_value / ebitda_ttm
+
+    # Net margin
+    net_margin: Optional[float] = None
+    if fund_snap.net_income and fund_snap.revenue and fund_snap.revenue > 0:
+        net_margin = fund_snap.net_income / fund_snap.revenue * 100
+
+    # Peers
+    from sqlalchemy import select as sa_select
+    peer_result = await db.execute(
+        sa_select(Instrument).where(
+            Instrument.sector == instrument.sector,
+            Instrument.exchange == instrument.exchange,
+            Instrument.status == "ACTIVE",
+        ).limit(peer_limit + 1)
+    )
+    peer_instruments = list(peer_result.scalars().all())
+    peer_ids = {p.id for p in peer_instruments}
+    if instrument.id not in peer_ids:
+        peer_instruments.insert(0, instrument)
+
+    snapshots = await asyncio.gather(*[
+        load_fundamental_snapshot(db, p, today)
+        for p in peer_instruments
+    ])
+
+    peers_resp: list[PeerFundamentalSnapshot] = []
+    for inst, snap in zip(peer_instruments, snapshots):
+        peers_resp.append(PeerFundamentalSnapshot(
+            canonical_symbol=inst.canonical_symbol,
+            company_name=inst.company_name,
+            sector=inst.sector,
+            pe_ratio=snap.pe_ratio,
+            pb_ratio=snap.pb_ratio,
+            roe=snap.roe,
+            eps=snap.eps,
+            gross_margin=snap.gross_margin,
+            net_margin=getattr(snap, "net_margin", None),
+            revenue=snap.revenue,
+            net_income=snap.net_income,
+            market_cap=snap.market_cap,
+            dividend_yield=snap.dividend_yield,
+            debt_to_equity=snap.debt_to_equity,
+            nim=snap.nim,
+            npl_gross=snap.npl_gross,
+            car=snap.car,
+            data_freshness=snap.data_freshness,
+            period_end=snap.period_end,
+            is_subject=(inst.id == instrument.id),
+        ))
+
+    pe_vals = [p.pe_ratio for p in peers_resp if p.pe_ratio is not None and p.pe_ratio > 0]
+    pb_vals = [p.pb_ratio for p in peers_resp if p.pb_ratio is not None and p.pb_ratio > 0]
+    roe_vals = [p.roe for p in peers_resp if p.roe is not None]
+
+    return FinancialBundleResponse(
+        canonical_symbol=instrument.canonical_symbol,
+        company_name=instrument.company_name,
+        exchange=instrument.exchange or "",
+        sector=instrument.sector,
+        currency=instrument.currency or "IDR",
+        country=instrument.country or "ID",
+        last_price=float(last_bar.close) if last_bar else None,
+        price_date=last_bar.session_date if last_bar else None,
+        high_52w=high_52w,
+        low_52w=low_52w,
+        return_1y=return_1y,
+        return_ytd=None,
+        beta_1y=beta_1y,
+        market_cap=market_cap,
+        enterprise_value=enterprise_value,
+        revenue_ttm=fund_snap.revenue,
+        ebitda_ttm=ebitda_ttm,
+        net_income_ttm=fund_snap.net_income,
+        gross_margin=fund_snap.gross_margin,
+        operating_margin=fund_snap.operating_margin,
+        net_margin=net_margin,
+        roe=fund_snap.roe,
+        roa=None,
+        debt_to_equity=fund_snap.debt_to_equity,
+        current_ratio=None,
+        pe_ratio=fund_snap.pe_ratio,
+        pb_ratio=fund_snap.pb_ratio,
+        ps_ratio=None,
+        ev_ebitda=ev_ebitda,
+        dividend_yield=fund_snap.dividend_yield,
+        peers=peers_resp,
+        peer_count=len(peers_resp),
+        sector_median_pe=median(pe_vals) if pe_vals else None,
+        sector_median_pb=median(pb_vals) if pb_vals else None,
+        sector_median_roe=median(roe_vals) if roe_vals else None,
+        rsi_14=tech_snap.rsi_14 if tech_snap else None,
+        sma_200=tech_snap.sma_200 if tech_snap else None,
+        above_sma_200=tech_snap.above_sma_200 if tech_snap else None,
+        nim=fund_snap.nim,
+        npl_gross=fund_snap.npl_gross,
+        car=fund_snap.car,
+        data_period=fund_snap.period_end,
+        as_of=datetime.now(tz=timezone.utc),
     )
