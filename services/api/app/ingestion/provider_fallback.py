@@ -40,6 +40,10 @@ class FallbackIngestResult:
     providers_tried: list[str] = field(default_factory=list)
     fallback_used: bool = False   # True jika bukan provider pertama yang berhasil
 
+    @property
+    def bars_added(self) -> int:
+        return self.ohlcv.inserted
+
 
 async def ingest_with_fallback(
     db: AsyncSession,
