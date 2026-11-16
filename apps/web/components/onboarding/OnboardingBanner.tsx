@@ -131,8 +131,8 @@ export function OnboardingBanner() {
               key={step.id}
               className={`rounded-lg p-3.5 border transition-colors ${
                 isDone
-                  ? "border-emerald-700/40 bg-emerald-950/20"
-                  : "border-blue-700/30 bg-blue-950/20 hover:bg-blue-950/30"
+                  ? "border-emerald-700/50 bg-emerald-950/30"
+                  : "border-gray-600/50 bg-gray-800/50 hover:bg-gray-800/70"
               }`}
             >
               <div className="flex items-start gap-2.5">
@@ -142,10 +142,10 @@ export function OnboardingBanner() {
                     : <Circle size={15} className="text-blue-500/60" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-xs font-semibold ${isDone ? "text-emerald-400/70 line-through" : "text-blue-100"}`}>
+                  <p className={`text-xs font-semibold ${isDone ? "text-emerald-400/80 line-through" : "text-gray-100"}`}>
                     {i + 1}. {step.title}
                   </p>
-                  <p className="text-xs text-blue-300/60 mt-1 leading-relaxed">{step.desc}</p>
+                  <p className="text-xs text-gray-400 mt-1 leading-relaxed">{step.desc}</p>
                   {!isDone && (
                     <Link
                       href={step.href}

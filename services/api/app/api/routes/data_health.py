@@ -581,7 +581,7 @@ async def get_coverage_by_sector(db=Depends(get_db)) -> CoverageBySectorResponse
             func.count(PriceBar.id).label("total_bars"),
         )
         .join(PriceBar, PriceBar.instrument_id == Instrument.id)
-        .group_by(func.coalesce(Instrument.sector, "Unknown"), Instrument.exchange)
+        .group_by(Instrument.sector, Instrument.exchange)
         .order_by(func.count(PriceBar.id).desc())
         .limit(50)
     )

@@ -56,26 +56,30 @@ export function MarketStatusGrid() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       {statuses.map((s) => (
-        <div key={s.exchange} className="rounded-xl border border-gray-700/50 bg-gray-800/30 px-4 py-4 space-y-2.5">
+        <div key={s.exchange} className={`rounded-xl border px-4 py-4 space-y-2.5 ${
+          s.is_trading_day
+            ? "border-emerald-800/40 bg-emerald-950/10"
+            : "border-gray-700/50 bg-gray-800/30"
+        }`}>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-gray-200">{s.exchange}</span>
-            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+            <span className="text-sm font-bold text-gray-100">{s.exchange}</span>
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
               s.is_trading_day
-                ? "bg-emerald-900/40 text-emerald-400 border border-emerald-700/40"
-                : "bg-gray-700/40 text-gray-500 border border-gray-600/30"
+                ? "bg-emerald-900/50 text-emerald-300 border-emerald-700/50"
+                : "bg-gray-700/50 text-gray-400 border-gray-600/40"
             }`}>
               {s.is_trading_day ? "Hari Bursa" : "Libur"}
             </span>
           </div>
           <p className="text-xs text-gray-500">{s.timezone}</p>
           <div className="flex items-center gap-2 pt-0.5">
-            <span className={`w-1.5 h-1.5 rounded-full ${s.is_eod_data_ready ? "bg-emerald-400" : "bg-amber-400/70"}`} />
-            <span className="text-xs text-gray-400">
+            <span className={`w-2 h-2 rounded-full ${s.is_eod_data_ready ? "bg-emerald-400" : "bg-amber-400"}`} />
+            <span className="text-xs text-gray-300">
               {s.is_eod_data_ready ? "Data EOD tersedia" : "Menunggu EOD"}
             </span>
           </div>
           {s.session_date && (
-            <p className="text-[11px] text-gray-600">Sesi: {s.session_date}</p>
+            <p className="text-[11px] text-gray-500">Sesi: {s.session_date}</p>
           )}
         </div>
       ))}
