@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.db.models import Instrument, PriceBar
-from app.db.session import get_db
+from app.db.session import AsyncSessionLocal, get_db
 from app.domain.ops_monitor import build_ops_report
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -49,7 +49,7 @@ async def get_setup_status(db: AsyncSession = Depends(get_db)) -> dict:
 
 
 @router.post("/bootstrap/idx")
-async def trigger_idx_bootstrap(db: AsyncSession = Depends(get_db)) -> dict:
+async def trigger_idx_bootstrap() -> dict:
     """
     Trigger IDX full bootstrap di background (~30 menit).
     Download histori 200+ saham IDX via yfinance.
@@ -58,14 +58,15 @@ async def trigger_idx_bootstrap(db: AsyncSession = Depends(get_db)) -> dict:
     from app.ingestion.idx_full_bootstrap import run_idx_full_bootstrap
 
     async def _run() -> None:
-        await run_idx_full_bootstrap(db)
+        async with AsyncSessionLocal() as bg_db:
+            await run_idx_full_bootstrap(bg_db)
 
     asyncio.create_task(_run())
     return {"status": "triggered", "message": "IDX bootstrap berjalan di background. Cek /admin/setup-status untuk progress."}
 
 
 @router.post("/bootstrap/us")
-async def trigger_us_bootstrap(db: AsyncSession = Depends(get_db)) -> dict:
+async def trigger_us_bootstrap() -> dict:
     """
     Trigger US stocks bootstrap di background (~20 menit).
     Download histori 90 ticker US (S&P 500 pilihan + ETF) via yfinance.
@@ -74,7 +75,8 @@ async def trigger_us_bootstrap(db: AsyncSession = Depends(get_db)) -> dict:
     from app.ingestion.us_bootstrap import run_us_bootstrap
 
     async def _run() -> None:
-        await run_us_bootstrap(db)
+        async with AsyncSessionLocal() as bg_db:
+            await run_us_bootstrap(bg_db)
 
     asyncio.create_task(_run())
     return {"status": "triggered", "message": "US bootstrap berjalan di background. Cek /admin/setup-status untuk progress."}
