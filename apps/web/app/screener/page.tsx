@@ -8,7 +8,7 @@ import {
   type MultibaggerResult,
 } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
-import { Search, SlidersHorizontal, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, SlidersHorizontal, Sparkles, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 const ACTION_VARIANT: Record<string, "success" | "danger" | "warning" | "default"> = {
   BUY: "success",
@@ -33,6 +33,79 @@ const PIPELINE_LABELS: Record<string, string> = {
   EARNINGS_INFLECTION: "Earnings Inflection",
   TURNAROUND: "Turnaround",
   UNDERAPPRECIATED_CATALYST: "Underappreciated Catalyst",
+};
+
+// Narasi kualitatif per pipeline — menjelaskan "kenapa ini menarik" bukan hanya angka
+const PIPELINE_NARRATIVE: Record<string, { title: string; why: string; signal: string }> = {
+  QUALITY_COMPOUNDER: {
+    title: "Quality Compounder",
+    why: "ROE konsisten di atas rata-rata industri dengan FCF positif — bisnis yang mampu compounding sendiri tanpa terus-menerus butuh modal eksternal. Pasar biasanya memberi premium multiple yang persisten untuk kategori ini.",
+    signal: "Cocok sebagai core holding jangka panjang. Tesis kuat selama ROE tidak terdegradasi.",
+  },
+  EARNINGS_INFLECTION: {
+    title: "Earnings Inflection",
+    why: "Terjadi akselerasi pertumbuhan laba yang baru muncul dalam 1–3 tahun terakhir. Pasar sering terlambat pricing in momentum yang baru dimulai — window of opportunity biasanya ada sebelum consensus analyst update target.",
+    signal: "High conviction jika akselerasi berlanjut ke kuartal berikutnya. Watch earnings release berikutnya.",
+  },
+  TURNAROUND: {
+    title: "Turnaround",
+    why: "Valuasi tertekan sementara fundamentals (FCF, margin) mulai pulih dari titik terendah. Skenario asymmetric: downside terbatas karena sudah diharga buruk, upside besar jika recovery berlanjut.",
+    signal: "High risk, high reward. Konfirmasi butuh 2–3 kuartal berturutan sebelum ukuran posisi diperbesar.",
+  },
+  UNDERAPPRECIATED_CATALYST: {
+    title: "Underappreciated Catalyst",
+    why: "Diskon ≥20% terhadap peer dengan profitabilitas yang sebenarnya kuat — ada mismatch antara persepsi pasar dan realita bisnis. Biasanya karena liquidity rendah, coverage analyst minim, atau nama saham kurang populer.",
+    signal: "Catalyst biasanya datang dari rerating oleh analis baru atau aksi korporasi (rights issue, buyback, rights offering).",
+  },
+};
+
+// Tema struktural per sektor — berlabel jelas sebagai opini riset jangka menengah
+const SECTOR_STRUCTURAL_THEME: Record<string, { trend: string; catalyst: string; risk: string }> = {
+  Finance: {
+    trend: "Suku bunga BI tinggi menguntungkan NIM perbankan. Digitalisasi layanan keuangan (open banking, super-app) membuka revenue stream baru di luar kredit.",
+    catalyst: "Penurunan suku bunga BI (bila terjadi) akan re-rating PBV. Ekspansi ke segmen MSME dan fintech lending.",
+    risk: "Tekanan NPL jika siklus kredit memburuk. Kompetisi fintech menekan fee income.",
+  },
+  Telecoms: {
+    trend: "5G rollout IDX masih tahap awal — penetrasi rendah berarti runway panjang. Konsolidasi industri (3 operator besar) mengurangi price war yang selama ini menekan ARPU.",
+    catalyst: "Monetisasi infrastruktur pasif (menara, fiber) via spin-off. IoT enterprise sebagai engine pertumbuhan baru.",
+    risk: "Capex 5G besar menekan free cash flow jangka pendek.",
+  },
+  Technology: {
+    trend: "AI adoption enterprise dan digitalisasi UMKM mendorong demand platform SaaS lokal. Valuasi sektor ini di IDX masih compressed vs peer Asia Tenggara.",
+    catalyst: "Partnership dengan hyperscaler (AWS, Azure, GCP). Pemerintah mendorong pengadaan produk lokal (P3DN).",
+    risk: "Talent war membuat biaya SDM naik. Kompetisi dari produk global yang masuk via cloud.",
+  },
+  Energy: {
+    trend: "Hilirisasi batubara dan gas (DMO, gasifikasi) memberikan margin premium bagi produsen domestik. Transisi ke EV membuka pasar komponen baterai.",
+    catalyst: "Harga komoditas global naik (driven geopolitik). Ekspor ke pasar Asia Timur yang masih bergantung fosil.",
+    risk: "Tekanan ESG dari investor global. Regulasi transisi energi bisa memotong life-of-asset.",
+  },
+  Healthcare: {
+    trend: "Populasi aging Indonesia + ekspansi JKN memperluas addressable market. Under-penetrated vs Malaysia dan Thailand — ruang tumbuh organik masih besar.",
+    catalyst: "Kebijakan mandatory health insurance coverage yang semakin luas. Medical tourism domestik post-COVID.",
+    risk: "Ketergantungan bahan baku impor (API farmasi). Tarif BPJS yang sering ditekan.",
+  },
+  Consumer: {
+    trend: "Recovery daya beli middle class setelah tekanan inflasi 2022–2024. Urbanisasi dan pergeseran ke konsumsi branded masih berlanjut jangka panjang.",
+    catalyst: "Penurunan harga pangan (El Niño reda) memperbesar disposable income. Bonus demografi 2030.",
+    risk: "El Niño atau gangguan rantai pasok pangan bisa tekan margin. Kompetisi private label dari modern retail.",
+  },
+  Property: {
+    trend: "Backlog rumah affordable masih besar. Program 3 juta rumah pemerintah menjadi demand driver jangka menengah bagi developer mid-low.",
+    catalyst: "Penurunan suku bunga KPR. Pembangunan IKN membuka demand properti komersial di Kalimantan Timur.",
+    risk: "Tingkat suku bunga tinggi menekan affordability dan volume penjualan saat ini.",
+  },
+  Materials: {
+    trend: "Hilirisasi nikel dan bauksit — smelter domestik mendapat premium atas raw ore. Kebijakan biodiesel B40/B50 mempertahankan floor demand CPO.",
+    catalyst: "Demand baterai EV global naik — nikel dan litium menjadi critical mineral.",
+    risk: "Harga komoditas volatile bergantung demand China. Risiko over-supply smelter nikel.",
+  },
+  Industrial: {
+    trend: "Belanja infrastruktur PSN (Proyek Strategis Nasional) + IKN memberikan order visibility 3–5 tahun ke depan bagi kontraktor dan material building.",
+    catalyst: "Diversifikasi supply chain dari China mendorong FDI ke kawasan industri IDX.",
+    risk: "Keterlambatan pembayaran proyek pemerintah menekan cashflow. Risiko proyek mangkrak jika anggaran dipangkas.",
+  },
 };
 
 const SECTORS = [
@@ -95,6 +168,7 @@ export default function ScreenerPage() {
   const [mbMinTier, setMbMinTier] = useState("WEAK");
   const [mbPipelineFilter, setMbPipelineFilter] = useState("");
   const [expandedSymbol, setExpandedSymbol] = useState<string | null>(null);
+  const [sectorRotation, setSectorRotation] = useState<Record<string, { signal: string; return_1m: number | null; momentum_score: number | null }>>({});
 
   async function runScreen() {
     setLoading(true);
@@ -123,13 +197,24 @@ export default function ScreenerPage() {
     setMbError(null);
     setMbSearched(true);
     try {
-      const res = await api.screener.multibagger({
-        sector: sector || undefined,
-        exchange: exchange || undefined,
-        min_tier: mbMinTier,
-        limit: 100,
-      });
-      setMbResults(res.results);
+      const [mbRes, rotationRes] = await Promise.allSettled([
+        api.screener.multibagger({
+          sector: sector || undefined,
+          exchange: exchange || undefined,
+          min_tier: mbMinTier,
+          limit: 100,
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "/api/v1"}/screener/sectors/rotation?exchange=${exchange || "IDX"}`).then(r => r.json()),
+      ]);
+      if (mbRes.status === "fulfilled") setMbResults(mbRes.value.results);
+      else throw new Error((mbRes.reason as Error).message);
+      if (rotationRes.status === "fulfilled") {
+        const byKey: Record<string, { signal: string; return_1m: number | null; momentum_score: number | null }> = {};
+        for (const s of (rotationRes.value?.all_sectors ?? [])) {
+          byKey[s.sector] = { signal: s.signal, return_1m: s.return_1m, momentum_score: s.momentum_score };
+        }
+        setSectorRotation(byKey);
+      }
     } catch (e) {
       setMbError(e instanceof Error ? e.message : "Multibagger screener gagal");
     } finally {
@@ -150,6 +235,7 @@ export default function ScreenerPage() {
     setMbResults([]);
     setMbSearched(false);
     setMbPipelineFilter("");
+    setSectorRotation({});
   }
 
   const filteredMbResults = mbPipelineFilter
@@ -565,23 +651,74 @@ export default function ScreenerPage() {
                       </div>
                     </div>
 
-                    {/* Matched Pipelines Badges */}
-                    <div className="flex flex-wrap gap-1.5">
-                      {pipelines.length > 0 ? (
-                        pipelines.map(p => (
-                          <span
-                            key={p}
-                            className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-700/40 text-emerald-300"
-                          >
-                            {PIPELINE_LABELS[p] ?? p}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-[11px] text-slate-300">
-                          Belum memenuhi threshold pipeline spesifik
-                        </span>
-                      )}
-                    </div>
+                    {/* Matched Pipelines + narasi kualitatif */}
+                    {pipelines.length > 0 ? (
+                      <div className="space-y-2">
+                        {pipelines.map(p => {
+                          const narrative = PIPELINE_NARRATIVE[p];
+                          return (
+                            <div key={p} className="bg-emerald-950/20 border border-emerald-800/30 rounded-lg px-3 py-2.5">
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <span className="text-[11px] font-semibold text-emerald-300">
+                                  {PIPELINE_LABELS[p] ?? p}
+                                </span>
+                              </div>
+                              {narrative && (
+                                <>
+                                  <p className="text-xs text-gray-300 leading-relaxed">{narrative.why}</p>
+                                  <p className="text-xs text-sky-400 mt-1">→ {narrative.signal}</p>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <span className="text-[11px] text-slate-300">
+                        Belum memenuhi threshold pipeline spesifik
+                      </span>
+                    )}
+
+                    {/* Konteks Sektor: rotasi (data live) + tema struktural (opini riset) */}
+                    {item.sector && (
+                      <div className="bg-blue-950/20 border border-blue-800/30 rounded-lg px-3 py-2.5 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-blue-300">Konteks Sektor — {item.sector}</span>
+                          {sectorRotation[item.sector] && (() => {
+                            const rot = sectorRotation[item.sector];
+                            const isAccumulate = rot.signal === "ACCUMULATE";
+                            const isDistribute = rot.signal === "DISTRIBUTE";
+                            return (
+                              <div className="flex items-center gap-1.5 text-[11px]">
+                                {isAccumulate ? (
+                                  <><TrendingUp size={12} className="text-emerald-400" /><span className="text-emerald-400 font-medium">Rotasi Masuk</span></>
+                                ) : isDistribute ? (
+                                  <><TrendingDown size={12} className="text-red-400" /><span className="text-red-400 font-medium">Rotasi Keluar</span></>
+                                ) : (
+                                  <><Minus size={12} className="text-gray-400" /><span className="text-gray-400">Netral</span></>
+                                )}
+                                {rot.return_1m != null && (
+                                  <span className={`ml-1 ${rot.return_1m >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                                    {rot.return_1m >= 0 ? "+" : ""}{(rot.return_1m * 100).toFixed(1)}% (1M)
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                        {SECTOR_STRUCTURAL_THEME[item.sector] && (() => {
+                          const theme = SECTOR_STRUCTURAL_THEME[item.sector];
+                          return (
+                            <div className="space-y-1.5 text-xs">
+                              <p className="text-gray-300"><span className="text-sky-400 font-medium">Tren:</span> {theme.trend}</p>
+                              <p className="text-gray-300"><span className="text-emerald-400 font-medium">Katalis:</span> {theme.catalyst}</p>
+                              <p className="text-gray-400"><span className="text-amber-400 font-medium">Risiko:</span> {theme.risk}</p>
+                            </div>
+                          );
+                        })()}
+                        <p className="text-[10px] text-slate-500 italic">Rotasi: data harga aktual 90 hari. Tema: opini riset struktural, bukan sinyal trading.</p>
+                      </div>
+                    )}
 
                     {/* Strengths & Concerns */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
