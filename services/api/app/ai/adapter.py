@@ -504,3 +504,144 @@ async def enrich_with_ai(
     result.latency_ms = int((time.monotonic() - t_start) * 1000)
     verify_ai_claims(bundle, result)
     return result
+
+
+# ---------------------------------------------------------------------------
+# Screener Insight — single-pass AI explanation untuk hasil screener/multibagger
+# ---------------------------------------------------------------------------
+
+_SCREENER_INSIGHT_SYSTEM = """Kamu adalah analis riset ekuitas yang membantu menjelaskan \
+mengapa suatu saham menarik sebagai kandidat riset.
+
+ATURAN KERAS:
+1. JANGAN membuat angka harga, target price, atau valuasi baru — gunakan hanya data yang diberikan.
+2. JANGAN merekomendasikan beli/jual — ini hanya konteks riset, bukan nasihat.
+3. Fokus pada: narasi bisnis, tren struktural sektor, katalis konkret yang mungkin terjadi.
+4. Respons dalam format JSON valid."""
+
+
+def _build_screener_insight_prompt(
+    symbol: str,
+    sector: Optional[str],
+    pipelines: list[str],
+    tier: str,
+    total_score: float,
+    strengths: list[str],
+    concerns: list[str],
+    pe_ratio: Optional[float],
+    roe: Optional[float],
+    net_margin: Optional[float],
+    revenue_growth_1y: Optional[float],
+    debt_to_equity: Optional[float],
+    sector_signal: Optional[str],
+    sector_return_1m: Optional[float],
+) -> str:
+    pipelines_str = ", ".join(pipelines) if pipelines else "tidak ada pipeline spesifik"
+    strengths_str = "\n".join(f"  - {s}" for s in strengths) if strengths else "  - (tidak ada)"
+    concerns_str = "\n".join(f"  - {c}" for c in concerns) if concerns else "  - (tidak ada)"
+
+    fund_parts = []
+    if pe_ratio is not None:
+        fund_parts.append(f"PE: {pe_ratio:.1f}x")
+    if roe is not None:
+        fund_parts.append(f"ROE: {roe:.1f}%")
+    if net_margin is not None:
+        fund_parts.append(f"Net Margin: {net_margin:.1f}%")
+    if revenue_growth_1y is not None:
+        fund_parts.append(f"Revenue Growth 1Y: {revenue_growth_1y:.1f}%")
+    if debt_to_equity is not None:
+        fund_parts.append(f"DER: {debt_to_equity:.2f}x")
+    fund_str = " | ".join(fund_parts) if fund_parts else "data terbatas"
+
+    rotation_str = ""
+    if sector_signal:
+        rotation_str = f"\nRotasi sektor saat ini: {sector_signal}"
+        if sector_return_1m is not None:
+            rotation_str += f" (return 1M: {sector_return_1m*100:+.1f}%)"
+
+    return f"""Saham: {symbol}
+Sektor: {sector or "tidak diketahui"}
+Tier Multibagger: {tier} (skor {total_score:.0f}/100)
+Pipeline riset cocok: {pipelines_str}
+
+Data fundamental: {fund_str}{rotation_str}
+
+Faktor pendukung dari scoring engine:
+{strengths_str}
+
+Kekhawatiran dari scoring engine:
+{concerns_str}
+
+Berdasarkan data di atas, berikan analisis dalam format JSON:
+{{
+  "investment_thesis": "2-3 kalimat: mengapa saham ini menarik sebagai kandidat riset berdasarkan karakteristik bisnisnya",
+  "sector_trend": "1-2 kalimat: tren struktural sektor yang relevan saat ini",
+  "near_term_catalysts": ["katalis 1 yang mungkin terjadi", "katalis 2", "katalis 3"],
+  "key_risks": ["risiko 1 yang spesifik", "risiko 2"],
+  "research_priority": "HIGH/MEDIUM/LOW"
+}}"""
+
+
+async def generate_screener_insight(
+    symbol: str,
+    sector: Optional[str],
+    pipelines: list[str],
+    tier: str,
+    total_score: float,
+    strengths: list[str],
+    concerns: list[str],
+    pe_ratio: Optional[float] = None,
+    roe: Optional[float] = None,
+    net_margin: Optional[float] = None,
+    revenue_growth_1y: Optional[float] = None,
+    debt_to_equity: Optional[float] = None,
+    sector_signal: Optional[str] = None,
+    sector_return_1m: Optional[float] = None,
+    api_key: Optional[str] = None,
+    model: Optional[str] = None,
+) -> dict:
+    """Generate AI insight untuk satu saham dari hasil screener. Single-pass, ringan."""
+    block = _check_circuit_breaker()
+    if block:
+        return {"skipped": True, "reason": block}
+
+    if not api_key:
+        return {"skipped": True, "reason": "ANTHROPIC_API_KEY tidak diset"}
+
+    try:
+        import anthropic
+    except ImportError:
+        return {"skipped": True, "reason": "Package anthropic tidak terinstall"}
+
+    model_id = model or DEFAULT_MODEL
+    client = anthropic.AsyncAnthropic(api_key=api_key)
+    t_start = time.monotonic()
+
+    try:
+        resp = await client.messages.create(
+            model=model_id,
+            max_tokens=512,
+            system=_SCREENER_INSIGHT_SYSTEM,
+            messages=[{"role": "user", "content": _build_screener_insight_prompt(
+                symbol=symbol, sector=sector, pipelines=pipelines, tier=tier,
+                total_score=total_score, strengths=strengths, concerns=concerns,
+                pe_ratio=pe_ratio, roe=roe, net_margin=net_margin,
+                revenue_growth_1y=revenue_growth_1y, debt_to_equity=debt_to_equity,
+                sector_signal=sector_signal, sector_return_1m=sector_return_1m,
+            )}],
+        )
+        _budget.calls_this_hour += 1
+        _budget.tokens_this_hour += (resp.usage.input_tokens + resp.usage.output_tokens)
+        _budget.consecutive_errors = 0
+
+        raw = _extract_text(resp.content) if resp.content else ""
+        parsed = _parse_json_response(raw, {"investment_thesis", "sector_trend", "near_term_catalysts", "key_risks"})
+        parsed["latency_ms"] = int((time.monotonic() - t_start) * 1000)
+        parsed["tokens"] = resp.usage.input_tokens + resp.usage.output_tokens
+        log.info("ai.screener_insight.success", symbol=symbol, tokens=parsed["tokens"])
+        return parsed
+
+    except Exception as exc:
+        _budget.consecutive_errors += 1
+        log.error("ai.screener_insight.error", symbol=symbol, error=str(exc))
+        return {"skipped": True, "reason": f"{type(exc).__name__}: {exc}"}

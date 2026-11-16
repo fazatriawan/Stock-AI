@@ -5,6 +5,7 @@ GET /screener  → Filter saham IDX/US berdasarkan fundamental + teknikal + siny
 """
 from __future__ import annotations
 
+import os
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
@@ -424,3 +425,54 @@ async def get_sector_rotation(
             for s in report.all_sectors
         ],
     }
+
+
+# ---------------------------------------------------------------------------
+# AI Insight — penjelasan kualitatif per saham (on-demand)
+# ---------------------------------------------------------------------------
+
+from app.ai.adapter import generate_screener_insight  # noqa: E402
+from pydantic import BaseModel as PydanticBase  # noqa: E402
+
+
+class ScreenerInsightRequest(PydanticBase):
+    symbol: str
+    sector: Optional[str] = None
+    pipelines: list[str] = []
+    tier: str = "INSUFFICIENT"
+    total_score: float = 0.0
+    strengths: list[str] = []
+    concerns: list[str] = []
+    pe_ratio: Optional[float] = None
+    roe: Optional[float] = None
+    net_margin: Optional[float] = None
+    revenue_growth_1y: Optional[float] = None
+    debt_to_equity: Optional[float] = None
+    sector_signal: Optional[str] = None
+    sector_return_1m: Optional[float] = None
+
+
+@router.post("/insight", response_model=dict)
+async def get_screener_insight(body: ScreenerInsightRequest) -> dict:
+    """
+    Generate AI insight on-demand untuk satu saham dari hasil screener/multibagger.
+    Panggil per saham saat user klik tombol "Analisis AI".
+    """
+    result = await generate_screener_insight(
+        symbol=body.symbol,
+        sector=body.sector,
+        pipelines=body.pipelines,
+        tier=body.tier,
+        total_score=body.total_score,
+        strengths=body.strengths,
+        concerns=body.concerns,
+        pe_ratio=body.pe_ratio,
+        roe=body.roe,
+        net_margin=body.net_margin,
+        revenue_growth_1y=body.revenue_growth_1y,
+        debt_to_equity=body.debt_to_equity,
+        sector_signal=body.sector_signal,
+        sector_return_1m=body.sector_return_1m,
+        api_key=os.getenv("ANTHROPIC_API_KEY"),
+    )
+    return result

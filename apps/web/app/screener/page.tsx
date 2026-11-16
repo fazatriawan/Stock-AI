@@ -8,7 +8,19 @@ import {
   type MultibaggerResult,
 } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
-import { Search, SlidersHorizontal, Sparkles, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Search, SlidersHorizontal, Sparkles, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, Bot, Loader2 } from "lucide-react";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
+
+interface AiInsight {
+  investment_thesis?: string;
+  sector_trend?: string;
+  near_term_catalysts?: string[];
+  key_risks?: string[];
+  research_priority?: string;
+  skipped?: boolean;
+  reason?: string;
+}
 
 const ACTION_VARIANT: Record<string, "success" | "danger" | "warning" | "default"> = {
   BUY: "success",
@@ -169,6 +181,42 @@ export default function ScreenerPage() {
   const [mbPipelineFilter, setMbPipelineFilter] = useState("");
   const [expandedSymbol, setExpandedSymbol] = useState<string | null>(null);
   const [sectorRotation, setSectorRotation] = useState<Record<string, { signal: string; return_1m: number | null; momentum_score: number | null }>>({});
+  const [aiInsights, setAiInsights] = useState<Record<string, AiInsight>>({});
+  const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({});
+
+  async function fetchAiInsight(item: MultibaggerResult, rot?: { signal: string; return_1m: number | null }) {
+    const key = item.canonical_symbol;
+    if (aiInsights[key] || aiLoading[key]) return;
+    setAiLoading(prev => ({ ...prev, [key]: true }));
+    try {
+      const res = await fetch(`${API_BASE}/screener/insight`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symbol: item.canonical_symbol,
+          sector: item.sector,
+          pipelines: item.score.pipelines_matched ?? [],
+          tier: item.score.tier,
+          total_score: item.score.total_score,
+          strengths: item.score.strengths ?? [],
+          concerns: item.score.concerns ?? [],
+          pe_ratio: item.pe_ratio,
+          roe: item.roe,
+          net_margin: item.net_margin,
+          revenue_growth_1y: item.revenue_growth_1y,
+          debt_to_equity: item.debt_to_equity,
+          sector_signal: rot?.signal ?? null,
+          sector_return_1m: rot?.return_1m ?? null,
+        }),
+      });
+      const data: AiInsight = await res.json();
+      setAiInsights(prev => ({ ...prev, [key]: data }));
+    } catch {
+      setAiInsights(prev => ({ ...prev, [key]: { skipped: true, reason: "Gagal menghubungi AI" } }));
+    } finally {
+      setAiLoading(prev => ({ ...prev, [key]: false }));
+    }
+  }
 
   async function runScreen() {
     setLoading(true);
@@ -719,6 +767,76 @@ export default function ScreenerPage() {
                         <p className="text-[10px] text-slate-500 italic">Rotasi: data harga aktual 90 hari. Tema: opini riset struktural, bukan sinyal trading.</p>
                       </div>
                     )}
+
+                    {/* AI Insight — on demand */}
+                    {(() => {
+                      const key = item.canonical_symbol;
+                      const insight = aiInsights[key];
+                      const loading = aiLoading[key];
+                      const rot = item.sector ? sectorRotation[item.sector] : undefined;
+                      const priorityColor = insight?.research_priority === "HIGH"
+                        ? "text-emerald-400" : insight?.research_priority === "MEDIUM"
+                          ? "text-amber-400" : "text-gray-400";
+                      return (
+                        <div>
+                          {!insight && (
+                            <button
+                              onClick={() => fetchAiInsight(item, rot)}
+                              disabled={loading}
+                              className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 disabled:opacity-50 transition-colors"
+                            >
+                              {loading
+                                ? <><Loader2 size={13} className="animate-spin" />Menganalisis...</>
+                                : <><Bot size={13} />Analisis AI</>}
+                            </button>
+                          )}
+                          {insight && !insight.skipped && (
+                            <div className="bg-purple-950/20 border border-purple-800/30 rounded-lg px-3 py-2.5 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-semibold text-purple-300 flex items-center gap-1.5">
+                                  <Bot size={12} /> Analisis AI
+                                </span>
+                                {insight.research_priority && (
+                                  <span className={`text-[11px] font-medium ${priorityColor}`}>
+                                    Prioritas Riset: {insight.research_priority}
+                                  </span>
+                                )}
+                              </div>
+                              {insight.investment_thesis && (
+                                <p className="text-xs text-gray-200 leading-relaxed">{insight.investment_thesis}</p>
+                              )}
+                              {insight.sector_trend && (
+                                <p className="text-xs text-sky-300"><span className="font-medium">Tren sektor:</span> {insight.sector_trend}</p>
+                              )}
+                              {insight.near_term_catalysts && insight.near_term_catalysts.length > 0 && (
+                                <div>
+                                  <p className="text-[11px] font-medium text-emerald-400 mb-1">Katalis potensial:</p>
+                                  <ul className="space-y-0.5">
+                                    {insight.near_term_catalysts.map((c, i) => (
+                                      <li key={i} className="text-xs text-gray-300 flex gap-1.5"><span className="text-emerald-500 mt-px">•</span>{c}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {insight.key_risks && insight.key_risks.length > 0 && (
+                                <div>
+                                  <p className="text-[11px] font-medium text-amber-400 mb-1">Risiko kunci:</p>
+                                  <ul className="space-y-0.5">
+                                    {insight.key_risks.map((r, i) => (
+                                      <li key={i} className="text-xs text-gray-400 flex gap-1.5"><span className="text-amber-500 mt-px">•</span>{r}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              <p className="text-[10px] text-slate-500 italic">Dihasilkan AI dari data terverifikasi. Bukan nasihat investasi.</p>
+                            </div>
+                          )}
+                          {insight?.skipped && (
+                            <p className="text-xs text-red-400">AI tidak tersedia: {insight.reason}</p>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Strengths & Concerns */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
