@@ -294,7 +294,7 @@ async def get_analysis(
                 Instrument.sector == instrument.sector,
                 Instrument.exchange == instrument.exchange,
                 Instrument.id != instrument.id,
-                Instrument.status == "active",
+                Instrument.status == "ACTIVE",
             ).limit(10)
         )
         _peer_instruments = list(_peer_result.scalars().all())
@@ -913,7 +913,7 @@ async def get_financial_bundle(
     ev_ebitda: Optional[float] = None
     ebitda_ttm: Optional[float] = None
     if fund_snap.operating_margin and fund_snap.revenue:
-        ebitda_ttm = fund_snap.revenue * (fund_snap.operating_margin / 100)
+        ebitda_ttm = fund_snap.revenue * fund_snap.operating_margin
         if enterprise_value and ebitda_ttm > 0:
             ev_ebitda = enterprise_value / ebitda_ttm
 
@@ -924,14 +924,16 @@ async def get_financial_bundle(
 
     # Peers
     from sqlalchemy import select as sa_select
-    peer_result = await db.execute(
-        sa_select(Instrument).where(
-            Instrument.sector == instrument.sector,
-            Instrument.exchange == instrument.exchange,
-            Instrument.status == "ACTIVE",
-        ).limit(peer_limit + 1)
-    )
-    peer_instruments = list(peer_result.scalars().all())
+    peer_instruments: list = []
+    if instrument.sector:
+        peer_result = await db.execute(
+            sa_select(Instrument).where(
+                Instrument.sector == instrument.sector,
+                Instrument.exchange == instrument.exchange,
+                Instrument.status == "ACTIVE",
+            ).limit(peer_limit + 1)
+        )
+        peer_instruments = list(peer_result.scalars().all())
     peer_ids = {p.id for p in peer_instruments}
     if instrument.id not in peer_ids:
         peer_instruments.insert(0, instrument)

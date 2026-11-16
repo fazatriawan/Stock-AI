@@ -179,7 +179,7 @@ def _make_fundamental_snap(symbol: str = "BBCA") -> MagicMock:
     snap.dividend_yield = 3.5
     snap.debt_to_equity = 5.8
     snap.gross_margin = None
-    snap.operating_margin = 32.0
+    snap.operating_margin = 0.32
     snap.nim = 5.5
     snap.npl_gross = 1.5
     snap.car = 23.0
@@ -264,8 +264,8 @@ class TestFinancialBundleEndpoint:
              patch("app.api.routes.stocks._load_price_df", new=AsyncMock(return_value=pd.DataFrame())):
             resp = await get_financial_bundle("BBCA", peer_limit=3, db=db)
 
-        # ebitda_ttm = revenue * operating_margin / 100
-        expected_ebitda = fund_snap.revenue * fund_snap.operating_margin / 100
+        # ebitda_ttm = revenue * operating_margin (ratio, 0-1)
+        expected_ebitda = fund_snap.revenue * fund_snap.operating_margin
         assert resp.ebitda_ttm == pytest.approx(expected_ebitda, rel=0.01)
         assert resp.enterprise_value is not None
 

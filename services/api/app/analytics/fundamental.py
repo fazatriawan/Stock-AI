@@ -117,7 +117,7 @@ async def load_fundamental_snapshot(
         if field_name and fact.value is not None:
             value = float(fact.value)
             # DIVIDEND_YIELD tersimpan dalam format persen (7.87), normalisasi ke desimal (0.0787)
-            if metric == "DIVIDEND_YIELD" and value > 1.0:
+            if metric == "DIVIDEND_YIELD" and value >= 1.0:
                 value = value / 100.0
             setattr(snap, field_name, value)
             snap.metrics_available.append(metric)
