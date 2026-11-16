@@ -275,6 +275,7 @@ export interface MarketStatus {
   exchange: string;
   timezone: string;
   is_trading_day: boolean;
+  is_market_open: boolean;
   is_eod_data_ready: boolean;
   session_date: string;
   as_of: string;

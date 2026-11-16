@@ -73,9 +73,19 @@ export function MarketStatusGrid() {
           </div>
           <p className="text-xs text-slate-300">{s.timezone}</p>
           <div className="flex items-center gap-2 pt-0.5">
-            <span className={`w-2 h-2 rounded-full ${s.is_eod_data_ready ? "bg-emerald-400" : "bg-amber-400"}`} />
+            <span className={`w-2 h-2 rounded-full ${
+              s.is_eod_data_ready
+                ? "bg-emerald-400"
+                : s.is_market_open
+                  ? "bg-green-400 animate-pulse"
+                  : "bg-amber-400"
+            }`} />
             <span className="text-xs text-gray-300">
-              {s.is_eod_data_ready ? "Data EOD tersedia" : "Menunggu EOD"}
+              {s.is_eod_data_ready
+                ? "Data EOD tersedia"
+                : s.is_market_open
+                  ? "Pasar Buka"
+                  : "Menunggu EOD"}
             </span>
           </div>
           {s.session_date && (

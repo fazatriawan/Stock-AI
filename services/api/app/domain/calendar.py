@@ -60,6 +60,19 @@ class MarketCalendar:
             nxt += timedelta(days=1)
         return nxt
 
+    def is_market_open(self, now: datetime | None = None) -> bool:
+        """Apakah bursa sedang buka saat ini (dalam jam perdagangan)."""
+        if now is None:
+            now = datetime.now(tz=self.tz)
+        local = now.astimezone(self.tz)
+        if not self.is_trading_day(local.date()):
+            return False
+        open_h, open_m = self.config["open_time"]
+        close_h, close_m = self.config["close_time"]
+        open_dt = local.replace(hour=open_h, minute=open_m, second=0, microsecond=0)
+        close_dt = local.replace(hour=close_h, minute=close_m, second=0, microsecond=0)
+        return open_dt <= local < close_dt
+
     def is_eod_data_ready(self, session_date: date, now: datetime | None = None) -> bool:
         """
         Apakah data EOD untuk session_date sudah tersedia di sumber?

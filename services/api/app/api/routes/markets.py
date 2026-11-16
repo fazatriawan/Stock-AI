@@ -20,6 +20,7 @@ async def get_market_status() -> list[MarketStatusResponse]:
             exchange=exchange,
             timezone=EXCHANGE_CONFIG[exchange]["timezone"],
             is_trading_day=cal.is_trading_day(today),
+            is_market_open=cal.is_market_open(now),
             is_eod_data_ready=cal.is_eod_data_ready(today, now),
             session_date=today,
             as_of=now,

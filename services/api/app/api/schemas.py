@@ -266,6 +266,7 @@ class MarketStatusResponse(BaseModel):
     exchange: str
     timezone: str
     is_trading_day: bool
+    is_market_open: bool
     is_eod_data_ready: bool
     session_date: date
     as_of: datetime
