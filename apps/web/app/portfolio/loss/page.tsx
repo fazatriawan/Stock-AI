@@ -37,7 +37,7 @@ function ScenarioCard({ scenario, isSuggested }: { scenario: LossScenario; isSug
         </div>
         <div className="flex items-center gap-3">
           <Badge variant={RISK_BADGES[scenario.risk_level]}>Risiko {scenario.risk_level === "LOW" ? "Rendah" : scenario.risk_level === "MEDIUM" ? "Sedang" : "Tinggi"}</Badge>
-          {expanded ? <ChevronUp size={14} className="text-gray-500" /> : <ChevronDown size={14} className="text-gray-500" />}
+          {expanded ? <ChevronUp size={14} className="text-slate-300" /> : <ChevronDown size={14} className="text-slate-300" />}
         </div>
       </button>
 
@@ -48,17 +48,17 @@ function ScenarioCard({ scenario, isSuggested }: { scenario: LossScenario; isSug
           <div className="grid grid-cols-2 gap-3 text-xs">
             {scenario.projected_loss_idr !== 0 && (
               <div>
-                <p className="text-gray-500">Realisasi kerugian</p>
+                <p className="text-slate-300">Realisasi kerugian</p>
                 <p className="text-red-400 font-medium">{formatCurrency(scenario.projected_loss_idr)}</p>
               </div>
             )}
             <div>
-              <p className="text-gray-500">Sisa eksposur</p>
+              <p className="text-slate-300">Sisa eksposur</p>
               <p className="text-gray-300 font-medium">{formatCurrency(scenario.remaining_exposure_idr)}</p>
             </div>
             {scenario.breakeven_price !== null && (
               <div>
-                <p className="text-gray-500">Harga impas</p>
+                <p className="text-slate-300">Harga impas</p>
                 <p className="text-gray-300 font-medium">{formatCurrency(scenario.breakeven_price)}</p>
               </div>
             )}
@@ -68,7 +68,7 @@ function ScenarioCard({ scenario, isSuggested }: { scenario: LossScenario; isSug
             <div className="space-y-1">
               <p className="text-xs font-medium text-emerald-500">Kelebihan</p>
               {scenario.pros.map((p, i) => (
-                <p key={i} className="text-xs text-gray-500 flex gap-1">
+                <p key={i} className="text-xs text-slate-300 flex gap-1">
                   <span className="text-emerald-700">+</span>{p}
                 </p>
               ))}
@@ -76,7 +76,7 @@ function ScenarioCard({ scenario, isSuggested }: { scenario: LossScenario; isSug
             <div className="space-y-1">
               <p className="text-xs font-medium text-red-500">Kekurangan</p>
               {scenario.cons.map((c, i) => (
-                <p key={i} className="text-xs text-gray-500 flex gap-1">
+                <p key={i} className="text-xs text-slate-300 flex gap-1">
                   <span className="text-red-700">−</span>{c}
                 </p>
               ))}
@@ -99,7 +99,7 @@ function LossPositionCard({ position }: { position: LossPosition }) {
           <div>
             <CardTitle className="text-base text-gray-100">{ticker}</CardTitle>
             {position.company_name && (
-              <p className="text-xs text-gray-500 mt-0.5">{position.company_name}</p>
+              <p className="text-xs text-slate-300 mt-0.5">{position.company_name}</p>
             )}
           </div>
           <div className="text-right">
@@ -114,34 +114,34 @@ function LossPositionCard({ position }: { position: LossPosition }) {
         {/* Stats grid */}
         <div className="grid grid-cols-3 gap-3 text-xs">
           <div>
-            <p className="text-gray-500">Avg cost</p>
+            <p className="text-slate-300">Avg cost</p>
             <p className="text-gray-300">{formatCurrency(position.avg_cost)}</p>
           </div>
           <div>
-            <p className="text-gray-500">Harga saat ini</p>
+            <p className="text-slate-300">Harga saat ini</p>
             <p className="text-gray-300">{formatCurrency(position.current_price)}</p>
           </div>
           <div>
-            <p className="text-gray-500">Lot / Saham</p>
+            <p className="text-slate-300">Lot / Saham</p>
             <p className="text-gray-300">{position.lots} / {position.shares.toLocaleString()}</p>
           </div>
           <div>
-            <p className="text-gray-500">Modal</p>
+            <p className="text-slate-300">Modal</p>
             <p className="text-gray-300">{formatCurrency(position.total_cost)}</p>
           </div>
           <div>
-            <p className="text-gray-500">Nilai pasar</p>
+            <p className="text-slate-300">Nilai pasar</p>
             <p className="text-gray-300">{formatCurrency(position.market_value)}</p>
           </div>
           <div>
-            <p className="text-gray-500">Rugi (IDR)</p>
+            <p className="text-slate-300">Rugi (IDR)</p>
             <p className="text-red-400">{formatCurrency(position.unrealized_pnl)}</p>
           </div>
         </div>
 
         {/* Saran */}
         <div className="rounded-lg bg-blue-950/20 border border-blue-800/30 px-3 py-2.5">
-          <p className="text-xs text-gray-500 mb-1">Skenario disarankan</p>
+          <p className="text-xs text-slate-300 mb-1">Skenario disarankan</p>
           <p className="text-xs font-medium text-blue-300">{position.suggested_reason}</p>
         </div>
 
@@ -201,18 +201,18 @@ export default function LossAnalyzerPage() {
     <div className="p-6 space-y-6 max-w-4xl">
       <div>
         <h1 className="text-lg font-semibold text-gray-100">Loss Analyzer</h1>
-        <p className="text-xs text-gray-500 mt-0.5">Analisis posisi rugi dengan 5 skenario aksi deterministik</p>
+        <p className="text-xs text-slate-300 mt-0.5">Analisis posisi rugi dengan 5 skenario aksi deterministik</p>
       </div>
 
       {/* Summary */}
       {data.total_loss_positions > 0 && (
         <div className="flex gap-4">
           <div className="bg-red-900/20 border border-red-800/30 rounded-lg p-4 flex-1 text-center">
-            <p className="text-xs text-gray-500">Posisi Rugi</p>
+            <p className="text-xs text-slate-300">Posisi Rugi</p>
             <p className="text-2xl font-bold text-red-400">{data.total_loss_positions}</p>
           </div>
           <div className="bg-red-900/20 border border-red-800/30 rounded-lg p-4 flex-1 text-center">
-            <p className="text-xs text-gray-500">Total Unrealized Loss</p>
+            <p className="text-xs text-slate-300">Total Unrealized Loss</p>
             <p className="text-xl font-bold text-red-400">{formatCurrency(data.total_unrealized_loss_idr)}</p>
           </div>
         </div>
@@ -222,7 +222,7 @@ export default function LossAnalyzerPage() {
         <div className="rounded-xl border border-emerald-800/30 bg-emerald-900/10 p-8 text-center">
           <TrendingDown size={32} className="mx-auto text-emerald-400 mb-3" />
           <p className="text-sm font-medium text-emerald-300">Tidak ada posisi rugi signifikan</p>
-          <p className="text-xs text-gray-500 mt-1">Semua posisi rugi &lt;5% atau tidak memiliki data harga terkini</p>
+          <p className="text-xs text-slate-300 mt-1">Semua posisi rugi &lt;5% atau tidak memiliki data harga terkini</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -232,7 +232,7 @@ export default function LossAnalyzerPage() {
         </div>
       )}
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-slate-300">
         Skenario dihitung dari data posisi saat ini. Ini bukan nasihat investasi.
         Keputusan jual/beli sepenuhnya menjadi tanggung jawab pengguna.
       </p>

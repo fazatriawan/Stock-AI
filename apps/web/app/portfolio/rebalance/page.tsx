@@ -30,7 +30,7 @@ function AllocationRow({ a }: { a: TargetAllocation }) {
     <tr className="border-b border-gray-800/50 hover:bg-gray-800/20">
       <td className="py-3 px-4">
         <p className="text-sm font-medium text-gray-200">{ticker}</p>
-        {a.company_name && <p className="text-xs text-gray-500 truncate max-w-[120px]">{a.company_name}</p>}
+        {a.company_name && <p className="text-xs text-slate-300 truncate max-w-[120px]">{a.company_name}</p>}
       </td>
       <td className="py-3 px-4 text-center">
         <Badge variant={style.badge} className="gap-1">
@@ -41,22 +41,22 @@ function AllocationRow({ a }: { a: TargetAllocation }) {
       <td className="py-3 px-4 text-right">
         <div>
           <span className="text-xs text-gray-400">{(a.current_weight * 100).toFixed(1)}%</span>
-          <span className="text-xs text-gray-500 mx-1">→</span>
+          <span className="text-xs text-slate-300 mx-1">→</span>
           <span className="text-xs text-gray-200">{(a.target_weight * 100).toFixed(1)}%</span>
         </div>
-        <div className={`text-xs ${weightDelta > 0 ? "text-emerald-500" : weightDelta < 0 ? "text-red-500" : "text-gray-500"}`}>
+        <div className={`text-xs ${weightDelta > 0 ? "text-emerald-500" : weightDelta < 0 ? "text-red-500" : "text-slate-300"}`}>
           {weightDelta !== 0 ? `${weightDelta > 0 ? "+" : ""}${(weightDelta * 100).toFixed(1)}%` : ""}
         </div>
       </td>
       <td className="py-3 px-4 text-right">
-        <p className={`text-sm font-medium ${a.delta_lots > 0 ? "text-emerald-400" : a.delta_lots < 0 ? "text-red-400" : "text-gray-500"}`}>
+        <p className={`text-sm font-medium ${a.delta_lots > 0 ? "text-emerald-400" : a.delta_lots < 0 ? "text-red-400" : "text-slate-300"}`}>
           {formatLots(a.delta_lots)}
         </p>
         {a.delta_value !== 0 && (
-          <p className="text-xs text-gray-500">{formatCurrency(Math.abs(a.delta_value))}</p>
+          <p className="text-xs text-slate-300">{formatCurrency(Math.abs(a.delta_value))}</p>
         )}
       </td>
-      <td className="py-3 px-4 text-xs text-gray-500 max-w-[200px]">{a.note}</td>
+      <td className="py-3 px-4 text-xs text-slate-300 max-w-[200px]">{a.note}</td>
     </tr>
   );
 }
@@ -98,7 +98,7 @@ export default function RebalancePage() {
     <div className="p-6 space-y-6 max-w-4xl">
       <div>
         <h1 className="text-lg font-semibold text-gray-100">Rebalance Simulator</h1>
-        <p className="text-xs text-gray-500 mt-0.5">Simulasi alokasi modal — tidak ada transaksi nyata yang dieksekusi</p>
+        <p className="text-xs text-slate-300 mt-0.5">Simulasi alokasi modal — tidak ada transaksi nyata yang dieksekusi</p>
       </div>
 
       {/* Mode selector + input */}
@@ -111,7 +111,7 @@ export default function RebalancePage() {
               className={`px-4 py-2 rounded-lg text-sm transition-colors ${
                 mode === "equal_weight"
                   ? "bg-blue-900/40 border border-blue-700/40 text-blue-300"
-                  : "text-gray-500 hover:text-gray-300"
+                  : "text-slate-300 hover:text-gray-300"
               }`}
             >
               Equal Weight
@@ -121,14 +121,14 @@ export default function RebalancePage() {
               className={`px-4 py-2 rounded-lg text-sm transition-colors ${
                 mode === "capital_plan"
                   ? "bg-blue-900/40 border border-blue-700/40 text-blue-300"
-                  : "text-gray-500 hover:text-gray-300"
+                  : "text-slate-300 hover:text-gray-300"
               }`}
             >
               Alokasi Modal Baru
             </button>
           </div>
 
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-slate-300">
             {mode === "equal_weight"
               ? "Simulasikan rebalancing ke bobot equal-weight (1/n per saham). Tambahkan modal baru opsional."
               : "Rencanakan cara mengalokasikan modal baru ke posisi yang underweight."}
@@ -141,7 +141,7 @@ export default function RebalancePage() {
                 {mode === "equal_weight" ? "Modal tambahan (opsional)" : "Modal baru (wajib)"}
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-xs text-gray-500">Rp</span>
+                <span className="absolute left-3 top-2.5 text-xs text-slate-300">Rp</span>
                 <input
                   type="text"
                   value={newCapital}
@@ -170,21 +170,21 @@ export default function RebalancePage() {
           {/* Summary stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div className="bg-gray-800/50 rounded-lg p-3 text-center">
-              <p className="text-gray-500">Total Nilai</p>
+              <p className="text-slate-300">Total Nilai</p>
               <p className="text-gray-200 font-medium">{formatCurrency(simulation.total_portfolio_value)}</p>
             </div>
             <div className="bg-emerald-900/20 rounded-lg p-3 text-center">
-              <p className="text-gray-500">Beli</p>
+              <p className="text-slate-300">Beli</p>
               <p className="text-emerald-400 font-medium">{simulation.buy_actions} aksi</p>
               <p className="text-emerald-600">{formatCurrency(simulation.total_buy_value)}</p>
             </div>
             <div className="bg-red-900/20 rounded-lg p-3 text-center">
-              <p className="text-gray-500">Jual</p>
+              <p className="text-slate-300">Jual</p>
               <p className="text-red-400 font-medium">{simulation.sell_actions} aksi</p>
               <p className="text-red-600">{formatCurrency(simulation.total_sell_value)}</p>
             </div>
             <div className={`rounded-lg p-3 text-center ${simulation.net_cash_needed > 0 ? "bg-amber-900/20" : "bg-gray-800/50"}`}>
-              <p className="text-gray-500">{simulation.net_cash_needed > 0 ? "Modal Dibutuhkan" : "Sisa Kas"}</p>
+              <p className="text-slate-300">{simulation.net_cash_needed > 0 ? "Modal Dibutuhkan" : "Sisa Kas"}</p>
               <p className={`font-medium ${simulation.net_cash_needed > 0 ? "text-amber-400" : "text-gray-300"}`}>
                 {formatCurrency(Math.abs(simulation.net_cash_needed))}
               </p>
@@ -196,7 +196,7 @@ export default function RebalancePage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-gray-800 text-gray-500">
+                    <tr className="border-b border-gray-800 text-slate-300">
                       <th className="py-2.5 px-4 text-left">Saham</th>
                       <th className="py-2.5 px-4 text-center">Aksi</th>
                       <th className="py-2.5 px-4 text-right">Saat ini</th>
@@ -216,8 +216,8 @@ export default function RebalancePage() {
           </Card>
 
           <div className="flex items-start gap-2 rounded-lg bg-gray-800/30 border border-gray-700/30 px-4 py-3">
-            <Info size={13} className="text-gray-500 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-gray-500">{simulation.disclaimer}</p>
+            <Info size={13} className="text-slate-300 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-slate-300">{simulation.disclaimer}</p>
           </div>
         </div>
       )}
@@ -227,11 +227,11 @@ export default function RebalancePage() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div className="bg-blue-900/20 rounded-lg p-3 text-center">
-              <p className="text-gray-500">Modal Dialokasikan</p>
+              <p className="text-slate-300">Modal Dialokasikan</p>
               <p className="text-blue-300 font-medium">{formatCurrency(capitalPlan.new_capital)}</p>
             </div>
             <div className="bg-gray-800/50 rounded-lg p-3 text-center">
-              <p className="text-gray-500">Saran Posisi</p>
+              <p className="text-slate-300">Saran Posisi</p>
               <p className="text-gray-200 font-medium">{capitalPlan.suggestions.length}</p>
             </div>
           </div>
@@ -250,38 +250,38 @@ export default function RebalancePage() {
                 <div key={s.canonical_symbol} className="rounded-lg border border-gray-700/40 bg-gray-800/20 px-4 py-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-500 w-5 text-right">{s.priority}</span>
+                      <span className="text-xs text-slate-300 w-5 text-right">{s.priority}</span>
                       <div>
                         <p className="text-sm font-medium text-gray-200">{ticker}</p>
-                        {s.company_name && <p className="text-xs text-gray-500">{s.company_name}</p>}
+                        {s.company_name && <p className="text-xs text-slate-300">{s.company_name}</p>}
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-emerald-400">+{s.suggested_lots} lot</p>
-                      <p className="text-xs text-gray-500">{formatCurrency(s.suggested_new_amount)}</p>
+                      <p className="text-xs text-slate-300">{formatCurrency(s.suggested_new_amount)}</p>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1.5 ml-8">{s.rationale}</p>
+                  <p className="text-xs text-slate-300 mt-1.5 ml-8">{s.rationale}</p>
                 </div>
               );
             })}
             {capitalPlan.suggestions.length === 0 && (
-              <p className="text-xs text-gray-500 text-center py-4">
+              <p className="text-xs text-slate-300 text-center py-4">
                 Semua posisi sudah mendekati equal-weight — tidak ada saran alokasi spesifik
               </p>
             )}
           </div>
 
           <div className="flex items-start gap-2 rounded-lg bg-gray-800/30 border border-gray-700/30 px-4 py-3">
-            <Info size={13} className="text-gray-500 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-gray-500">{capitalPlan.disclaimer}</p>
+            <Info size={13} className="text-slate-300 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-slate-300">{capitalPlan.disclaimer}</p>
           </div>
         </div>
       )}
 
       {/* Empty state */}
       {!simulation && !capitalPlan && !loading && (
-        <div className="text-center py-12 text-gray-500 text-sm">
+        <div className="text-center py-12 text-slate-300 text-sm">
           Pilih mode dan klik Simulasikan untuk memulai
         </div>
       )}

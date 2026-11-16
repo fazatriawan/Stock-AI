@@ -9,7 +9,7 @@ function Stat({ label, value, positive }: { label: string; value: string; positi
   const color = positive === true ? "text-emerald-400" : positive === false ? "text-red-400" : "text-gray-300";
   return (
     <div>
-      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-xs text-slate-300">{label}</p>
       <p className={`text-sm font-medium ${color}`}>{value}</p>
     </div>
   );
@@ -59,7 +59,7 @@ export function TechnicalCard({ technical: t }: Props) {
         )}
 
         {t.missing_indicators.length > 0 && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-slate-300">
             Indikator belum cukup data: {t.missing_indicators.join(", ")}
           </p>
         )}

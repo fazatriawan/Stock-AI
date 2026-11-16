@@ -37,11 +37,11 @@ export function MarketStatusGrid() {
           <div key={ex} className="rounded-xl border border-gray-700/40 bg-gray-800/20 px-4 py-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-400">{ex}</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-700/50 text-gray-500">—</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-700/50 text-slate-300">—</span>
             </div>
             <div className="flex items-center gap-1.5 mt-3">
               <span className="w-1.5 h-1.5 rounded-full bg-gray-600" />
-              <span className="text-xs text-gray-500">Backend tidak terhubung</span>
+              <span className="text-xs text-slate-300">Backend tidak terhubung</span>
             </div>
           </div>
         ))}
@@ -50,7 +50,7 @@ export function MarketStatusGrid() {
   }
 
   if (statuses.length === 0) {
-    return <p className="text-sm text-gray-500">Tidak ada data status bursa.</p>;
+    return <p className="text-sm text-slate-300">Tidak ada data status bursa.</p>;
   }
 
   return (
@@ -71,7 +71,7 @@ export function MarketStatusGrid() {
               {s.is_trading_day ? "Hari Bursa" : "Libur"}
             </span>
           </div>
-          <p className="text-xs text-gray-500">{s.timezone}</p>
+          <p className="text-xs text-slate-300">{s.timezone}</p>
           <div className="flex items-center gap-2 pt-0.5">
             <span className={`w-2 h-2 rounded-full ${s.is_eod_data_ready ? "bg-emerald-400" : "bg-amber-400"}`} />
             <span className="text-xs text-gray-300">
@@ -79,7 +79,7 @@ export function MarketStatusGrid() {
             </span>
           </div>
           {s.session_date && (
-            <p className="text-[11px] text-gray-500">Sesi: {s.session_date}</p>
+            <p className="text-[11px] text-slate-300">Sesi: {s.session_date}</p>
           )}
         </div>
       ))}

@@ -100,7 +100,7 @@ export function PriceChart({ bars, symbol, chartType = "area" }: Props) {
 
   if (bars.length === 0) {
     return (
-      <div className="h-[260px] flex items-center justify-center text-xs text-gray-500 border border-gray-800 rounded-lg">
+      <div className="h-[260px] flex items-center justify-center text-xs text-slate-300 border border-gray-800 rounded-lg">
         Tidak ada data harga tersimpan — klik Refresh Data untuk mengambil dari provider.
       </div>
     );

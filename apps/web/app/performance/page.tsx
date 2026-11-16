@@ -15,7 +15,7 @@ const RANGES = ["1m", "3m", "6m", "1y", "2y"] as const;
 function MiniLineChart({ points }: { points: EquityDataPoint[] }) {
   if (points.length < 2)
     return (
-      <div className="h-32 flex items-center justify-center text-xs text-gray-500">
+      <div className="h-32 flex items-center justify-center text-xs text-slate-300">
         Data tidak cukup
       </div>
     );
@@ -110,7 +110,7 @@ export default function PerformancePage() {
         <h1 className="text-lg font-semibold text-gray-100">
           Performa & Atribusi Keputusan (HARD-05)
         </h1>
-        <p className="text-xs text-gray-500 mt-0.5">
+        <p className="text-xs text-slate-300 mt-0.5">
           Equity curve dan dekomposisi return terhadap benchmark, sektor, dividen, & biaya transaksi
         </p>
       </div>
@@ -129,7 +129,7 @@ export default function PerformancePage() {
               key={r}
               onClick={() => setRange(r)}
               className={`px-3 py-1 rounded text-xs transition-colors ${
-                range === r ? "bg-gray-700 text-gray-100" : "text-gray-500 hover:text-gray-300"
+                range === r ? "bg-gray-700 text-gray-100" : "text-slate-300 hover:text-gray-300"
               }`}
             >
               {r}
@@ -138,7 +138,7 @@ export default function PerformancePage() {
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-gray-500">Return Acuan (IHSG %):</span>
+          <span className="text-slate-300">Return Acuan (IHSG %):</span>
           <input
             type="number"
             step="0.5"
@@ -172,26 +172,26 @@ export default function PerformancePage() {
           {/* KPI row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div className="bg-gray-800/50 rounded-lg p-3">
-              <p className="text-gray-500">Total Return</p>
+              <p className="text-slate-300">Total Return</p>
               <p className={`text-xl font-bold ${isUp ? "text-emerald-400" : "text-red-400"}`}>
                 {isUp ? "+" : ""}
                 {data.total_return_pct.toFixed(2)}%
               </p>
             </div>
             <div className="bg-gray-800/50 rounded-lg p-3">
-              <p className="text-gray-500">Nilai Saat Ini</p>
+              <p className="text-slate-300">Nilai Saat Ini</p>
               <p className="text-lg font-bold text-gray-100">
                 {formatCurrency(data.current_value)}
               </p>
             </div>
             <div className="bg-gray-800/50 rounded-lg p-3">
-              <p className="text-gray-500">Total Invested</p>
+              <p className="text-slate-300">Total Invested</p>
               <p className="text-lg font-bold text-gray-300">
                 {formatCurrency(data.total_invested)}
               </p>
             </div>
             <div className="bg-gray-800/50 rounded-lg p-3">
-              <p className="text-gray-500">Unrealized P/L</p>
+              <p className="text-slate-300">Unrealized P/L</p>
               <p
                 className={`text-lg font-bold ${
                   data.unrealized_pnl >= 0 ? "text-emerald-400" : "text-red-400"
@@ -205,16 +205,16 @@ export default function PerformancePage() {
 
           {/* Equity curve */}
           <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl p-4">
-            <p className="text-xs text-gray-500 mb-3">Nilai Portofolio</p>
+            <p className="text-xs text-slate-300 mb-3">Nilai Portofolio</p>
             {data.equity_curve.length >= 2 ? (
               <MiniLineChart points={data.equity_curve} />
             ) : (
-              <div className="h-32 flex items-center justify-center text-xs text-gray-500">
+              <div className="h-32 flex items-center justify-center text-xs text-slate-300">
                 Data harga tidak cukup untuk menampilkan grafik
               </div>
             )}
             {data.equity_curve.length >= 2 && (
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-xs text-slate-300 mt-1">
                 <span>{data.equity_curve[0]?.date}</span>
                 <span>{data.equity_curve[data.equity_curve.length - 1]?.date}</span>
               </div>
@@ -233,19 +233,19 @@ export default function PerformancePage() {
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 text-xs">
                 <div className="bg-gray-900/50 rounded-lg p-2.5">
-                  <p className="text-gray-500">Excess vs Benchmark</p>
+                  <p className="text-slate-300">Excess vs Benchmark</p>
                   <PnlBadge pct={attribution.portfolio_excess_return_pct} />
                 </div>
                 <div className="bg-gray-900/50 rounded-lg p-2.5">
-                  <p className="text-gray-500">Stock-Specific Alpha</p>
+                  <p className="text-slate-300">Stock-Specific Alpha</p>
                   <PnlBadge pct={attribution.weighted_stock_alpha_pct} />
                 </div>
                 <div className="bg-gray-900/50 rounded-lg p-2.5">
-                  <p className="text-gray-500">Kontribusi Dividen</p>
+                  <p className="text-slate-300">Kontribusi Dividen</p>
                   <PnlBadge pct={attribution.weighted_dividend_pct} />
                 </div>
                 <div className="bg-gray-900/50 rounded-lg p-2.5">
-                  <p className="text-gray-500">Beban Biaya (Cost Drag)</p>
+                  <p className="text-slate-300">Beban Biaya (Cost Drag)</p>
                   <PnlBadge pct={attribution.weighted_cost_drag_pct} />
                 </div>
               </div>
@@ -254,7 +254,7 @@ export default function PerformancePage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="text-gray-500 border-b border-gray-800">
+                      <tr className="text-slate-300 border-b border-gray-800">
                         <th className="text-left py-1.5 pr-3">Ticker</th>
                         <th className="text-right py-1.5 pr-3">Bobot</th>
                         <th className="text-right py-1.5 pr-3">Return Net</th>
@@ -293,7 +293,7 @@ export default function PerformancePage() {
                 </div>
               )}
 
-              <p className="text-[11px] text-gray-500 italic">{attribution.caveat}</p>
+              <p className="text-[11px] text-slate-300 italic">{attribution.caveat}</p>
             </div>
           )}
 
@@ -302,7 +302,7 @@ export default function PerformancePage() {
             <div className="grid grid-cols-2 gap-3">
               {data.best_position && (
                 <div className="bg-emerald-900/10 border border-emerald-800/30 rounded-lg p-3">
-                  <p className="text-xs text-gray-500 flex items-center gap-1 mb-1">
+                  <p className="text-xs text-slate-300 flex items-center gap-1 mb-1">
                     <TrendingUp size={11} className="text-emerald-400" /> Terbaik
                   </p>
                   <p className="text-sm font-semibold text-gray-100">
@@ -314,7 +314,7 @@ export default function PerformancePage() {
               )}
               {data.worst_position && (
                 <div className="bg-red-900/10 border border-red-800/30 rounded-lg p-3">
-                  <p className="text-xs text-gray-500 flex items-center gap-1 mb-1">
+                  <p className="text-xs text-slate-300 flex items-center gap-1 mb-1">
                     <TrendingDown size={11} className="text-red-400" /> Terburuk
                   </p>
                   <p className="text-sm font-semibold text-gray-100">
@@ -330,10 +330,10 @@ export default function PerformancePage() {
           {/* Position contribution table */}
           {data.position_contributions.length > 0 && (
             <div className="space-y-1">
-              <p className="text-xs text-gray-500">Kontribusi per Posisi</p>
+              <p className="text-xs text-slate-300">Kontribusi per Posisi</p>
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="text-gray-500 border-b border-gray-800">
+                  <tr className="text-slate-300 border-b border-gray-800">
                     <th className="text-left py-2 pr-3">Ticker</th>
                     <th className="text-right py-2 pr-3">Bobot</th>
                     <th className="text-right py-2 pr-3">Modal</th>
@@ -371,7 +371,7 @@ export default function PerformancePage() {
           )}
 
           {data.equity_curve.length === 0 && data.position_contributions.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-slate-300">
               <p className="text-sm">
                 Belum ada data performa — tambahkan transaksi terlebih dahulu
               </p>

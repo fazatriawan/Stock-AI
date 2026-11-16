@@ -84,16 +84,16 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="w-56 bg-gray-950 border-r border-gray-800/60 flex flex-col min-h-screen sticky top-0">
+    <aside className="w-56 bg-gray-950 border-r border-blue-900/30 flex flex-col min-h-screen sticky top-0">
       {/* Logo */}
-      <div className="px-4 py-5 border-b border-gray-800/60">
+      <div className="px-4 py-5 border-b border-blue-900/30">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-blue-600 flex items-center justify-center shrink-0">
+          <div className="w-6 h-6 rounded-md bg-blue-500 flex items-center justify-center shrink-0">
             <BarChart2 size={13} className="text-white" />
           </div>
-          <span className="text-sm font-semibold text-gray-100 tracking-tight">Stock Intel</span>
+          <span className="text-sm font-bold text-white tracking-tight">Stock Intel</span>
         </div>
-        <p className="text-xs text-gray-500 mt-1.5 ml-8">IDX · US · Riset pribadi</p>
+        <p className="text-xs text-sky-400 mt-1.5 ml-8">IDX · US · Riset pribadi</p>
       </div>
 
       <nav className="flex-1 py-3 overflow-y-auto">
@@ -106,11 +106,11 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all",
                 isActive(href)
-                  ? "bg-gray-800 text-white font-medium border-l-2 border-blue-500 pl-[10px]"
-                  : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50"
+                  ? "bg-blue-900/40 text-white font-semibold border-l-2 border-blue-400 pl-[10px]"
+                  : "text-slate-300 hover:text-white hover:bg-blue-900/20"
               )}
             >
-              <Icon size={15} strokeWidth={isActive(href) ? 2 : 1.75} />
+              <Icon size={15} strokeWidth={isActive(href) ? 2 : 1.75} className={isActive(href) ? "text-blue-400" : ""} />
               {label}
             </Link>
           ))}
@@ -120,9 +120,9 @@ export function Sidebar() {
         <div className="mt-3 px-2">
           <button
             onClick={toggleAdvanced}
-            className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:text-gray-400 hover:bg-gray-800/40 transition-colors"
+            className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 transition-colors"
           >
-            <span className="uppercase tracking-widest font-semibold text-[10px]">Fitur Lanjutan</span>
+            <span className="uppercase tracking-widest font-bold text-[10px]">Fitur Lanjutan</span>
             <ChevronDown
               size={11}
               className={cn("transition-transform duration-200", advancedOpen && "rotate-180")}
@@ -138,11 +138,11 @@ export function Sidebar() {
                   className={cn(
                     "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all",
                     isActive(href)
-                      ? "bg-gray-800 text-white font-medium border-l-2 border-blue-500 pl-[10px]"
-                      : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50"
+                      ? "bg-blue-900/40 text-white font-semibold border-l-2 border-blue-400 pl-[10px]"
+                      : "text-slate-300 hover:text-white hover:bg-blue-900/20"
                   )}
                 >
-                  <Icon size={15} strokeWidth={isActive(href) ? 2 : 1.75} />
+                  <Icon size={15} strokeWidth={isActive(href) ? 2 : 1.75} className={isActive(href) ? "text-blue-400" : ""} />
                   {label}
                 </Link>
               ))}
@@ -151,8 +151,8 @@ export function Sidebar() {
         </div>
       </nav>
 
-      <div className="px-4 py-3 border-t border-gray-800/60">
-        <p className="text-[11px] text-gray-500">Bukan nasihat investasi</p>
+      <div className="px-4 py-3 border-t border-blue-900/30">
+        <p className="text-[11px] text-sky-400/60">Bukan nasihat investasi</p>
       </div>
     </aside>
   );

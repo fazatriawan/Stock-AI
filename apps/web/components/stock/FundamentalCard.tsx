@@ -9,8 +9,8 @@ function MetricRow({ label, value, note }: { label: string; value: string; note?
   return (
     <div className="flex justify-between items-baseline py-1.5 border-b border-gray-800/50 last:border-0">
       <div>
-        <span className="text-xs text-gray-500">{label}</span>
-        {note && <span className="text-xs text-gray-500 ml-1">({note})</span>}
+        <span className="text-xs text-slate-300">{label}</span>
+        {note && <span className="text-xs text-slate-300 ml-1">({note})</span>}
       </div>
       <span className="text-sm text-gray-200 font-medium">{value}</span>
     </div>
@@ -37,7 +37,7 @@ export function FundamentalCard({ fundamental: f }: Props) {
       <CardContent>
         {isBank ? (
           <>
-            <p className="text-xs text-gray-500 mb-2">Metrik Bank</p>
+            <p className="text-xs text-slate-300 mb-2">Metrik Bank</p>
             {f.roe !== null && <MetricRow label="ROE" value={formatPercent(f.roe)} />}
             {f.nim !== null && <MetricRow label="NIM" value={formatPercent(f.nim)} />}
             {f.npl_gross !== null && <MetricRow label="NPL Gross" value={formatPercent(f.npl_gross)} />}
@@ -56,14 +56,14 @@ export function FundamentalCard({ fundamental: f }: Props) {
 
         {f.metrics_missing.length > 0 && (
           <div className="mt-3 pt-2 border-t border-gray-800">
-            <p className="text-xs text-gray-500 mb-1">Metrik tidak tersedia:</p>
+            <p className="text-xs text-slate-300 mb-1">Metrik tidak tersedia:</p>
             <div className="flex flex-wrap gap-1">
               {f.metrics_missing.map((m) => <Badge key={m} variant="muted">{m}</Badge>)}
             </div>
           </div>
         )}
 
-        <p className="text-xs text-gray-500 mt-3 pt-2 border-t border-gray-800">
+        <p className="text-xs text-slate-300 mt-3 pt-2 border-t border-gray-800">
           {f.metrics_available.length} metrik fundamental tersedia
         </p>
       </CardContent>

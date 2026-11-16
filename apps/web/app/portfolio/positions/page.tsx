@@ -29,24 +29,24 @@ function PositionRow({ pos, rank }: { pos: Position; rank: number }) {
   return (
     <tr className="border-b border-gray-800/50 hover:bg-gray-800/20 cursor-pointer" onClick={() => router.push(`/explorer?q=${encodeURIComponent(pos.canonical_symbol)}`)}>
       <td className="py-3 px-4">
-        <span className="text-xs text-gray-500">{rank}</span>
+        <span className="text-xs text-slate-300">{rank}</span>
       </td>
       <td className="py-3 px-4">
         <div>
           <p className="text-sm font-medium text-gray-100">{ticker}</p>
-          {pos.company_name && <p className="text-xs text-gray-500 truncate max-w-[140px]">{pos.company_name}</p>}
+          {pos.company_name && <p className="text-xs text-slate-300 truncate max-w-[140px]">{pos.company_name}</p>}
         </div>
       </td>
       <td className="py-3 px-4">
         {pos.sector ? (
-          <span className="text-xs text-gray-500 bg-gray-800 rounded px-2 py-0.5">{pos.sector}</span>
+          <span className="text-xs text-slate-300 bg-gray-800 rounded px-2 py-0.5">{pos.sector}</span>
         ) : (
-          <span className="text-xs text-gray-500">—</span>
+          <span className="text-xs text-slate-300">—</span>
         )}
       </td>
       <td className="py-3 px-4 text-right">
         <p className="text-sm text-gray-300">{pos.lots}</p>
-        <p className="text-xs text-gray-500">{pos.shares.toLocaleString()} lembar</p>
+        <p className="text-xs text-slate-300">{pos.shares.toLocaleString()} lembar</p>
       </td>
       <td className="py-3 px-4 text-right">
         <p className="text-sm text-gray-300">{formatCurrency(pos.avg_cost)}</p>
@@ -55,7 +55,7 @@ function PositionRow({ pos, rank }: { pos: Position; rank: number }) {
         {pos.current_price ? (
           <p className="text-sm text-gray-300">{formatCurrency(pos.current_price)}</p>
         ) : (
-          <p className="text-xs text-gray-500">—</p>
+          <p className="text-xs text-slate-300">—</p>
         )}
       </td>
       <td className="py-3 px-4 text-right">
@@ -67,7 +67,7 @@ function PositionRow({ pos, rank }: { pos: Position; rank: number }) {
             <span className={`text-xs ${tier.color}`}>{formatCurrency(pos.unrealized_pnl!)}</span>
           </div>
         ) : (
-          <span className="text-xs text-gray-500">—</span>
+          <span className="text-xs text-slate-300">—</span>
         )}
       </td>
       <td className="py-3 px-4 text-right">
@@ -82,7 +82,7 @@ function PositionRow({ pos, rank }: { pos: Position; rank: number }) {
         </div>
       </td>
       <td className="py-3 px-4 text-center">
-        <ExternalLink size={12} className="text-gray-500 inline" />
+        <ExternalLink size={12} className="text-slate-300 inline" />
       </td>
     </tr>
   );
@@ -146,7 +146,7 @@ export default function PositionIntelligencePage() {
         className="py-2.5 px-4 text-right cursor-pointer hover:text-gray-300 select-none"
         onClick={() => toggleSort(k)}
       >
-        <span className={active ? "text-blue-400" : "text-gray-500"}>
+        <span className={active ? "text-blue-400" : "text-slate-300"}>
           {label} {active ? (sortDir === "desc" ? "↓" : "↑") : ""}
         </span>
       </th>
@@ -157,7 +157,7 @@ export default function PositionIntelligencePage() {
     <div className="p-6 space-y-5 max-w-5xl">
       <div>
         <h1 className="text-lg font-semibold text-gray-100">Position Intelligence</h1>
-        <p className="text-xs text-gray-500 mt-0.5">{data.positions.length} posisi aktif — klik baris untuk analisis detail</p>
+        <p className="text-xs text-slate-300 mt-0.5">{data.positions.length} posisi aktif — klik baris untuk analisis detail</p>
       </div>
 
       {/* Filter tabs */}
@@ -169,7 +169,7 @@ export default function PositionIntelligencePage() {
             className={`px-3 py-1.5 rounded-md transition-colors ${
               filter === f
                 ? "bg-gray-700 text-gray-100"
-                : "text-gray-500 hover:text-gray-300"
+                : "text-slate-300 hover:text-gray-300"
             }`}
           >
             {f === "ALL" && `Semua (${data.positions.length})`}
@@ -192,13 +192,13 @@ export default function PositionIntelligencePage() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-gray-800 text-gray-500">
+                <tr className="border-b border-gray-800 text-slate-300">
                   <th className="py-2.5 px-4 text-left w-8">#</th>
                   <th className="py-2.5 px-4 text-left">Saham</th>
                   <th className="py-2.5 px-4 text-left">Sektor</th>
                   <SortTh label="Lot" k="lots" />
                   <SortTh label="Avg Cost" k="total_cost" />
-                  <th className="py-2.5 px-4 text-right text-gray-500">Harga</th>
+                  <th className="py-2.5 px-4 text-right text-slate-300">Harga</th>
                   <SortTh label="P/L" k="pnl_pct" />
                   <SortTh label="Bobot" k="weight" />
                   <th className="py-2.5 px-4 w-8" />
@@ -210,7 +210,7 @@ export default function PositionIntelligencePage() {
                 ))}
                 {sorted.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="py-8 text-center text-xs text-gray-500">
+                    <td colSpan={9} className="py-8 text-center text-xs text-slate-300">
                       Tidak ada posisi yang sesuai filter
                     </td>
                   </tr>
@@ -224,15 +224,15 @@ export default function PositionIntelligencePage() {
       {/* Summary row */}
       <div className="grid grid-cols-3 gap-3 text-xs">
         <div className="bg-gray-800/40 rounded-lg p-3">
-          <p className="text-gray-500">Total Modal</p>
+          <p className="text-slate-300">Total Modal</p>
           <p className="text-gray-200 font-medium">{formatCurrency(data.total_invested)}</p>
         </div>
         <div className="bg-gray-800/40 rounded-lg p-3">
-          <p className="text-gray-500">Nilai Pasar</p>
+          <p className="text-slate-300">Nilai Pasar</p>
           <p className="text-gray-200 font-medium">{formatCurrency(data.market_value)}</p>
         </div>
         <div className={`rounded-lg p-3 ${data.unrealized_pnl >= 0 ? "bg-emerald-900/20" : "bg-red-900/20"}`}>
-          <p className="text-gray-500">Unrealized P/L</p>
+          <p className="text-slate-300">Unrealized P/L</p>
           <p className={`font-medium ${data.unrealized_pnl >= 0 ? "text-emerald-400" : "text-red-400"}`}>
             {data.unrealized_pnl >= 0 ? "+" : ""}{formatCurrency(data.unrealized_pnl)}
             {" "}({formatPercent(data.unrealized_pnl_pct)})
@@ -240,7 +240,7 @@ export default function PositionIntelligencePage() {
         </div>
       </div>
 
-      <p className="text-xs text-gray-500">Klik nama saham untuk analisis mendalam. Ini bukan nasihat investasi.</p>
+      <p className="text-xs text-slate-300">Klik nama saham untuk analisis mendalam. Ini bukan nasihat investasi.</p>
     </div>
   );
 }

@@ -37,10 +37,10 @@ export function RecommendationCard({ recommendation: rec }: Props) {
             <span className={`text-lg font-bold px-2 py-0.5 rounded ${actionBadgeClass(rec.action)}`}>
               {rec.action}
             </span>
-            <p className="text-xs text-gray-500 mt-0.5">Horizon: {rec.horizon}</p>
+            <p className="text-xs text-slate-300 mt-0.5">Horizon: {rec.horizon}</p>
           </div>
           <div className="ml-auto text-right">
-            <p className="text-xs text-gray-500">Confidence</p>
+            <p className="text-xs text-slate-300">Confidence</p>
             <p className={`text-sm font-medium ${confidenceColor(rec.evidence_confidence)}`}>
               {rec.evidence_confidence}
             </p>
@@ -59,13 +59,13 @@ export function RecommendationCard({ recommendation: rec }: Props) {
 
         {/* Scores */}
         <div>
-          <p className="text-xs text-gray-500 mb-2">Skor Per Pilar (0–100)</p>
+          <p className="text-xs text-slate-300 mb-2">Skor Per Pilar (0–100)</p>
           <div className="space-y-1.5">
             {(["fundamental", "valuation", "technical", "macro_policy", "risk_quality"] as const).map((factor) => {
               const score = rec.factor_scores[factor];
               return (
                 <div key={factor} className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500 w-28 capitalize">{factor.replace("_", " ")}</span>
+                  <span className="text-xs text-slate-300 w-28 capitalize">{factor.replace("_", " ")}</span>
                   {score !== null ? (
                     <>
                       <div className="flex-1 bg-gray-800 rounded-full h-1.5">
@@ -79,7 +79,7 @@ export function RecommendationCard({ recommendation: rec }: Props) {
                       </span>
                     </>
                   ) : (
-                    <span className="text-xs text-gray-500">Data tidak tersedia</span>
+                    <span className="text-xs text-slate-300">Data tidak tersedia</span>
                   )}
                 </div>
               );
@@ -102,7 +102,7 @@ export function RecommendationCard({ recommendation: rec }: Props) {
         {/* Bull thesis */}
         {rec.bull_thesis.length > 0 && (
           <div>
-            <p className="text-xs text-gray-500 mb-1.5">Bull Case</p>
+            <p className="text-xs text-slate-300 mb-1.5">Bull Case</p>
             <ul className="space-y-1">
               {rec.bull_thesis.map((point, i) => (
                 <li key={i} className="flex gap-2 text-xs text-emerald-300/80">
@@ -117,7 +117,7 @@ export function RecommendationCard({ recommendation: rec }: Props) {
         {/* Bear case */}
         {rec.bear_case.length > 0 && (
           <div>
-            <p className="text-xs text-gray-500 mb-1.5">Bear Case</p>
+            <p className="text-xs text-slate-300 mb-1.5">Bear Case</p>
             <ul className="space-y-1">
               {rec.bear_case.slice(0, 3).map((point, i) => (
                 <li key={i} className="flex gap-2 text-xs text-red-300/80">
@@ -132,7 +132,7 @@ export function RecommendationCard({ recommendation: rec }: Props) {
         {/* Data gaps */}
         {rec.data_gaps.length > 0 && (
           <div className="rounded border border-gray-700 bg-gray-800/40 px-3 py-2">
-            <p className="text-xs text-gray-500 mb-1">Data tidak tersedia:</p>
+            <p className="text-xs text-slate-300 mb-1">Data tidak tersedia:</p>
             <div className="flex flex-wrap gap-1">
               {rec.data_gaps.map((gap) => (
                 <Badge key={gap} variant="muted">{gap}</Badge>
@@ -152,7 +152,7 @@ export function RecommendationCard({ recommendation: rec }: Props) {
             )}
             {rec.ai_identified_risks.length > 0 && (
               <div>
-                <p className="text-xs text-gray-500 mb-1">Risiko tambahan:</p>
+                <p className="text-xs text-slate-300 mb-1">Risiko tambahan:</p>
                 <ul className="space-y-0.5">
                   {rec.ai_identified_risks.map((r, i) => (
                     <li key={i} className="text-xs text-amber-300/70 flex gap-1.5">
@@ -166,7 +166,7 @@ export function RecommendationCard({ recommendation: rec }: Props) {
         )}
 
         {/* Disclaimer */}
-        <p className="text-xs text-gray-500 border-t border-gray-800 pt-2">
+        <p className="text-xs text-slate-300 border-t border-gray-800 pt-2">
           {rec.disclaimer}
         </p>
       </CardContent>

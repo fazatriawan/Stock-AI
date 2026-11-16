@@ -28,19 +28,19 @@ function SummaryStats({ preview }: { preview: ImportPreviewResponse }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       <div className="bg-gray-800/60 rounded-lg p-3 text-center">
-        <p className="text-xs text-gray-500">Total Baris</p>
+        <p className="text-xs text-slate-300">Total Baris</p>
         <p className="text-lg font-semibold text-gray-100">{preview.total_rows}</p>
       </div>
       <div className="bg-emerald-900/30 rounded-lg p-3 text-center">
-        <p className="text-xs text-gray-500">Siap Diimport</p>
+        <p className="text-xs text-slate-300">Siap Diimport</p>
         <p className="text-lg font-semibold text-emerald-400">{preview.valid_count}</p>
       </div>
       <div className="bg-amber-900/30 rounded-lg p-3 text-center">
-        <p className="text-xs text-gray-500">Duplikat</p>
+        <p className="text-xs text-slate-300">Duplikat</p>
         <p className="text-lg font-semibold text-amber-400">{preview.duplicate_count}</p>
       </div>
       <div className="bg-red-900/30 rounded-lg p-3 text-center">
-        <p className="text-xs text-gray-500">Error</p>
+        <p className="text-xs text-slate-300">Error</p>
         <p className="text-lg font-semibold text-red-400">{preview.error_count}</p>
       </div>
     </div>
@@ -150,15 +150,15 @@ export default function ImportPage() {
     <div className="p-6 space-y-6 max-w-5xl">
       <div>
         <h1 className="text-lg font-semibold text-gray-100">Import Transaksi</h1>
-        <p className="text-xs text-gray-500 mt-0.5">Upload CSV/XLSX/PDF dari broker — preview dulu sebelum commit</p>
+        <p className="text-xs text-slate-300 mt-0.5">Upload CSV/XLSX/PDF dari broker — preview dulu sebelum commit</p>
       </div>
 
       {/* Step indicator */}
       <div className="flex items-center gap-3 text-xs">
         {(["upload", "preview", "done"] as Step[]).map((s, i) => (
           <div key={s} className="flex items-center gap-2">
-            {i > 0 && <span className="text-gray-500">→</span>}
-            <span className={step === s ? "text-blue-400 font-medium" : step > s ? "text-gray-500 line-through" : "text-gray-500"}>
+            {i > 0 && <span className="text-slate-300">→</span>}
+            <span className={step === s ? "text-blue-400 font-medium" : step > s ? "text-slate-300 line-through" : "text-slate-300"}>
               {i + 1}. {s === "upload" ? "Upload" : s === "preview" ? "Verifikasi" : "Selesai"}
             </span>
           </div>
@@ -193,10 +193,10 @@ export default function ImportPage() {
                 dragging ? "border-blue-500 bg-blue-950/20" : "border-gray-700 hover:border-gray-500 hover:bg-gray-800/30"
               }`}
             >
-              <Upload size={28} className="mx-auto text-gray-500 mb-3" />
+              <Upload size={28} className="mx-auto text-slate-300 mb-3" />
               <p className="text-sm text-gray-300">Seret & lepas file di sini</p>
-              <p className="text-xs text-gray-500 mt-1">atau klik untuk memilih file</p>
-              <p className="text-xs text-gray-500 mt-3">CSV, XLSX, PDF · Maks 10 MB</p>
+              <p className="text-xs text-slate-300 mt-1">atau klik untuk memilih file</p>
+              <p className="text-xs text-slate-300 mt-3">CSV, XLSX, PDF · Maks 10 MB</p>
               <input
                 ref={fileRef}
                 type="file"
@@ -221,7 +221,7 @@ export default function ImportPage() {
             )}
 
             {/* Format guide */}
-            <div className="bg-gray-800/40 rounded-lg p-4 text-xs text-gray-500 space-y-1">
+            <div className="bg-gray-800/40 rounded-lg p-4 text-xs text-slate-300 space-y-1">
               <p className="font-medium text-gray-400 mb-2">Format kolom yang didukung (CSV/XLSX):</p>
               <p><span className="text-gray-300">Tanggal</span> — Tanggal, Date, Tgl</p>
               <p><span className="text-gray-300">Kode</span> — Kode Saham, Symbol, Ticker, Kode</p>
@@ -258,7 +258,7 @@ export default function ImportPage() {
             </div>
           )}
 
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-slate-300">
             Format terdeteksi: <span className="text-gray-300">{preview.broker_format}</span>
             {" · "}Pilih transaksi yang ingin diimport, lalu klik Konfirmasi.
           </p>
@@ -268,7 +268,7 @@ export default function ImportPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-gray-800 text-gray-500">
+                    <tr className="border-b border-gray-800 text-slate-300">
                       <th className="py-2.5 px-3 text-left">
                         <input
                           type="checkbox"
@@ -308,7 +308,7 @@ export default function ImportPage() {
                               className="rounded"
                             />
                           </td>
-                          <td className="py-2 px-3 text-gray-500">{t.row_number}</td>
+                          <td className="py-2 px-3 text-slate-300">{t.row_number}</td>
                           <td className="py-2 px-3">
                             <span className="font-medium text-gray-200">
                               {t.canonical_symbol.split(":")[1] ?? t.canonical_symbol}
@@ -357,7 +357,7 @@ export default function ImportPage() {
             </Button>
           </div>
 
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-slate-300">
             Keputusan import sepenuhnya menjadi tanggung jawab pengguna.
           </p>
         </div>
@@ -373,7 +373,7 @@ export default function ImportPage() {
                 {confirmResult.created} transaksi berhasil diimport
               </p>
               {confirmResult.skipped > 0 && (
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-slate-300 mt-1">
                   {confirmResult.skipped} duplikat dilewati
                 </p>
               )}

@@ -57,7 +57,7 @@ export function MobileNav() {
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-gray-100">Stock Intelligence</span>
           {currentPage && (
-            <span className="text-xs text-gray-500">· {currentPage.label}</span>
+            <span className="text-xs text-slate-300">· {currentPage.label}</span>
           )}
         </div>
         <button
@@ -90,9 +90,9 @@ export function MobileNav() {
             <div className="flex items-center justify-between px-4 py-4 border-b border-gray-800">
               <div>
                 <span className="text-sm font-semibold text-gray-100">Stock Intelligence</span>
-                <p className="text-xs text-gray-500">IDX · US</p>
+                <p className="text-xs text-slate-300">IDX · US</p>
               </div>
-              <button onClick={() => setOpen(false)} className="text-gray-500 hover:text-gray-300">
+              <button onClick={() => setOpen(false)} className="text-slate-300 hover:text-gray-300">
                 <X size={18} />
               </button>
             </div>
@@ -123,7 +123,7 @@ export function MobileNav() {
               <div className="mt-2 px-2">
                 <button
                   onClick={() => setAdvancedOpen(o => !o)}
-                  className="w-full flex items-center justify-between px-3 py-1.5 rounded-md text-xs text-gray-500 hover:text-gray-400 hover:bg-gray-800/40 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-1.5 rounded-md text-xs text-slate-300 hover:text-gray-400 hover:bg-gray-800/40 transition-colors"
                 >
                   <span className="uppercase tracking-wider font-semibold">Fitur Lanjutan</span>
                   <ChevronDown size={12} className={cn("transition-transform duration-200", advancedOpen && "rotate-180")} />
@@ -153,7 +153,7 @@ export function MobileNav() {
             </nav>
 
             <div className="px-4 py-3 border-t border-gray-800">
-              <p className="text-xs text-gray-500">Riset pribadi — bukan nasihat investasi</p>
+              <p className="text-xs text-slate-300">Riset pribadi — bukan nasihat investasi</p>
             </div>
           </div>
         </div>

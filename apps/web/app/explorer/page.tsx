@@ -182,7 +182,7 @@ export default function ExplorerPage() {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-lg font-semibold text-gray-100">Stock Explorer</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <p className="text-sm text-slate-300 mt-0.5">
           Cari ticker IDX (BBCA, BMRI) atau US (AAPL, MSFT) untuk melihat analisis
         </p>
       </div>
@@ -190,7 +190,7 @@ export default function ExplorerPage() {
       {/* Search with autocomplete */}
       <form onSubmit={handleSearch} className="flex gap-2 max-w-md">
         <div className="relative flex-1" ref={wrapperRef}>
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 z-10" size={14} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 z-10" size={14} />
           <input
             type="text"
             value={query}
@@ -218,14 +218,14 @@ export default function ExplorerPage() {
                   <span className="flex items-center gap-2 min-w-0">
                     <span className="text-sm font-mono text-gray-100 shrink-0">{instr.canonical_symbol}</span>
                     {instr.company_name && (
-                      <span className="text-xs text-gray-500 truncate">{instr.company_name}</span>
+                      <span className="text-xs text-slate-300 truncate">{instr.company_name}</span>
                     )}
                   </span>
-                  <span className="text-[10px] text-gray-500 shrink-0 ml-2">{instr.exchange}</span>
+                  <span className="text-[10px] text-slate-300 shrink-0 ml-2">{instr.exchange}</span>
                 </button>
               ))}
               {searching && (
-                <div className="px-3 py-1.5 text-[11px] text-gray-500">Mencari…</div>
+                <div className="px-3 py-1.5 text-[11px] text-slate-300">Mencari…</div>
               )}
             </div>
           )}
@@ -259,7 +259,7 @@ export default function ExplorerPage() {
       {error && (
         <div className="rounded-lg border border-red-800/40 bg-red-950/20 px-4 py-3">
           <p className="text-sm text-red-400">{error}</p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-slate-300 mt-1">
             Pastikan backend berjalan dan ticker ada di database (jalankan bootstrap terlebih dahulu).
           </p>
         </div>
@@ -327,7 +327,7 @@ export default function ExplorerPage() {
                       className={`px-2 py-1 transition-colors ${
                         chartType === t
                           ? "bg-gray-700 text-gray-100"
-                          : "bg-transparent text-gray-500 hover:text-gray-300"
+                          : "bg-transparent text-slate-300 hover:text-gray-300"
                       }`}
                     >
                       {t === "area" ? "Area" : "Candle"}
@@ -343,7 +343,7 @@ export default function ExplorerPage() {
                       className={`px-2 py-1 transition-colors ${
                         priceRange === r
                           ? "bg-blue-600 text-white"
-                          : "bg-transparent text-gray-500 hover:text-gray-300"
+                          : "bg-transparent text-slate-300 hover:text-gray-300"
                       }`}
                     >
                       {r.toUpperCase()}
@@ -354,7 +354,7 @@ export default function ExplorerPage() {
             </div>
             <PriceChart bars={priceBars} symbol={overview.instrument.canonical_symbol} chartType={chartType} />
             {priceBars.length > 0 && (
-              <p className="text-[10px] text-gray-500">
+              <p className="text-[10px] text-slate-300">
                 {priceBars.length} bar · sumber: {priceBars[0]?.provider ?? "—"} · {priceBars[0]?.session_date} – {priceBars[priceBars.length - 1]?.session_date}
               </p>
             )}
@@ -371,7 +371,7 @@ export default function ExplorerPage() {
 
       {/* Empty state */}
       {!overview && !loading && !error && (
-        <div className="text-center py-20 text-gray-500">
+        <div className="text-center py-20 text-slate-300">
           <Search size={32} className="mx-auto mb-3 opacity-30" />
           <p className="text-sm">Masukkan ticker untuk melihat analisis</p>
           <p className="text-xs mt-1">Contoh: BBCA, BMRI.JK, AAPL</p>

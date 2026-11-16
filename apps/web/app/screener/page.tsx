@@ -55,7 +55,7 @@ function FreshnessChip({ freshness }: { freshness: string }) {
       ? "text-emerald-400"
       : freshness === "ACCEPTABLE"
         ? "text-amber-400"
-        : "text-gray-500";
+        : "text-slate-300";
   return <span className={`text-xs ${color}`}>{freshness}</span>;
 }
 
@@ -161,7 +161,7 @@ export default function ScreenerPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold text-gray-100">Screener & Multibagger Lab</h1>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-slate-300 mt-0.5">
             Saring kandidat riset saham berdasarkan fundamental, teknikal, & 4 pipeline Multibagger (PRD v1.7.1)
           </p>
         </div>
@@ -202,7 +202,7 @@ export default function ScreenerPage() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Sektor</label>
+                <label className="block text-xs text-slate-300 mb-1">Sektor</label>
                 <select
                   value={sector}
                   onChange={e => setSector(e.target.value)}
@@ -218,7 +218,7 @@ export default function ScreenerPage() {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Bursa</label>
+                <label className="block text-xs text-slate-300 mb-1">Bursa</label>
                 <select
                   value={exchange}
                   onChange={e => setExchange(e.target.value)}
@@ -234,7 +234,7 @@ export default function ScreenerPage() {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">ROE min (%)</label>
+                <label className="block text-xs text-slate-300 mb-1">ROE min (%)</label>
                 <input
                   type="number"
                   value={minRoe}
@@ -245,7 +245,7 @@ export default function ScreenerPage() {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">P/E maks</label>
+                <label className="block text-xs text-slate-300 mb-1">P/E maks</label>
                 <input
                   type="number"
                   value={maxPe}
@@ -256,7 +256,7 @@ export default function ScreenerPage() {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">P/E min</label>
+                <label className="block text-xs text-slate-300 mb-1">P/E min</label>
                 <input
                   type="number"
                   value={minPe}
@@ -267,7 +267,7 @@ export default function ScreenerPage() {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Skor komposit min</label>
+                <label className="block text-xs text-slate-300 mb-1">Skor komposit min</label>
                 <input
                   type="number"
                   value={minScore}
@@ -278,7 +278,7 @@ export default function ScreenerPage() {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Sinyal engine</label>
+                <label className="block text-xs text-slate-300 mb-1">Sinyal engine</label>
                 <select
                   value={action}
                   onChange={e => setAction(e.target.value)}
@@ -305,7 +305,7 @@ export default function ScreenerPage() {
               </button>
               <button
                 onClick={reset}
-                className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                className="px-3 py-1.5 text-xs text-slate-300 hover:text-gray-300 transition-colors"
               >
                 Reset
               </button>
@@ -321,11 +321,11 @@ export default function ScreenerPage() {
           {/* Results table */}
           {results.length > 0 && (
             <div className="space-y-1">
-              <p className="text-xs text-gray-500">{results.length} saham ditemukan</p>
+              <p className="text-xs text-slate-300">{results.length} saham ditemukan</p>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-gray-500 border-b border-gray-800">
+                    <tr className="text-slate-300 border-b border-gray-800">
                       <th className="text-left py-2 pr-3">Ticker</th>
                       <th className="text-left py-2 pr-3">Sektor</th>
                       <th className="text-right py-2 pr-3">Harga</th>
@@ -349,7 +349,7 @@ export default function ScreenerPage() {
                           <td className="py-2 pr-3">
                             <span className="font-medium text-gray-100">{ticker}</span>
                             {r.company_name && (
-                              <p className="text-gray-500 truncate max-w-[120px]">
+                              <p className="text-slate-300 truncate max-w-[120px]">
                                 {r.company_name}
                               </p>
                             )}
@@ -397,13 +397,13 @@ export default function ScreenerPage() {
           )}
 
           {hasSearched && !loading && results.length === 0 && !error && (
-            <div className="text-center py-12 text-gray-500 space-y-2">
+            <div className="text-center py-12 text-slate-300 space-y-2">
               <Search size={28} className="mx-auto mb-2 opacity-30" />
               <p className="text-sm">Tidak ada saham yang cocok dengan filter ini</p>
-              <p className="text-xs text-gray-500 max-w-sm mx-auto">
+              <p className="text-xs text-slate-300 max-w-sm mx-auto">
                 Screener memerlukan data fundamental lengkap (revenue growth, EPS, ROE, dll). Jika
                 hasil selalu 0, jalankan{" "}
-                <strong className="text-gray-500">refresh fundamentals</strong> di halaman{" "}
+                <strong className="text-slate-300">refresh fundamentals</strong> di halaman{" "}
                 <a href="/settings" className="text-blue-500 hover:underline">
                   Settings
                 </a>{" "}
@@ -413,7 +413,7 @@ export default function ScreenerPage() {
           )}
 
           {!hasSearched && (
-            <div className="text-center py-16 text-gray-500">
+            <div className="text-center py-16 text-slate-300">
               <SlidersHorizontal size={28} className="mx-auto mb-2 opacity-30" />
               <p className="text-sm">Atur filter di atas, lalu klik Jalankan Screener</p>
             </div>
@@ -427,14 +427,14 @@ export default function ScreenerPage() {
               <div className="flex items-center gap-2 text-xs text-emerald-400 font-medium">
                 <Sparkles size={13} /> MULTI-01 & MULTI-02 — 4 Pipeline Riset & Reverse Scenario
               </div>
-              <span className="text-[11px] text-gray-500">
+              <span className="text-[11px] text-slate-300">
                 Output adalah kandidat riset, bukan sinyal beli otomatis
               </span>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Bursa</label>
+                <label className="block text-xs text-slate-300 mb-1">Bursa</label>
                 <select
                   value={exchange}
                   onChange={e => setExchange(e.target.value)}
@@ -450,7 +450,7 @@ export default function ScreenerPage() {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Sektor</label>
+                <label className="block text-xs text-slate-300 mb-1">Sektor</label>
                 <select
                   value={sector}
                   onChange={e => setSector(e.target.value)}
@@ -466,7 +466,7 @@ export default function ScreenerPage() {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Tier Minimum</label>
+                <label className="block text-xs text-slate-300 mb-1">Tier Minimum</label>
                 <select
                   value={mbMinTier}
                   onChange={e => setMbMinTier(e.target.value)}
@@ -479,7 +479,7 @@ export default function ScreenerPage() {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Filter Pipeline (MULTI-01)</label>
+                <label className="block text-xs text-slate-300 mb-1">Filter Pipeline (MULTI-01)</label>
                 <select
                   value={mbPipelineFilter}
                   onChange={e => setMbPipelineFilter(e.target.value)}
@@ -506,7 +506,7 @@ export default function ScreenerPage() {
               </button>
               <button
                 onClick={reset}
-                className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                className="px-3 py-1.5 text-xs text-slate-300 hover:text-gray-300 transition-colors"
               >
                 Reset
               </button>
@@ -521,7 +521,7 @@ export default function ScreenerPage() {
 
           {filteredMbResults.length > 0 && (
             <div className="space-y-3">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-slate-300">
                 {filteredMbResults.length} kandidat riset ditemukan
               </p>
 
@@ -544,7 +544,7 @@ export default function ScreenerPage() {
                           <Badge variant={TIER_VARIANT[item.score.tier] ?? "default"}>
                             {item.score.tier} ({item.score.total_score.toFixed(0)}/100)
                           </Badge>
-                          <span className="text-xs text-gray-500">{item.sector ?? "—"}</span>
+                          <span className="text-xs text-slate-300">{item.sector ?? "—"}</span>
                         </div>
                         {item.company_name && (
                           <p className="text-xs text-gray-400 mt-0.5">{item.company_name}</p>
@@ -557,7 +557,7 @@ export default function ScreenerPage() {
                             ? `Rp ${item.current_price.toLocaleString("id-ID")}`
                             : "Harga N/A"}
                         </p>
-                        <p className="text-gray-500">
+                        <p className="text-slate-300">
                           PE: {item.pe_ratio != null ? `${item.pe_ratio.toFixed(1)}x` : "—"} · ROE:{" "}
                           {item.roe != null ? `${item.roe.toFixed(1)}%` : "—"} · Data:{" "}
                           {(item.score.data_completeness * 100).toFixed(0)}%
@@ -577,7 +577,7 @@ export default function ScreenerPage() {
                           </span>
                         ))
                       ) : (
-                        <span className="text-[11px] text-gray-500">
+                        <span className="text-[11px] text-slate-300">
                           Belum memenuhi threshold pipeline spesifik
                         </span>
                       )}
@@ -594,7 +594,7 @@ export default function ScreenerPage() {
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-gray-500">Tidak ada highlight spesifik</p>
+                          <p className="text-slate-300">Tidak ada highlight spesifik</p>
                         )}
                       </div>
 
@@ -607,7 +607,7 @@ export default function ScreenerPage() {
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-gray-500">Periksa laporan keuangan & likuiditas</p>
+                          <p className="text-slate-300">Periksa laporan keuangan & likuiditas</p>
                         )}
                       </div>
                     </div>
@@ -629,7 +629,7 @@ export default function ScreenerPage() {
                           <div className="mt-2 bg-gray-900/60 border border-gray-800 rounded-lg p-3 overflow-x-auto">
                             <table className="w-full text-xs">
                               <thead>
-                                <tr className="text-gray-500 border-b border-gray-800">
+                                <tr className="text-slate-300 border-b border-gray-800">
                                   <th className="text-left py-1.5 pr-3">Target</th>
                                   <th className="text-right py-1.5 pr-3">Horizon</th>
                                   <th className="text-right py-1.5 pr-3">
@@ -683,10 +683,10 @@ export default function ScreenerPage() {
           )}
 
           {mbSearched && !mbLoading && filteredMbResults.length === 0 && !mbError && (
-            <div className="text-center py-12 text-gray-500 space-y-2">
+            <div className="text-center py-12 text-slate-300 space-y-2">
               <Sparkles size={28} className="mx-auto mb-2 opacity-30" />
               <p className="text-sm">Belum ada kandidat yang lolos filter Multibagger ini</p>
-              <p className="text-xs text-gray-500 max-w-sm mx-auto">
+              <p className="text-xs text-slate-300 max-w-sm mx-auto">
                 Coba turunkan Tier Minimum ke WEAK atau pilih Semua Pipeline.
               </p>
             </div>

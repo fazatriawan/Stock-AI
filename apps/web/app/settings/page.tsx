@@ -49,7 +49,7 @@ function LicenseBadge({ license }: { license: string }) {
     </span>
   );
   return (
-    <span className="text-[10px] px-1.5 py-0.5 rounded border bg-gray-800 text-gray-500 border-gray-700">
+    <span className="text-[10px] px-1.5 py-0.5 rounded border bg-gray-800 text-slate-300 border-gray-700">
       {license}
     </span>
   );
@@ -60,13 +60,13 @@ function AccessBadge({ access }: { access: string }) {
     <span className="text-[10px] px-1.5 py-0.5 rounded border bg-emerald-950/20 text-emerald-400 border-emerald-800/30">AKTIF</span>
   );
   if (access === "NOT_CONFIGURED") return (
-    <span className="text-[10px] px-1.5 py-0.5 rounded border bg-gray-800 text-gray-500 border-gray-700">BELUM DIKONFIGURASI</span>
+    <span className="text-[10px] px-1.5 py-0.5 rounded border bg-gray-800 text-slate-300 border-gray-700">BELUM DIKONFIGURASI</span>
   );
   if (access === "LICENSE_BLOCKED") return (
     <span className="text-[10px] px-1.5 py-0.5 rounded border bg-red-950/20 text-red-400 border-red-800/30">DIBLOKIR BUDGET</span>
   );
   return (
-    <span className="text-[10px] px-1.5 py-0.5 rounded border bg-gray-800 text-gray-500 border-gray-700">{access}</span>
+    <span className="text-[10px] px-1.5 py-0.5 rounded border bg-gray-800 text-slate-300 border-gray-700">{access}</span>
   );
 }
 
@@ -83,7 +83,7 @@ function GradeRing({ grade, score }: { grade: string; score: number }) {
   return (
     <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-full border-2 ${color}`}>
       <span className={`text-xl font-bold ${color.split(" ")[0]}`}>{grade}</span>
-      <span className="text-[10px] text-gray-500">{score}/100</span>
+      <span className="text-[10px] text-slate-300">{score}/100</span>
     </div>
   );
 }
@@ -94,7 +94,7 @@ function ScoreBar({ label, score, max, color }: { label: string; score: number; 
     <div className="space-y-0.5">
       <div className="flex justify-between text-[11px]">
         <span className="text-gray-400">{label}</span>
-        <span className="text-gray-500">{score}/{max}</span>
+        <span className="text-slate-300">{score}/{max}</span>
       </div>
       <div className="h-1.5 bg-gray-700/60 rounded-full overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
@@ -143,7 +143,7 @@ function PlatformHealthWidget() {
             <button
               onClick={load}
               disabled={loading}
-              className="text-[10px] text-gray-500 hover:text-gray-300 disabled:opacity-40 transition-colors"
+              className="text-[10px] text-slate-300 hover:text-gray-300 disabled:opacity-40 transition-colors"
             >
               <RefreshCw size={10} className={loading ? "animate-spin inline" : "inline"} />
             </button>
@@ -244,7 +244,7 @@ function DataHealthSection() {
           <button
             onClick={load}
             disabled={loading}
-            className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1 transition-colors disabled:opacity-50"
+            className="text-xs text-slate-300 hover:text-gray-300 flex items-center gap-1 transition-colors disabled:opacity-50"
           >
             <RefreshCw size={11} className={loading ? "animate-spin" : ""} />
             Refresh
@@ -277,10 +277,10 @@ function DataHealthSection() {
 
       {data && (
         <>
-          <p className="text-xs text-gray-500">Dicek pada {fmtDate(data.checked_at)}</p>
+          <p className="text-xs text-slate-300">Dicek pada {fmtDate(data.checked_at)}</p>
           <div className="space-y-1.5">
             {data.providers.length === 0 ? (
-              <p className="text-sm text-gray-500">Tidak ada provider terdaftar</p>
+              <p className="text-sm text-slate-300">Tidak ada provider terdaftar</p>
             ) : (
               data.providers.map(p => (
                 <div
@@ -304,19 +304,19 @@ function DataHealthSection() {
                         ))}
                       </div>
                     )}
-                    <div className="flex gap-3 mt-1 text-[10px] text-gray-500">
+                    <div className="flex gap-3 mt-1 text-[10px] text-slate-300">
                       <span>{p.granularity}</span>
                       <span>·</span>
                       <span>{p.freshness_policy}</span>
                     </div>
                     {p.last_success && (
-                      <p className="text-xs text-gray-500 mt-0.5">Sukses terakhir: {fmtDate(p.last_success)}</p>
+                      <p className="text-xs text-slate-300 mt-0.5">Sukses terakhir: {fmtDate(p.last_success)}</p>
                     )}
                     {p.last_error && (
                       <p className="text-xs text-red-400/70 mt-0.5 truncate">{p.last_error}</p>
                     )}
                     {p.notes && (
-                      <p className="text-xs text-gray-500 mt-0.5">{p.notes}</p>
+                      <p className="text-xs text-slate-300 mt-0.5">{p.notes}</p>
                     )}
                   </div>
                 </div>
@@ -363,7 +363,7 @@ function CoverageSection() {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-medium text-gray-300">Coverage & Freshness</h2>
-        <button onClick={load} className="text-gray-500 hover:text-gray-300">
+        <button onClick={load} className="text-slate-300 hover:text-gray-300">
           <RefreshCw size={12} />
         </button>
       </div>
@@ -392,11 +392,11 @@ function CoverageSection() {
           </div>
 
           {/* Summary row */}
-          <div className="flex flex-wrap gap-4 text-xs text-gray-500 pt-1 border-t border-gray-700/30">
+          <div className="flex flex-wrap gap-4 text-xs text-slate-300 pt-1 border-t border-gray-700/30">
             <span>Total <strong className="text-gray-300">{data.total.toLocaleString("id-ID")}</strong> bar</span>
             <span>Stale <strong className="text-amber-400">{data.stale_pct}%</strong></span>
             {data.unavailable_instruments > 0 && (
-              <span className="text-gray-500">{data.unavailable_instruments} instrumen unavailable</span>
+              <span className="text-slate-300">{data.unavailable_instruments} instrumen unavailable</span>
             )}
             {data.quota_instruments > 0 && (
               <span className="text-red-400">{data.quota_instruments} instrumen quota exhausted</span>
@@ -417,7 +417,7 @@ function CoverageSection() {
           )}
         </div>
       ) : (
-        <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl p-4 text-xs text-gray-500 text-center">
+        <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl p-4 text-xs text-slate-300 text-center">
           Memuat coverage...
         </div>
       )}
@@ -475,7 +475,7 @@ function CSVImportSection() {
   return (
     <div className="space-y-3">
       <h2 className="text-sm font-medium text-gray-300">Import Harga Historis (CSV)</h2>
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-slate-300">
         Upload file CSV dengan kolom <code className="bg-gray-800 px-1 rounded">date, close</code> (minimal).
         Kolom opsional: <code className="bg-gray-800 px-1 rounded">open, high, low, volume, adj_close</code>.
         Import bersifat idempoten — file yang sama tidak akan diproses ulang.
@@ -617,7 +617,7 @@ function BootstrapSection() {
             </p>
           )}
         </div>
-        <button onClick={loadStatus} className="text-gray-500 hover:text-gray-300">
+        <button onClick={loadStatus} className="text-slate-300 hover:text-gray-300">
           <RefreshCw size={12} />
         </button>
       </div>
@@ -630,7 +630,7 @@ function BootstrapSection() {
             <Wifi size={16} className="text-blue-400 mt-0.5 shrink-0" />
             <div>
               <p className="text-sm font-medium text-gray-200">Data Live (Rekomendasi)</p>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-slate-300 mt-0.5">
                 Muat saham IDX + US dari yfinance. Butuh koneksi internet.
                 Harga historis 1 tahun diunduh di background (~1–3 menit).
               </p>
@@ -655,10 +655,10 @@ function BootstrapSection() {
         {/* Mock */}
         <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl p-4 space-y-3">
           <div className="flex items-start gap-3">
-            <WifiOff size={16} className="text-gray-500 mt-0.5 shrink-0" />
+            <WifiOff size={16} className="text-slate-300 mt-0.5 shrink-0" />
             <div>
               <p className="text-sm font-medium text-gray-300">Data Contoh (Offline)</p>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-slate-300 mt-0.5">
                 Pakai data sintetis — untuk testing tanpa internet.
                 Angka tidak mencerminkan kondisi pasar nyata.
               </p>
@@ -727,7 +727,7 @@ function MarketBootstrapSection() {
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-medium text-gray-300">Bootstrap Instrumen</h2>
         {status && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-slate-300">
             {status.instruments_loaded} instrumen · {status.price_bars.toLocaleString("id-ID")} bar
           </span>
         )}
@@ -738,7 +738,7 @@ function MarketBootstrapSection() {
         <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl p-4 space-y-3">
           <div>
             <p className="text-sm font-medium text-gray-200">IDX (~200 saham)</p>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-slate-300 mt-0.5">
               LQ45 · IDX80 · sektoral pilihan. Histori 5 tahun via yfinance.
               Berjalan di background ~5–15 menit.
             </p>
@@ -758,7 +758,7 @@ function MarketBootstrapSection() {
         <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl p-4 space-y-3">
           <div>
             <p className="text-sm font-medium text-gray-200">US (~90 saham + ETF)</p>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-slate-300 mt-0.5">
               S&amp;P 500 pilihan · ETF likuid (SPY, QQQ, GLD). Histori 5 tahun via yfinance.
               Berjalan di background ~3–10 menit.
             </p>
@@ -785,7 +785,7 @@ function MarketBootstrapSection() {
         </div>
       )}
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-slate-300">
         Bootstrap berjalan sekali — data yang sudah ada tidak dihapus (upsert idempoten).
         Jalankan ulang kapan saja untuk mengisi gap data.
       </p>
@@ -847,18 +847,18 @@ function DataGapsSection() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-sm font-medium text-gray-300">Data Gap</h2>
-          <p className="text-[11px] text-gray-500 mt-0.5">Instrumen dengan bar OHLCV kurang dari ekspektasi</p>
+          <p className="text-[11px] text-slate-300 mt-0.5">Instrumen dengan bar OHLCV kurang dari ekspektasi</p>
         </div>
         <div className="flex items-center gap-2">
           {data && (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-slate-300">
               {data.with_gaps} / {data.instruments_checked} instrumen
             </span>
           )}
           <button
             onClick={load}
             disabled={loading}
-            className="text-xs text-gray-500 hover:text-gray-300 disabled:opacity-40 transition-colors"
+            className="text-xs text-slate-300 hover:text-gray-300 disabled:opacity-40 transition-colors"
             title="Refresh"
           >
             <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
@@ -874,14 +874,14 @@ function DataGapsSection() {
 
       <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl overflow-hidden">
         {loading && !data ? (
-          <div className="p-4 text-xs text-gray-500 text-center">Menghitung gap…</div>
+          <div className="p-4 text-xs text-slate-300 text-center">Menghitung gap…</div>
         ) : !data || data.reports.length === 0 ? (
-          <div className="p-4 text-xs text-gray-500 text-center">
+          <div className="p-4 text-xs text-slate-300 text-center">
             {data ? "Tidak ada gap terdeteksi — semua instrumen terlihat lengkap." : "Belum ada data."}
           </div>
         ) : (
           <div className="divide-y divide-gray-700/30">
-            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 px-4 py-2 text-[10px] text-gray-500 uppercase tracking-wide">
+            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 px-4 py-2 text-[10px] text-slate-300 uppercase tracking-wide">
               <span>Instrumen</span>
               <span className="text-right">Bar</span>
               <span className="text-right">Gap</span>
@@ -891,7 +891,7 @@ function DataGapsSection() {
               <div key={r.instrument_id} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 px-4 py-2.5 items-center">
                 <div>
                   <span className="text-xs font-medium text-gray-200">{r.canonical_symbol}</span>
-                  <span className="text-[10px] text-gray-500 ml-1.5">{r.exchange}</span>
+                  <span className="text-[10px] text-slate-300 ml-1.5">{r.exchange}</span>
                 </div>
                 <div className="text-xs text-right text-gray-400 tabular-nums">
                   {r.bar_count.toLocaleString()} / {r.expected_bars.toLocaleString()}
@@ -905,7 +905,7 @@ function DataGapsSection() {
               </div>
             ))}
             {data.reports.length > 20 && (
-              <div className="px-4 py-2 text-[11px] text-gray-500 text-center">
+              <div className="px-4 py-2 text-[11px] text-slate-300 text-center">
                 +{data.reports.length - 20} instrumen lainnya
               </div>
             )}
@@ -928,7 +928,7 @@ function DataGapsSection() {
 
       {data && data.with_gaps > 0 && (
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[11px] text-gray-500">
+          <p className="text-[11px] text-slate-300">
             {data.with_gaps} instrumen terdeteksi gap. Re-ingest via provider gratis tersedia.
           </p>
           <button
@@ -980,13 +980,13 @@ function ProviderQuotaSection() {
         <h2 className="text-sm font-medium text-gray-300">Panggilan Provider Hari Ini</h2>
         <div className="flex items-center gap-2">
           {data && (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-slate-300">
               Total: <span className="text-gray-300 font-medium">{data.total_calls_today}</span>
             </span>
           )}
           <button
             onClick={load}
-            className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+            className="text-xs text-slate-300 hover:text-gray-300 transition-colors"
             title="Refresh"
           >
             <RefreshCw size={12} />
@@ -1006,9 +1006,9 @@ function ProviderQuotaSection() {
 
       <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl overflow-hidden">
         {!data ? (
-          <div className="p-4 text-xs text-gray-500 text-center">Memuat statistik provider…</div>
+          <div className="p-4 text-xs text-slate-300 text-center">Memuat statistik provider…</div>
         ) : data.providers.length === 0 ? (
-          <div className="p-4 text-xs text-gray-500 text-center">
+          <div className="p-4 text-xs text-slate-300 text-center">
             Belum ada panggilan provider hari ini. Counter akan terisi saat refresh data berjalan.
           </div>
         ) : (
@@ -1029,9 +1029,9 @@ function ProviderQuotaSection() {
                     <div className="text-xs text-gray-400">
                       <span className="text-gray-200 font-medium">{p.calls_today}</span>
                       {p.quota_per_day !== null && (
-                        <span className="text-gray-500"> / {p.quota_per_day}</span>
+                        <span className="text-slate-300"> / {p.quota_per_day}</span>
                       )}
-                      <span className="text-gray-500"> panggilan</span>
+                      <span className="text-slate-300"> panggilan</span>
                     </div>
                   </div>
                   {pct !== null && (
@@ -1066,7 +1066,7 @@ function ProviderQuotaSection() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-500">
+      <p className="text-[11px] text-slate-300">
         Counter reset otomatis setiap pergantian hari. Tanggal: {data?.providers[0]?.date_str ?? "—"}
       </p>
     </div>
@@ -1184,19 +1184,19 @@ function StaleInstrumentsSection() {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-gray-700/40">
-                <th className="text-left px-3 py-2 text-gray-500 font-normal">Ticker</th>
-                <th className="text-left px-3 py-2 text-gray-500 font-normal">Bursa</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Stale</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Total</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Stale%</th>
-                <th className="text-left px-3 py-2 text-gray-500 font-normal">FRESH terakhir</th>
+                <th className="text-left px-3 py-2 text-slate-300 font-normal">Ticker</th>
+                <th className="text-left px-3 py-2 text-slate-300 font-normal">Bursa</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Stale</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Total</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Stale%</th>
+                <th className="text-left px-3 py-2 text-slate-300 font-normal">FRESH terakhir</th>
               </tr>
             </thead>
             <tbody>
               {data.instruments.map((row) => (
                 <tr key={row.instrument_id} className="border-b border-gray-700/20 last:border-0 hover:bg-gray-700/20 transition-colors">
                   <td className="px-3 py-2 font-mono text-gray-300">{row.canonical_symbol}</td>
-                  <td className="px-3 py-2 text-gray-500">{row.exchange}</td>
+                  <td className="px-3 py-2 text-slate-300">{row.exchange}</td>
                   <td className="px-3 py-2 text-right text-amber-400">{row.stale_count.toLocaleString()}</td>
                   <td className="px-3 py-2 text-right text-gray-400">{row.total_count.toLocaleString()}</td>
                   <td className="px-3 py-2 text-right">
@@ -1204,7 +1204,7 @@ function StaleInstrumentsSection() {
                       {row.stale_pct}%
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-gray-500">
+                  <td className="px-3 py-2 text-slate-300">
                     {row.last_fresh_date ?? <span className="text-red-400/70">tidak ada</span>}
                   </td>
                 </tr>
@@ -1258,7 +1258,7 @@ function SectorCoverageSection() {
                 className={`px-2 py-0.5 capitalize transition-colors ${
                   view === v
                     ? "bg-gray-700 text-gray-100"
-                    : "bg-gray-800/50 text-gray-500 hover:text-gray-300"
+                    : "bg-gray-800/50 text-slate-300 hover:text-gray-300"
                 }`}
               >
                 {v === "exchange" ? "Bursa" : "Sektor"}
@@ -1289,12 +1289,12 @@ function SectorCoverageSection() {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-gray-700/40">
-                <th className="text-left px-3 py-2 text-gray-500 font-normal">Bursa</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Instrumen</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Ada FRESH</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Bar FRESH</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Total Bar</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Fresh%</th>
+                <th className="text-left px-3 py-2 text-slate-300 font-normal">Bursa</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Instrumen</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Ada FRESH</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Bar FRESH</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Total Bar</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Fresh%</th>
               </tr>
             </thead>
             <tbody>
@@ -1304,7 +1304,7 @@ function SectorCoverageSection() {
                   <td className="px-3 py-2 text-right text-gray-400">{row.total_instruments}</td>
                   <td className="px-3 py-2 text-right text-emerald-400">{row.instruments_with_fresh}</td>
                   <td className="px-3 py-2 text-right text-gray-400">{row.fresh_bars.toLocaleString()}</td>
-                  <td className="px-3 py-2 text-right text-gray-500">{row.total_bars.toLocaleString()}</td>
+                  <td className="px-3 py-2 text-right text-slate-300">{row.total_bars.toLocaleString()}</td>
                   <td className={`px-3 py-2 text-right font-medium ${freshColor(row.fresh_pct)}`}>
                     {row.fresh_pct}%
                   </td>
@@ -1320,22 +1320,22 @@ function SectorCoverageSection() {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-gray-700/40">
-                <th className="text-left px-3 py-2 text-gray-500 font-normal">Sektor</th>
-                <th className="text-left px-3 py-2 text-gray-500 font-normal">Bursa</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Instrumen</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Bar FRESH</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Total Bar</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Fresh%</th>
+                <th className="text-left px-3 py-2 text-slate-300 font-normal">Sektor</th>
+                <th className="text-left px-3 py-2 text-slate-300 font-normal">Bursa</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Instrumen</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Bar FRESH</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Total Bar</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Fresh%</th>
               </tr>
             </thead>
             <tbody>
               {data.by_sector.map((row, i) => (
                 <tr key={`${row.sector}-${row.exchange}-${i}`} className="border-b border-gray-700/20 last:border-0 hover:bg-gray-700/20 transition-colors">
                   <td className="px-3 py-2 text-gray-300 max-w-[160px] truncate" title={row.sector}>{row.sector}</td>
-                  <td className="px-3 py-2 text-gray-500 font-mono">{row.exchange}</td>
+                  <td className="px-3 py-2 text-slate-300 font-mono">{row.exchange}</td>
                   <td className="px-3 py-2 text-right text-gray-400">{row.instrument_count}</td>
                   <td className="px-3 py-2 text-right text-gray-400">{row.fresh_bars.toLocaleString()}</td>
-                  <td className="px-3 py-2 text-right text-gray-500">{row.total_bars.toLocaleString()}</td>
+                  <td className="px-3 py-2 text-right text-slate-300">{row.total_bars.toLocaleString()}</td>
                   <td className={`px-3 py-2 text-right font-medium ${freshColor(row.fresh_pct)}`}>
                     {row.fresh_pct}%
                   </td>
@@ -1347,7 +1347,7 @@ function SectorCoverageSection() {
       )}
 
       {data && (data.by_exchange.length === 0 && data.by_sector.length === 0) && (
-        <p className="text-xs text-gray-500 px-3 py-4 text-center">Belum ada data harga di database.</p>
+        <p className="text-xs text-slate-300 px-3 py-4 text-center">Belum ada data harga di database.</p>
       )}
     </div>
   );
@@ -1408,13 +1408,13 @@ function ProviderStatsSection() {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-gray-700/40">
-                <th className="text-left px-3 py-2 text-gray-500 font-normal">Provider</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Panggilan</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Sukses</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Gagal</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Rate</th>
-                <th className="text-right px-3 py-2 text-gray-500 font-normal">Bar</th>
-                <th className="text-left px-3 py-2 text-gray-500 font-normal">Error terakhir</th>
+                <th className="text-left px-3 py-2 text-slate-300 font-normal">Provider</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Panggilan</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Sukses</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Gagal</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Rate</th>
+                <th className="text-right px-3 py-2 text-slate-300 font-normal">Bar</th>
+                <th className="text-left px-3 py-2 text-slate-300 font-normal">Error terakhir</th>
               </tr>
             </thead>
             <tbody>
@@ -1427,19 +1427,19 @@ function ProviderStatsSection() {
                   <td className={`px-3 py-2 text-right font-medium ${rateColor(row.success_rate)}`}>
                     {row.total_calls === 0 ? "—" : `${row.success_rate}%`}
                   </td>
-                  <td className="px-3 py-2 text-right text-gray-500">{row.bars_fetched.toLocaleString()}</td>
-                  <td className="px-3 py-2 text-gray-500 max-w-[180px] truncate" title={row.last_error ?? undefined}>
+                  <td className="px-3 py-2 text-right text-slate-300">{row.bars_fetched.toLocaleString()}</td>
+                  <td className="px-3 py-2 text-slate-300 max-w-[180px] truncate" title={row.last_error ?? undefined}>
                     {row.last_error ? (
                       <span className="text-red-400/70">{row.last_error}</span>
                     ) : (
-                      <span className="text-gray-500">—</span>
+                      <span className="text-slate-300">—</span>
                     )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <div className="px-3 py-1.5 text-[10px] text-gray-500 border-t border-gray-700/20">
+          <div className="px-3 py-1.5 text-[10px] text-slate-300 border-t border-gray-700/20">
             Reset otomatis setiap tengah malam · hanya exception dihitung sebagai gagal
           </div>
         </div>
@@ -1502,11 +1502,11 @@ function SchedulerJobsSection() {
       )}
 
       {!status && !loading && !error && (
-        <p className="text-xs text-gray-500">Belum ada data. Klik "Muat ulang".</p>
+        <p className="text-xs text-slate-300">Belum ada data. Klik "Muat ulang".</p>
       )}
 
       {status && status.jobs.length === 0 && (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-slate-300">
           Belum ada job yang berjalan sejak server terakhir start.
         </p>
       )}
@@ -1516,11 +1516,11 @@ function SchedulerJobsSection() {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-gray-700/40">
-                <th className="text-left px-3 py-2 text-gray-500 font-normal">Job</th>
-                <th className="text-left px-3 py-2 text-gray-500 font-normal">Status</th>
-                <th className="text-left px-3 py-2 text-gray-500 font-normal">Durasi</th>
-                <th className="text-left px-3 py-2 text-gray-500 font-normal">Terakhir</th>
-                <th className="text-left px-3 py-2 text-gray-500 font-normal">Detail</th>
+                <th className="text-left px-3 py-2 text-slate-300 font-normal">Job</th>
+                <th className="text-left px-3 py-2 text-slate-300 font-normal">Status</th>
+                <th className="text-left px-3 py-2 text-slate-300 font-normal">Durasi</th>
+                <th className="text-left px-3 py-2 text-slate-300 font-normal">Terakhir</th>
+                <th className="text-left px-3 py-2 text-slate-300 font-normal">Detail</th>
               </tr>
             </thead>
             <tbody>
@@ -1533,15 +1533,15 @@ function SchedulerJobsSection() {
                       <span className={
                         row.status === "ok" ? "text-emerald-400" :
                         row.status === "error" ? "text-red-400" :
-                        row.status === "running" ? "text-amber-400" : "text-gray-500"
+                        row.status === "running" ? "text-amber-400" : "text-slate-300"
                       }>
                         {row.status}
                       </span>
                     </span>
                   </td>
                   <td className="px-3 py-2 text-gray-400">{fmtDuration(row.duration_ms)}</td>
-                  <td className="px-3 py-2 text-gray-500">{fmtDate(row.started_at)}</td>
-                  <td className="px-3 py-2 text-gray-500 max-w-[200px] truncate">
+                  <td className="px-3 py-2 text-slate-300">{fmtDate(row.started_at)}</td>
+                  <td className="px-3 py-2 text-slate-300 max-w-[200px] truncate">
                     {row.error
                       ? <span className="text-red-400">{row.error}</span>
                       : <span>{summaryText(row) ?? "—"}</span>
@@ -1566,24 +1566,24 @@ function AboutSection() {
       <h2 className="text-sm font-medium text-gray-300">Tentang</h2>
       <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl p-4 space-y-2 text-xs text-gray-400">
         <div className="flex justify-between">
-          <span className="text-gray-500">Versi</span>
+          <span className="text-slate-300">Versi</span>
           <span>v1.1.0</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-500">Stack</span>
+          <span className="text-slate-300">Stack</span>
           <span>Next.js 14 · FastAPI · PostgreSQL</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-500">Pasar</span>
+          <span className="text-slate-300">Pasar</span>
           <span>IDX (Indonesia) · US</span>
         </div>
         <hr className="border-gray-700/40 my-1" />
-        <p className="text-gray-500 leading-relaxed">
+        <p className="text-slate-300 leading-relaxed">
           Alat riset ekuitas pribadi. Tidak pernah mengeksekusi transaksi atau terhubung ke broker secara
           otomatis. Semua keputusan beli/jual sepenuhnya ada di tangan pengguna.
         </p>
-        <p className="text-gray-500 leading-relaxed">
-          <strong className="text-gray-500">Bukan nasihat investasi.</strong> Angka yang ditampilkan
+        <p className="text-slate-300 leading-relaxed">
+          <strong className="text-slate-300">Bukan nasihat investasi.</strong> Angka yang ditampilkan
           berasal dari provider data pihak ketiga dan mungkin terlambat atau tidak akurat.
           Selalu verifikasi secara independen sebelum mengambil keputusan investasi.
         </p>
@@ -1600,7 +1600,7 @@ export default function SettingsPage() {
     <div className="p-6 space-y-8 max-w-2xl">
       <div>
         <h1 className="text-lg font-semibold text-gray-100">Data & Settings</h1>
-        <p className="text-xs text-gray-500 mt-0.5">Status sistem, manajemen data, dan konfigurasi</p>
+        <p className="text-xs text-slate-300 mt-0.5">Status sistem, manajemen data, dan konfigurasi</p>
       </div>
 
       <PlatformHealthWidget />

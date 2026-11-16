@@ -23,7 +23,7 @@ export function DataHealthStatus() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="text-xs text-gray-500">Memeriksa provider...</div>;
+  if (loading) return <div className="text-xs text-slate-300">Memeriksa provider...</div>;
   if (error) return <div className="text-xs text-red-400">Error: {error}</div>;
 
   return (
@@ -35,7 +35,7 @@ export function DataHealthStatus() {
               <span className="text-xs font-medium text-gray-300 capitalize">{p.provider}</span>
               <span className={`text-xs font-semibold ${statusColor(p.status)}`}>{p.status}</span>
             </div>
-            {p.notes && <p className="text-xs text-gray-500 truncate">{p.notes}</p>}
+            {p.notes && <p className="text-xs text-slate-300 truncate">{p.notes}</p>}
             {p.last_error && <p className="text-xs text-red-500 truncate">{p.last_error}</p>}
           </CardContent>
         </Card>

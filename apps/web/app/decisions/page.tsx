@@ -29,7 +29,7 @@ const ACTION_LABEL: Record<string, string> = {
 const CONFIDENCE_COLOR: Record<string, string> = {
   HIGH: "text-emerald-400",
   MEDIUM: "text-amber-400",
-  LOW: "text-gray-500",
+  LOW: "text-slate-300",
 };
 
 function ScoreBar({ score }: { score: number }) {
@@ -83,12 +83,12 @@ function DecisionCard({ d }: { d: DecisionSummary }) {
 
         {/* Gate block message */}
         {hasGateBlock && d.hard_gate_reason && (
-          <p className="text-xs text-gray-500 italic">{d.hard_gate_reason}</p>
+          <p className="text-xs text-slate-300 italic">{d.hard_gate_reason}</p>
         )}
 
         {/* Factor scores mini row */}
         {!hasGateBlock && (
-          <div className="flex gap-3 text-xs text-gray-500">
+          <div className="flex gap-3 text-xs text-slate-300">
             {Object.entries(d.factor_scores).map(([k, v]) => (
               <span key={k}>
                 {k.slice(0, 4).toUpperCase()}: <span className="text-gray-300">{v?.toFixed(0) ?? "—"}</span>
@@ -101,7 +101,7 @@ function DecisionCard({ d }: { d: DecisionSummary }) {
         {(d.bull_thesis.length > 0 || d.bear_case.length > 0) && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="text-xs text-gray-500 hover:text-gray-400 flex items-center gap-1"
+            className="text-xs text-slate-300 hover:text-gray-400 flex items-center gap-1"
           >
             {expanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
             {expanded ? "Tutup" : "Lihat tesis"}
@@ -135,7 +135,7 @@ function DecisionCard({ d }: { d: DecisionSummary }) {
               </div>
             )}
             {d.data_gaps.length > 0 && (
-              <p className="text-xs text-gray-500">Data gap: {d.data_gaps.join(", ")}</p>
+              <p className="text-xs text-slate-300">Data gap: {d.data_gaps.join(", ")}</p>
             )}
           </div>
         )}
@@ -182,14 +182,14 @@ export default function DecisionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-gray-100">Decisions</h1>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-slate-300 mt-0.5">
             Sinyal dari decision engine — deterministik, bukan rekomendasi investasi
           </p>
         </div>
         <button
           onClick={load}
           disabled={loading}
-          className="p-2 text-gray-500 hover:text-gray-300 disabled:opacity-40 transition-colors"
+          className="p-2 text-slate-300 hover:text-gray-300 disabled:opacity-40 transition-colors"
         >
           <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
         </button>
@@ -205,7 +205,7 @@ export default function DecisionsPage() {
             { label: "Review Sekarang", val: reviewNow, color: "text-amber-400" },
           ].map(({ label, val, color }) => (
             <div key={label} className="bg-gray-800/50 rounded-lg p-2.5 text-center">
-              <p className="text-gray-500">{label}</p>
+              <p className="text-slate-300">{label}</p>
               <p className={`text-xl font-bold ${color}`}>{val}</p>
             </div>
           ))}
@@ -219,7 +219,7 @@ export default function DecisionsPage() {
             key={f}
             onClick={() => setFilter(f)}
             className={`px-2.5 py-1 rounded-md transition-colors ${
-              filter === f ? "bg-gray-700 text-gray-100" : "text-gray-500 hover:text-gray-300"
+              filter === f ? "bg-gray-700 text-gray-100" : "text-slate-300 hover:text-gray-300"
             }`}
           >
             {FILTER_LABEL[f]}{f !== "ALL" && counts[f] ? ` (${counts[f]})` : f === "ALL" && data ? ` (${data.total})` : ""}
@@ -239,11 +239,11 @@ export default function DecisionsPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-12 space-y-3">
-          <Minus size={28} className="mx-auto text-gray-500" />
+          <Minus size={28} className="mx-auto text-slate-300" />
           {decisions.length === 0 ? (
             <>
               <p className="text-sm text-gray-400 font-medium">Belum ada saham untuk dianalisis</p>
-              <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed">
+              <p className="text-xs text-slate-300 max-w-xs mx-auto leading-relaxed">
                 Decision Center menganalisis saham di portofolio dan watchlist-mu.
                 Tambahkan saham terlebih dahulu.
               </p>
@@ -257,7 +257,7 @@ export default function DecisionsPage() {
               </div>
             </>
           ) : (
-            <p className="text-sm text-gray-500">Tidak ada sinyal untuk filter yang dipilih</p>
+            <p className="text-sm text-slate-300">Tidak ada sinyal untuk filter yang dipilih</p>
           )}
         </div>
       ) : (
@@ -268,7 +268,7 @@ export default function DecisionsPage() {
         </div>
       )}
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-slate-300">
         Sinyal dihitung dari data fundamental & teknikal. Bukan rekomendasi investasi.
         Selalu lakukan riset mandiri sebelum mengambil keputusan.
       </p>

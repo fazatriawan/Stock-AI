@@ -62,10 +62,10 @@ export function EditPositionModal({ position, onClose, onSuccess }: Props) {
           <div>
             <h2 className="text-sm font-semibold text-gray-100">Edit Posisi — {ticker}</h2>
             {position.company_name && (
-              <p className="text-xs text-gray-500 mt-0.5">{position.company_name}</p>
+              <p className="text-xs text-slate-300 mt-0.5">{position.company_name}</p>
             )}
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 transition-colors">
+          <button onClick={onClose} className="text-slate-300 hover:text-gray-300 transition-colors">
             <X size={16} />
           </button>
         </div>
@@ -74,7 +74,7 @@ export function EditPositionModal({ position, onClose, onSuccess }: Props) {
           <div className="px-5 py-10 text-center space-y-3">
             <CheckCircle size={32} className="text-emerald-400 mx-auto" />
             <p className="text-sm font-medium text-gray-100">Posisi berhasil diperbarui</p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-slate-300">
               {ticker}: {lotsNum} lot @ {formatCurrency(priceNum)}
             </p>
             <Button size="sm" onClick={onSuccess} className="mt-2">
@@ -84,7 +84,7 @@ export function EditPositionModal({ position, onClose, onSuccess }: Props) {
         ) : (
           <form onSubmit={handleSubmit} className="px-5 py-5 space-y-4">
             {/* Info sekarang */}
-            <div className="bg-gray-800/40 rounded-xl px-4 py-3 text-xs text-gray-500 space-y-1">
+            <div className="bg-gray-800/40 rounded-xl px-4 py-3 text-xs text-slate-300 space-y-1">
               <p className="text-gray-400 font-medium mb-1.5">Posisi saat ini</p>
               <div className="flex justify-between">
                 <span>Lot / Saham</span>
@@ -114,7 +114,7 @@ export function EditPositionModal({ position, onClose, onSuccess }: Props) {
                   required
                 />
                 {lotsNum > 0 && (
-                  <p className="text-xs text-gray-500 mt-1">{lotsNum} lot = {(lotsNum * 100).toLocaleString("id-ID")} saham</p>
+                  <p className="text-xs text-slate-300 mt-1">{lotsNum} lot = {(lotsNum * 100).toLocaleString("id-ID")} saham</p>
                 )}
               </div>
 
@@ -159,20 +159,20 @@ export function EditPositionModal({ position, onClose, onSuccess }: Props) {
               <div className="bg-gray-800/40 rounded-xl px-4 py-3 text-xs space-y-1">
                 <p className="text-gray-400 font-medium mb-1.5">Setelah diperbarui</p>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Total Modal</span>
+                  <span className="text-slate-300">Total Modal</span>
                   <span className={`font-medium ${hasChange ? "text-blue-300" : "text-gray-300"}`}>
                     {formatCurrency(totalCost)}
                   </span>
                 </div>
                 {lotsChanged && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Lot berubah</span>
+                    <span className="text-slate-300">Lot berubah</span>
                     <span className="text-amber-400">{Math.round(position.lots)} → {lotsNum} lot</span>
                   </div>
                 )}
                 {priceChanged && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Harga berubah</span>
+                    <span className="text-slate-300">Harga berubah</span>
                     <span className="text-amber-400">{formatCurrency(position.avg_cost)} → {formatCurrency(priceNum)}</span>
                   </div>
                 )}

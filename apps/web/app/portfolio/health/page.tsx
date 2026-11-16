@@ -51,7 +51,7 @@ function ComponentCard({ label, score, max, description }: {
         <span className="text-sm font-semibold text-gray-100">{score.toFixed(1)} / {max}</span>
       </div>
       <ScoreBar value={score} max={max} color={color} />
-      <p className="text-xs text-gray-500">{description}</p>
+      <p className="text-xs text-slate-300">{description}</p>
     </div>
   );
 }
@@ -96,20 +96,20 @@ export default function PortfolioHealthPage() {
     <div className="p-6 space-y-6 max-w-4xl">
       <div>
         <h1 className="text-lg font-semibold text-gray-100">Portfolio Health</h1>
-        <p className="text-xs text-gray-500 mt-0.5">Analisis konsentrasi, diversifikasi, dan kondisi portofolio</p>
+        <p className="text-xs text-slate-300 mt-0.5">Analisis konsentrasi, diversifikasi, dan kondisi portofolio</p>
       </div>
 
       {/* Health Score Card */}
       <div className={`rounded-xl border p-6 ${gradeBg}`}>
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs text-gray-500 mb-1">Health Score</p>
+            <p className="text-xs text-slate-300 mb-1">Health Score</p>
             <p className={`text-5xl font-bold ${gradeColor}`}>{data.health_score.toFixed(0)}</p>
             <p className={`text-sm font-medium mt-1 ${gradeColor}`}>{GRADE_LABEL[data.grade]}</p>
           </div>
           <div className="text-right space-y-1">
-            <p className="text-xs text-gray-500">{data.position_count} posisi</p>
-            <p className="text-xs text-gray-500">Diversifikasi: {data.diversification_score.toFixed(0)}/100</p>
+            <p className="text-xs text-slate-300">{data.position_count} posisi</p>
+            <p className="text-xs text-slate-300">Diversifikasi: {data.diversification_score.toFixed(0)}/100</p>
             <p className={`text-xs font-medium ${data.unrealized_pnl >= 0 ? "text-emerald-400" : "text-red-400"}`}>
               P/L: {data.unrealized_pnl >= 0 ? "+" : ""}{formatPercent(data.unrealized_pnl_pct)}
             </p>
@@ -122,7 +122,7 @@ export default function PortfolioHealthPage() {
           <div className="bg-blue-600/60 h-full" style={{ width: `${data.concentration_component}%` }} title={`Konsentrasi: ${data.concentration_component.toFixed(1)}`} />
           <div className="bg-amber-600/60 h-full" style={{ width: `${data.pnl_component}%` }} title={`P/L: ${data.pnl_component.toFixed(1)}`} />
         </div>
-        <div className="flex gap-4 mt-2 text-xs text-gray-500">
+        <div className="flex gap-4 mt-2 text-xs text-slate-300">
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-600/60 inline-block" />Diversifikasi</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-600/60 inline-block" />Konsentrasi</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-600/60 inline-block" />P/L</span>
@@ -165,7 +165,7 @@ export default function PortfolioHealthPage() {
               <div key={r.symbol} className="flex items-center justify-between rounded-lg bg-amber-900/10 border border-amber-800/30 px-4 py-2.5">
                 <div>
                   <span className="text-sm font-medium text-gray-200">{r.symbol.split(":")[1] ?? r.symbol}</span>
-                  <p className="text-xs text-gray-500 mt-0.5">{r.message}</p>
+                  <p className="text-xs text-slate-300 mt-0.5">{r.message}</p>
                 </div>
                 <Badge variant={r.severity === "SEVERELY_OVERWEIGHT" ? "danger" : "warning"}>
                   {(r.weight * 100).toFixed(1)}%
@@ -235,7 +235,7 @@ export default function PortfolioHealthPage() {
         </div>
       )}
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-slate-300">
         Skor dihitung deterministik dari data posisi. Ini bukan nasihat investasi.
         Keputusan sepenuhnya tanggung jawab pengguna.
       </p>

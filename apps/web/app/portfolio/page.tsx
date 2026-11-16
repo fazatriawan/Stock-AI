@@ -13,7 +13,7 @@ import { EditPositionModal } from "@/components/portfolio/EditPositionModal";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 
 function PnlBadge({ value, pct }: { value: number | null; pct: number | null }) {
-  if (value === null || pct === null) return <span className="text-gray-500">N/A</span>;
+  if (value === null || pct === null) return <span className="text-slate-300">N/A</span>;
   const isPositive = value >= 0;
   const Icon = isPositive ? TrendingUp : TrendingDown;
   return (
@@ -28,8 +28,8 @@ function SummaryCard({ title, value, sub }: { title: string; value: React.ReactN
   return (
     <Card>
       <CardContent className="pt-4 pb-4">
-        <p className="text-xs text-gray-500 mb-1">{title}</p>
-        <div className="text-lg font-semibold text-gray-100">{value}</div>
+        <p className="text-xs text-sky-400 uppercase tracking-wide mb-1">{title}</p>
+        <div className="text-lg font-semibold text-white">{value}</div>
         {sub && <div className="text-xs mt-0.5">{sub}</div>}
       </CardContent>
     </Card>
@@ -53,23 +53,23 @@ function PositionRow({
     <tr className="border-b border-gray-800 hover:bg-gray-800/30 transition-colors group">
       <td className="py-3 px-4">
         <div className="font-medium text-gray-100 text-sm">{pos.canonical_symbol.split(":")[1] ?? pos.canonical_symbol}</div>
-        {pos.company_name && <div className="text-xs text-gray-500 truncate max-w-[140px]">{pos.company_name}</div>}
+        {pos.company_name && <div className="text-xs text-slate-300 truncate max-w-[140px]">{pos.company_name}</div>}
       </td>
       <td className="py-3 px-4 text-right text-sm text-gray-300">
         {pos.lots.toFixed(0)} lot
-        <div className="text-xs text-gray-500">{pos.shares.toLocaleString("id-ID")} saham</div>
+        <div className="text-xs text-slate-300">{pos.shares.toLocaleString("id-ID")} saham</div>
       </td>
       <td className="py-3 px-4 text-right text-sm text-gray-300">
         {formatCurrency(pos.avg_cost)}
       </td>
       <td className="py-3 px-4 text-right text-sm text-gray-300">
-        {pos.current_price !== null ? formatCurrency(pos.current_price) : <span className="text-gray-500">—</span>}
+        {pos.current_price !== null ? formatCurrency(pos.current_price) : <span className="text-slate-300">—</span>}
         {pos.current_price_date && (
-          <div className="text-xs text-gray-500">{pos.current_price_date}</div>
+          <div className="text-xs text-slate-300">{pos.current_price_date}</div>
         )}
       </td>
       <td className="py-3 px-4 text-right text-sm">
-        {hasMV ? formatCurrency(pos.market_value) : <span className="text-gray-500">—</span>}
+        {hasMV ? formatCurrency(pos.market_value) : <span className="text-slate-300">—</span>}
       </td>
       <td className="py-3 px-4 text-right text-sm">
         {pos.unrealized_pnl !== null ? (
@@ -79,9 +79,9 @@ function PositionRow({
               {isPos ? "+" : ""}{formatPercent(pos.unrealized_pnl_pct)}
             </div>
           </div>
-        ) : <span className="text-gray-500">—</span>}
+        ) : <span className="text-slate-300">—</span>}
       </td>
-      <td className="py-3 px-4 text-right text-xs text-gray-500">
+      <td className="py-3 px-4 text-right text-xs text-slate-300">
         {pos.weight > 0 ? `${(pos.weight * 100).toFixed(1)}%` : "—"}
       </td>
       <td className="py-3 px-4 text-right">
@@ -93,10 +93,10 @@ function PositionRow({
             >
               Hapus
             </button>
-            <span className="text-gray-500">·</span>
+            <span className="text-slate-300">·</span>
             <button
               onClick={() => setConfirmDelete(false)}
-              className="text-xs text-gray-500 hover:text-gray-300"
+              className="text-xs text-slate-300 hover:text-gray-300"
             >
               Batal
             </button>
@@ -105,14 +105,14 @@ function PositionRow({
           <span className="flex items-center gap-1.5 justify-end opacity-0 group-hover:opacity-100 transition-all">
             <button
               onClick={() => onEdit(pos)}
-              className="text-gray-500 hover:text-blue-400 transition-colors"
+              className="text-slate-300 hover:text-blue-400 transition-colors"
               title="Edit posisi"
             >
               <Pencil size={13} />
             </button>
             <button
               onClick={() => setConfirmDelete(true)}
-              className="text-gray-500 hover:text-red-400 transition-colors"
+              className="text-slate-300 hover:text-red-400 transition-colors"
               title="Hapus posisi"
             >
               <Trash2 size={13} />
@@ -211,8 +211,8 @@ export default function PortfolioPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-gray-100">My Portfolio</h1>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h1 className="text-lg font-semibold text-white">My Portfolio</h1>
+          <p className="text-xs text-sky-400 mt-0.5">
             {data?.portfolio_name ?? "Default"} · {data?.base_currency ?? "IDR"}
           </p>
         </div>
@@ -266,7 +266,7 @@ export default function PortfolioPage() {
           title="Nilai Pasar"
           value={formatCurrency(data?.market_value ?? 0)}
           sub={data && data.market_value > 0 ? (
-            <span className="text-gray-500 text-xs">{data.trade_count} transaksi</span>
+            <span className="text-slate-300 text-xs">{data.trade_count} transaksi</span>
           ) : null}
         />
         <SummaryCard
@@ -307,7 +307,7 @@ export default function PortfolioPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-sm text-gray-400 mb-2">Portofolio masih kosong.</p>
-            <p className="text-xs text-gray-500 mb-4">
+            <p className="text-xs text-slate-300 mb-4">
               Muat data awal (BMRI, BBRI, BBNI, BBCA) dari CR §10 atau tambah trade manual.
             </p>
             <div className="flex justify-center gap-3">
@@ -331,7 +331,7 @@ export default function PortfolioPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-800 text-xs text-gray-500">
+                    <tr className="border-b border-blue-900/40 text-xs text-sky-400">
                       <th className="py-2.5 px-4 text-left">Saham</th>
                       <th className="py-2.5 px-4 text-right">Lot / Saham</th>
                       <th className="py-2.5 px-4 text-right">Avg Cost</th>
@@ -381,7 +381,7 @@ export default function PortfolioPage() {
         </>
       )}
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-slate-300">
         Data ini hanya untuk riset pribadi, bukan nasihat investasi.
         Keputusan transaksi sepenuhnya menjadi tanggung jawab pengguna.
       </p>

@@ -32,10 +32,10 @@ function KpiCard({
     : highlight === "red" ? "text-red-400"
     : "text-gray-100";
   return (
-    <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4 hover:border-gray-600/60 transition-colors">
-      <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-2">{label}</p>
+    <div className="bg-gray-800/60 border border-blue-900/40 rounded-xl p-4 hover:border-blue-700/50 transition-colors">
+      <p className="text-[11px] font-medium text-sky-400 uppercase tracking-wide mb-2">{label}</p>
       <p className={`text-2xl font-bold tracking-tight ${valueColor}`}>{value}</p>
-      {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
+      {sub && <p className="text-xs text-sky-300/80 mt-1">{sub}</p>}
     </div>
   );
 }
@@ -182,14 +182,14 @@ function TopPositions() {
   if (loading) return <div className="h-24 bg-gray-800 rounded-xl animate-pulse" />;
 
   if (fetchError) return (
-    <div className="text-center py-6 text-gray-500 text-sm">
+    <div className="text-center py-6 text-slate-300 text-sm">
       Gagal memuat posisi — pastikan API berjalan
     </div>
   );
 
   const positions = portfolio?.positions ?? [];
   if (positions.length === 0) return (
-    <div className="text-center py-6 text-gray-500 text-sm">
+    <div className="text-center py-6 text-slate-300 text-sm">
       Belum ada posisi —{" "}
       <Link href="/portfolio/import" className="text-blue-400 hover:underline">import transaksi</Link>
     </div>
@@ -204,13 +204,13 @@ function TopPositions() {
         const pct = pos.unrealized_pnl_pct ?? 0;
         const isUp = pct >= 0;
         return (
-          <div key={pos.canonical_symbol} className="flex items-center gap-3 rounded-xl bg-gray-800/40 border border-gray-700/40 px-4 py-3 hover:border-gray-600/50 transition-colors">
+          <div key={pos.canonical_symbol} className="flex items-center gap-3 rounded-xl bg-gray-800/50 border border-blue-900/30 px-4 py-3 hover:border-blue-700/40 transition-colors">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-100">{ticker}</span>
-                <span className="text-xs text-gray-500">{pos.sector ?? "—"}</span>
+                <span className="text-sm font-semibold text-white">{ticker}</span>
+                <span className="text-xs text-sky-400">{pos.sector ?? "—"}</span>
               </div>
-              <p className="text-xs text-gray-500">{formatCurrency(pos.market_value ?? 0)}</p>
+              <p className="text-xs text-slate-300">{formatCurrency(pos.market_value ?? 0)}</p>
             </div>
             <div className="text-right">
               <span className={`text-sm font-medium ${PnlColor(pct)}`}>
@@ -225,7 +225,7 @@ function TopPositions() {
       })}
       <Link
         href="/portfolio"
-        className="flex items-center justify-center gap-1 text-xs text-gray-500 hover:text-gray-300 py-1 transition-colors"
+        className="flex items-center justify-center gap-1 text-xs text-slate-300 hover:text-gray-300 py-1 transition-colors"
       >
         Lihat semua posisi <ChevronRight size={12} />
       </Link>
@@ -251,8 +251,8 @@ export default function OverviewPage() {
     <div className="p-6 space-y-6 max-w-5xl">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-gray-100">Overview</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Ringkasan portofolio & market hari ini</p>
+        <h1 className="text-xl font-bold text-white">Overview</h1>
+        <p className="text-sm text-sky-300 mt-0.5">Ringkasan portofolio & market hari ini</p>
       </div>
 
       {/* Onboarding steps */}
@@ -263,21 +263,21 @@ export default function OverviewPage() {
 
       {/* Market status */}
       <section>
-        <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Status Bursa</h2>
+        <h2 className="text-xs font-medium text-blue-400 uppercase tracking-wider mb-3">Status Bursa</h2>
         <MarketStatusGrid />
       </section>
 
       {/* Portfolio KPIs */}
       <section>
-        <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Portofolio</h2>
+        <h2 className="text-xs font-medium text-blue-400 uppercase tracking-wider mb-3">Portofolio</h2>
         <PortfolioKpis />
       </section>
 
       {/* Top positions */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Posisi Teratas</h2>
-          <Link href="/portfolio/positions" className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1">
+          <h2 className="text-xs font-medium text-blue-400 uppercase tracking-wider">Posisi Teratas</h2>
+          <Link href="/portfolio/positions" className="text-xs text-slate-300 hover:text-gray-300 flex items-center gap-1">
             Intelligence <ChevronRight size={11} />
           </Link>
         </div>
@@ -286,7 +286,7 @@ export default function OverviewPage() {
 
       {/* Quick links */}
       <section>
-        <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Aksi Cepat</h2>
+        <h2 className="text-xs font-medium text-blue-400 uppercase tracking-wider mb-3">Aksi Cepat</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {QUICK_LINKS.map(link => {
             const Icon = link.icon;
@@ -294,12 +294,12 @@ export default function OverviewPage() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="bg-gray-800/40 border border-gray-700/40 hover:border-gray-500/60 hover:bg-gray-800/60 rounded-xl px-4 py-4 flex flex-col gap-2.5 group transition-all"
+                className="bg-gray-800/50 border border-blue-900/30 hover:border-blue-600/50 hover:bg-blue-950/20 rounded-xl px-4 py-4 flex flex-col gap-2.5 group transition-all"
               >
-                <Icon size={16} className="text-gray-500 group-hover:text-gray-300 transition-colors" />
+                <Icon size={16} className="text-blue-400 group-hover:text-blue-300 transition-colors" />
                 <div>
-                  <p className="text-sm font-semibold text-gray-200 group-hover:text-white transition-colors">{link.label}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{link.desc}</p>
+                  <p className="text-sm font-semibold text-white group-hover:text-sky-200 transition-colors">{link.label}</p>
+                  <p className="text-xs text-sky-400/80 mt-0.5">{link.desc}</p>
                 </div>
               </Link>
             );
@@ -309,13 +309,13 @@ export default function OverviewPage() {
 
       {/* Data health */}
       <section>
-        <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Status Provider Data</h2>
+        <h2 className="text-xs font-medium text-blue-400 uppercase tracking-wider mb-3">Status Provider Data</h2>
         <DataHealthStatus />
       </section>
 
       {/* Disclaimer */}
       <div className="rounded-lg border border-gray-700/40 bg-gray-800/20 px-4 py-3">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-slate-300">
           Data harga bersumber dari provider publik (yfinance). Aplikasi ini hanya untuk riset pribadi
           dan <strong className="text-gray-400">bukan nasihat investasi</strong>. Semua keputusan beli/jual
           sepenuhnya menjadi tanggung jawab pengguna.

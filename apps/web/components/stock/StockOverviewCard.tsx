@@ -23,7 +23,7 @@ export function StockOverviewCard({ overview }: Props) {
               <Badge variant="muted">{inst.currency}</Badge>
             </div>
             {inst.company_name && (
-              <p className="text-xs text-gray-500 mt-0.5">{inst.company_name}</p>
+              <p className="text-xs text-slate-300 mt-0.5">{inst.company_name}</p>
             )}
           </div>
           {price_stale && <Badge variant="warning">Data Lama</Badge>}
@@ -43,7 +43,7 @@ export function StockOverviewCard({ overview }: Props) {
             )}
           </div>
           {last_price_date && (
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-slate-300 mt-0.5">
               Harga per {last_price_date} · Sumber: {price_provider ?? "—"}
             </p>
           )}
@@ -71,7 +71,7 @@ export function StockOverviewCard({ overview }: Props) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-xs text-slate-300">{label}</p>
       <p className="text-sm text-gray-200">{value}</p>
     </div>
   );

@@ -145,11 +145,11 @@ export function ChatWidget() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-100">Asisten Stock Intelligence</p>
-              <p className="text-[10px] text-gray-500">Powered by Claude Opus · Bukan nasihat investasi</p>
+              <p className="text-[10px] text-slate-300">Powered by Claude Opus · Bukan nasihat investasi</p>
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="ml-auto text-gray-500 hover:text-gray-400 transition-colors"
+              className="ml-auto text-slate-300 hover:text-gray-400 transition-colors"
             >
               <X size={15} />
             </button>

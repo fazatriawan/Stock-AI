@@ -105,7 +105,7 @@ function NewNoteForm({ onCreated }: { onCreated: (note: ResearchNote) => void })
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-300 transition-colors"
+          className="text-xs px-3 py-1.5 text-slate-300 hover:text-gray-300 transition-colors"
         >
           Batal
         </button>
@@ -199,7 +199,7 @@ function NoteEditor({
         <div className="flex gap-2">
           <button
             onClick={onClose}
-            className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-300 transition-colors"
+            className="text-xs px-3 py-1.5 text-slate-300 hover:text-gray-300 transition-colors"
           >
             Tutup
           </button>
@@ -242,10 +242,10 @@ function NoteCard({
           </span>
         )}
       </div>
-      {preview && <p className="text-xs text-gray-500 line-clamp-2">{preview}</p>}
+      {preview && <p className="text-xs text-slate-300 line-clamp-2">{preview}</p>}
       <div className="flex flex-wrap gap-1 items-center">
         {note.tags.map(t => <TagPill key={t} label={t} />)}
-        <span className="text-[10px] text-gray-500 ml-auto">{fmtDate(note.updated_at)}</span>
+        <span className="text-[10px] text-slate-300 ml-auto">{fmtDate(note.updated_at)}</span>
       </div>
     </button>
   );
@@ -306,7 +306,7 @@ export default function NotebookPage() {
     <div className="p-6 space-y-4 max-w-2xl">
       <div>
         <h1 className="text-lg font-semibold text-gray-100">Notebook Riset</h1>
-        <p className="text-xs text-gray-500 mt-0.5">Catatan ide, analisis, dan insight investasi</p>
+        <p className="text-xs text-slate-300 mt-0.5">Catatan ide, analisis, dan insight investasi</p>
       </div>
 
       {error && (
@@ -329,7 +329,7 @@ export default function NotebookPage() {
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setTagFilter(null)}
-            className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${!tagFilter ? "bg-gray-600 text-gray-200 border-gray-500" : "bg-transparent text-gray-500 border-gray-700 hover:border-gray-500"}`}
+            className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${!tagFilter ? "bg-gray-600 text-gray-200 border-gray-500" : "bg-transparent text-slate-300 border-gray-700 hover:border-gray-500"}`}
           >
             Semua
           </button>
@@ -337,7 +337,7 @@ export default function NotebookPage() {
             <button
               key={t}
               onClick={() => setTagFilter(tagFilter === t ? null : t)}
-              className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${tagFilter === t ? "bg-gray-600 text-gray-200 border-gray-500" : "bg-transparent text-gray-500 border-gray-700 hover:border-gray-500"}`}
+              className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${tagFilter === t ? "bg-gray-600 text-gray-200 border-gray-500" : "bg-transparent text-slate-300 border-gray-700 hover:border-gray-500"}`}
             >
               {t}
             </button>
@@ -363,7 +363,7 @@ export default function NotebookPage() {
           ))}
         </div>
       ) : visible.length === 0 ? (
-        <div className="text-center py-12 text-gray-500 text-sm">
+        <div className="text-center py-12 text-slate-300 text-sm">
           {search || tagFilter ? "Tidak ada catatan yang cocok" : "Belum ada catatan — buat yang pertama!"}
         </div>
       ) : (
@@ -374,7 +374,7 @@ export default function NotebookPage() {
         </div>
       )}
 
-      <p className="text-xs text-gray-500">{notes.length} catatan total</p>
+      <p className="text-xs text-slate-300">{notes.length} catatan total</p>
     </div>
   );
 }

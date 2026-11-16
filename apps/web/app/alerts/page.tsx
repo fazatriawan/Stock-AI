@@ -121,7 +121,7 @@ function CreateRuleForm({ onCreated }: { onCreated: () => void }) {
       <h3 className="text-sm font-semibold mb-3">Buat Alert Rule</h3>
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
-          <label className="text-xs text-gray-500 mb-1 block">Jenis Alert</label>
+          <label className="text-xs text-slate-300 mb-1 block">Jenis Alert</label>
           <select
             className="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-sm text-gray-100"
             value={ruleType}
@@ -132,13 +132,13 @@ function CreateRuleForm({ onCreated }: { onCreated: () => void }) {
             ))}
           </select>
           {RULE_META[ruleType]?.desc && (
-            <p className="text-xs text-gray-500 mt-1">{RULE_META[ruleType].desc}</p>
+            <p className="text-xs text-slate-300 mt-1">{RULE_META[ruleType].desc}</p>
           )}
         </div>
 
         {NEEDS_SYMBOL.has(ruleType) && (
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">Kode Saham</label>
+            <label className="text-xs text-slate-300 mb-1 block">Kode Saham</label>
             <input
               className="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-sm text-gray-100 uppercase"
               placeholder="mis. BBCA"
@@ -151,7 +151,7 @@ function CreateRuleForm({ onCreated }: { onCreated: () => void }) {
 
         {NEEDS_THRESHOLD.has(ruleType) && (
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">
+            <label className="text-xs text-slate-300 mb-1 block">
               {RULE_META[ruleType]?.thresholdLabel ?? "Nilai Ambang"}
             </label>
             <input
@@ -166,7 +166,7 @@ function CreateRuleForm({ onCreated }: { onCreated: () => void }) {
         )}
 
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">Cooldown (jam)</label>
+          <label className="text-xs text-slate-300 mb-1 block">Cooldown (jam)</label>
           <input
             type="number"
             min={1}
@@ -177,7 +177,7 @@ function CreateRuleForm({ onCreated }: { onCreated: () => void }) {
         </div>
 
         <div className="col-span-2">
-          <label className="text-xs text-gray-500 mb-1 block">Webhook URL (opsional)</label>
+          <label className="text-xs text-slate-300 mb-1 block">Webhook URL (opsional)</label>
           <input
             type="url"
             className="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-sm text-gray-100"
@@ -215,7 +215,7 @@ function CreateRuleForm({ onCreated }: { onCreated: () => void }) {
 // ---------------------------------------------------------------------------
 function RulesTab({ rules, onDelete }: { rules: AlertRuleResponse[]; onDelete: (id: string) => void }) {
   if (rules.length === 0) {
-    return <p className="text-sm text-gray-500 py-6 text-center">Belum ada alert rule.</p>;
+    return <p className="text-sm text-slate-300 py-6 text-center">Belum ada alert rule.</p>;
   }
   return (
     <div className="space-y-2">
@@ -231,7 +231,7 @@ function RulesTab({ rules, onDelete }: { rules: AlertRuleResponse[]; onDelete: (
                 <span className="text-xs text-gray-400 font-mono">@ {r.threshold_value.toLocaleString()}</span>
               )}
             </div>
-            <div className="mt-1 flex gap-3 text-xs text-gray-500 flex-wrap">
+            <div className="mt-1 flex gap-3 text-xs text-slate-300 flex-wrap">
               <span>Cooldown: {r.cooldown_hours}j</span>
               <span>Fired: {r.fire_count}×</span>
               {r.last_fired_at && <span>Terakhir: {fmtDatetime(r.last_fired_at)}</span>}
@@ -240,7 +240,7 @@ function RulesTab({ rules, onDelete }: { rules: AlertRuleResponse[]; onDelete: (
           </div>
           <button
             onClick={() => onDelete(r.id)}
-            className="text-gray-500 hover:text-red-400 text-xs mt-0.5 shrink-0"
+            className="text-slate-300 hover:text-red-400 text-xs mt-0.5 shrink-0"
           >
             Hapus
           </button>
@@ -255,7 +255,7 @@ function RulesTab({ rules, onDelete }: { rules: AlertRuleResponse[]; onDelete: (
 // ---------------------------------------------------------------------------
 function HistoryTab({ items }: { items: AlertHistoryItem[] }) {
   if (items.length === 0) {
-    return <p className="text-sm text-gray-500 py-6 text-center">Belum ada alert yang terpicu.</p>;
+    return <p className="text-sm text-slate-300 py-6 text-center">Belum ada alert yang terpicu.</p>;
   }
   return (
     <div className="space-y-2">
@@ -263,7 +263,7 @@ function HistoryTab({ items }: { items: AlertHistoryItem[] }) {
         <div key={a.id} className="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3">
           <div className="flex items-center justify-between">
             <RuleTypeBadge type={a.event_type} />
-            <span className="text-xs text-gray-500">{fmtDatetime(a.created_at)}</span>
+            <span className="text-xs text-slate-300">{fmtDatetime(a.created_at)}</span>
           </div>
           {a.payload && (
             <p className="text-sm text-gray-300 mt-1">
@@ -329,7 +329,7 @@ export default function AlertsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-lg font-semibold text-gray-100">Alert Rules</h1>
-          <p className="text-xs text-gray-500 mt-0.5">Monitor harga, RSI, swing, dan macro</p>
+          <p className="text-xs text-slate-300 mt-0.5">Monitor harga, RSI, swing, dan macro</p>
         </div>
         <button
           onClick={handleEvaluate}
@@ -347,7 +347,7 @@ export default function AlertsPage() {
           </span>
           <span className="text-gray-400"> dari {evalResult.rules_checked} rules</span>
           {evalResult.alerts_skipped_cooldown > 0 && (
-            <span className="text-gray-500"> · {evalResult.alerts_skipped_cooldown} di-skip (cooldown)</span>
+            <span className="text-slate-300"> · {evalResult.alerts_skipped_cooldown} di-skip (cooldown)</span>
           )}
         </div>
       )}
@@ -360,7 +360,7 @@ export default function AlertsPage() {
             key={t}
             onClick={() => setTab(t)}
             className={`px-3 py-1.5 text-sm rounded transition-colors ${
-              tab === t ? "bg-gray-800 text-white" : "text-gray-500 hover:text-gray-300"
+              tab === t ? "bg-gray-800 text-white" : "text-slate-300 hover:text-gray-300"
             }`}
           >
             {t === "rules" ? "Rules" : "History"}
