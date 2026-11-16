@@ -93,7 +93,7 @@ export function Sidebar() {
           </div>
           <span className="text-sm font-semibold text-gray-100 tracking-tight">Stock Intel</span>
         </div>
-        <p className="text-xs text-gray-600 mt-1.5 ml-8">IDX · US · Riset pribadi</p>
+        <p className="text-xs text-gray-500 mt-1.5 ml-8">IDX · US · Riset pribadi</p>
       </div>
 
       <nav className="flex-1 py-3 overflow-y-auto">
@@ -120,7 +120,7 @@ export function Sidebar() {
         <div className="mt-3 px-2">
           <button
             onClick={toggleAdvanced}
-            className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs text-gray-600 hover:text-gray-400 hover:bg-gray-800/40 transition-colors"
+            className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:text-gray-400 hover:bg-gray-800/40 transition-colors"
           >
             <span className="uppercase tracking-widest font-semibold text-[10px]">Fitur Lanjutan</span>
             <ChevronDown
@@ -152,7 +152,7 @@ export function Sidebar() {
       </nav>
 
       <div className="px-4 py-3 border-t border-gray-800/60">
-        <p className="text-[11px] text-gray-700">Bukan nasihat investasi</p>
+        <p className="text-[11px] text-gray-500">Bukan nasihat investasi</p>
       </div>
     </aside>
   );

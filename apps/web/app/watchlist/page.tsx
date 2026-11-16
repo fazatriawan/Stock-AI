@@ -24,7 +24,7 @@ function pctColor(v: number | null): string {
 }
 
 function PctBadge({ v, label }: { v: number | null; label: string }) {
-  if (v == null) return <span className="text-gray-600 text-xs">—</span>;
+  if (v == null) return <span className="text-gray-500 text-xs">—</span>;
   return (
     <span className={`text-xs font-mono ${pctColor(v)}`}>
       {label}: {v > 0 ? "+" : ""}{v.toFixed(2)}%
@@ -192,7 +192,7 @@ function WatchlistCard({
           {wl.description && (
             <span className="ml-2 text-xs text-gray-500">{wl.description}</span>
           )}
-          <span className="ml-2 text-xs text-gray-600">{wl.item_count} item</span>
+          <span className="ml-2 text-xs text-gray-500">{wl.item_count} item</span>
         </button>
         <div className="flex gap-2">
           <button
@@ -218,8 +218,8 @@ function WatchlistCard({
 
       {expanded && items.length === 0 && !loading && (
         <div className="px-4 pb-4">
-          <p className="text-xs text-gray-600 mb-2">Belum ada saham di watchlist ini.</p>
-          <p className="text-xs text-gray-700">Klik <span className="text-indigo-400">+ Tambah Saham</span> di atas untuk mulai memantau harga saham favoritmu.</p>
+          <p className="text-xs text-gray-500 mb-2">Belum ada saham di watchlist ini.</p>
+          <p className="text-xs text-gray-500">Klik <span className="text-indigo-400">+ Tambah Saham</span> di atas untuk mulai memantau harga saham favoritmu.</p>
         </div>
       )}
 
@@ -253,12 +253,12 @@ function WatchlistCard({
                   <TargetBar pct={item.pct_to_target} />
                 )}
                 {item.notes && (
-                  <p className="text-xs text-gray-600 mt-1 italic">{item.notes}</p>
+                  <p className="text-xs text-gray-500 mt-1 italic">{item.notes}</p>
                 )}
               </div>
               <button
                 onClick={() => removeItem(item.id)}
-                className="text-gray-700 hover:text-red-400 text-xs mt-0.5 shrink-0"
+                className="text-gray-500 hover:text-red-400 text-xs mt-0.5 shrink-0"
               >
                 ✕
               </button>
@@ -359,7 +359,7 @@ export default function WatchlistPage() {
       ) : watchlists.length === 0 ? (
         <div className="text-center py-16 space-y-3">
           <p className="text-gray-400 text-sm font-medium">Belum ada watchlist</p>
-          <p className="text-gray-600 text-xs max-w-xs mx-auto leading-relaxed">
+          <p className="text-gray-500 text-xs max-w-xs mx-auto leading-relaxed">
             Watchlist membantu kamu memantau harga dan price target saham yang kamu incar.
           </p>
           <button

@@ -15,7 +15,7 @@ const RANGES = ["1m", "3m", "6m", "1y", "2y"] as const;
 function MiniLineChart({ points }: { points: EquityDataPoint[] }) {
   if (points.length < 2)
     return (
-      <div className="h-32 flex items-center justify-center text-xs text-gray-600">
+      <div className="h-32 flex items-center justify-center text-xs text-gray-500">
         Data tidak cukup
       </div>
     );
@@ -209,12 +209,12 @@ export default function PerformancePage() {
             {data.equity_curve.length >= 2 ? (
               <MiniLineChart points={data.equity_curve} />
             ) : (
-              <div className="h-32 flex items-center justify-center text-xs text-gray-600">
+              <div className="h-32 flex items-center justify-center text-xs text-gray-500">
                 Data harga tidak cukup untuk menampilkan grafik
               </div>
             )}
             {data.equity_curve.length >= 2 && (
-              <div className="flex justify-between text-xs text-gray-600 mt-1">
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
                 <span>{data.equity_curve[0]?.date}</span>
                 <span>{data.equity_curve[data.equity_curve.length - 1]?.date}</span>
               </div>
@@ -371,7 +371,7 @@ export default function PerformancePage() {
           )}
 
           {data.equity_curve.length === 0 && data.position_contributions.length === 0 && (
-            <div className="text-center py-8 text-gray-600">
+            <div className="text-center py-8 text-gray-500">
               <p className="text-sm">
                 Belum ada data performa — tambahkan transaksi terlebih dahulu
               </p>

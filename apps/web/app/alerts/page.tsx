@@ -132,7 +132,7 @@ function CreateRuleForm({ onCreated }: { onCreated: () => void }) {
             ))}
           </select>
           {RULE_META[ruleType]?.desc && (
-            <p className="text-xs text-gray-600 mt-1">{RULE_META[ruleType].desc}</p>
+            <p className="text-xs text-gray-500 mt-1">{RULE_META[ruleType].desc}</p>
           )}
         </div>
 
@@ -215,7 +215,7 @@ function CreateRuleForm({ onCreated }: { onCreated: () => void }) {
 // ---------------------------------------------------------------------------
 function RulesTab({ rules, onDelete }: { rules: AlertRuleResponse[]; onDelete: (id: string) => void }) {
   if (rules.length === 0) {
-    return <p className="text-sm text-gray-600 py-6 text-center">Belum ada alert rule.</p>;
+    return <p className="text-sm text-gray-500 py-6 text-center">Belum ada alert rule.</p>;
   }
   return (
     <div className="space-y-2">
@@ -231,7 +231,7 @@ function RulesTab({ rules, onDelete }: { rules: AlertRuleResponse[]; onDelete: (
                 <span className="text-xs text-gray-400 font-mono">@ {r.threshold_value.toLocaleString()}</span>
               )}
             </div>
-            <div className="mt-1 flex gap-3 text-xs text-gray-600 flex-wrap">
+            <div className="mt-1 flex gap-3 text-xs text-gray-500 flex-wrap">
               <span>Cooldown: {r.cooldown_hours}j</span>
               <span>Fired: {r.fire_count}×</span>
               {r.last_fired_at && <span>Terakhir: {fmtDatetime(r.last_fired_at)}</span>}
@@ -240,7 +240,7 @@ function RulesTab({ rules, onDelete }: { rules: AlertRuleResponse[]; onDelete: (
           </div>
           <button
             onClick={() => onDelete(r.id)}
-            className="text-gray-700 hover:text-red-400 text-xs mt-0.5 shrink-0"
+            className="text-gray-500 hover:text-red-400 text-xs mt-0.5 shrink-0"
           >
             Hapus
           </button>
@@ -255,7 +255,7 @@ function RulesTab({ rules, onDelete }: { rules: AlertRuleResponse[]; onDelete: (
 // ---------------------------------------------------------------------------
 function HistoryTab({ items }: { items: AlertHistoryItem[] }) {
   if (items.length === 0) {
-    return <p className="text-sm text-gray-600 py-6 text-center">Belum ada alert yang terpicu.</p>;
+    return <p className="text-sm text-gray-500 py-6 text-center">Belum ada alert yang terpicu.</p>;
   }
   return (
     <div className="space-y-2">
@@ -263,7 +263,7 @@ function HistoryTab({ items }: { items: AlertHistoryItem[] }) {
         <div key={a.id} className="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3">
           <div className="flex items-center justify-between">
             <RuleTypeBadge type={a.event_type} />
-            <span className="text-xs text-gray-600">{fmtDatetime(a.created_at)}</span>
+            <span className="text-xs text-gray-500">{fmtDatetime(a.created_at)}</span>
           </div>
           {a.payload && (
             <p className="text-sm text-gray-300 mt-1">
@@ -347,7 +347,7 @@ export default function AlertsPage() {
           </span>
           <span className="text-gray-400"> dari {evalResult.rules_checked} rules</span>
           {evalResult.alerts_skipped_cooldown > 0 && (
-            <span className="text-gray-600"> · {evalResult.alerts_skipped_cooldown} di-skip (cooldown)</span>
+            <span className="text-gray-500"> · {evalResult.alerts_skipped_cooldown} di-skip (cooldown)</span>
           )}
         </div>
       )}

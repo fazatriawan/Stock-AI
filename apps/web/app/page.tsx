@@ -182,14 +182,14 @@ function TopPositions() {
   if (loading) return <div className="h-24 bg-gray-800 rounded-xl animate-pulse" />;
 
   if (fetchError) return (
-    <div className="text-center py-6 text-gray-600 text-sm">
+    <div className="text-center py-6 text-gray-500 text-sm">
       Gagal memuat posisi — pastikan API berjalan
     </div>
   );
 
   const positions = portfolio?.positions ?? [];
   if (positions.length === 0) return (
-    <div className="text-center py-6 text-gray-600 text-sm">
+    <div className="text-center py-6 text-gray-500 text-sm">
       Belum ada posisi —{" "}
       <Link href="/portfolio/import" className="text-blue-400 hover:underline">import transaksi</Link>
     </div>
@@ -210,7 +210,7 @@ function TopPositions() {
                 <span className="text-sm font-medium text-gray-100">{ticker}</span>
                 <span className="text-xs text-gray-500">{pos.sector ?? "—"}</span>
               </div>
-              <p className="text-xs text-gray-600">{formatCurrency(pos.market_value ?? 0)}</p>
+              <p className="text-xs text-gray-500">{formatCurrency(pos.market_value ?? 0)}</p>
             </div>
             <div className="text-right">
               <span className={`text-sm font-medium ${PnlColor(pct)}`}>
@@ -299,7 +299,7 @@ export default function OverviewPage() {
                 <Icon size={16} className="text-gray-500 group-hover:text-gray-300 transition-colors" />
                 <div>
                   <p className="text-sm font-semibold text-gray-200 group-hover:text-white transition-colors">{link.label}</p>
-                  <p className="text-xs text-gray-600 mt-0.5">{link.desc}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{link.desc}</p>
                 </div>
               </Link>
             );

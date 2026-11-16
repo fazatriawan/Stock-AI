@@ -349,7 +349,7 @@ export default function ScreenerPage() {
                           <td className="py-2 pr-3">
                             <span className="font-medium text-gray-100">{ticker}</span>
                             {r.company_name && (
-                              <p className="text-gray-600 truncate max-w-[120px]">
+                              <p className="text-gray-500 truncate max-w-[120px]">
                                 {r.company_name}
                               </p>
                             )}
@@ -397,10 +397,10 @@ export default function ScreenerPage() {
           )}
 
           {hasSearched && !loading && results.length === 0 && !error && (
-            <div className="text-center py-12 text-gray-600 space-y-2">
+            <div className="text-center py-12 text-gray-500 space-y-2">
               <Search size={28} className="mx-auto mb-2 opacity-30" />
               <p className="text-sm">Tidak ada saham yang cocok dengan filter ini</p>
-              <p className="text-xs text-gray-700 max-w-sm mx-auto">
+              <p className="text-xs text-gray-500 max-w-sm mx-auto">
                 Screener memerlukan data fundamental lengkap (revenue growth, EPS, ROE, dll). Jika
                 hasil selalu 0, jalankan{" "}
                 <strong className="text-gray-500">refresh fundamentals</strong> di halaman{" "}
@@ -413,7 +413,7 @@ export default function ScreenerPage() {
           )}
 
           {!hasSearched && (
-            <div className="text-center py-16 text-gray-600">
+            <div className="text-center py-16 text-gray-500">
               <SlidersHorizontal size={28} className="mx-auto mb-2 opacity-30" />
               <p className="text-sm">Atur filter di atas, lalu klik Jalankan Screener</p>
             </div>
@@ -683,10 +683,10 @@ export default function ScreenerPage() {
           )}
 
           {mbSearched && !mbLoading && filteredMbResults.length === 0 && !mbError && (
-            <div className="text-center py-12 text-gray-600 space-y-2">
+            <div className="text-center py-12 text-gray-500 space-y-2">
               <Sparkles size={28} className="mx-auto mb-2 opacity-30" />
               <p className="text-sm">Belum ada kandidat yang lolos filter Multibagger ini</p>
-              <p className="text-xs text-gray-700 max-w-sm mx-auto">
+              <p className="text-xs text-gray-500 max-w-sm mx-auto">
                 Coba turunkan Tier Minimum ke WEAK atau pilih Semua Pipeline.
               </p>
             </div>

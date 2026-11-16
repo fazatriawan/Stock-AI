@@ -51,7 +51,7 @@ function ComponentCard({ label, score, max, description }: {
         <span className="text-sm font-semibold text-gray-100">{score.toFixed(1)} / {max}</span>
       </div>
       <ScoreBar value={score} max={max} color={color} />
-      <p className="text-xs text-gray-600">{description}</p>
+      <p className="text-xs text-gray-500">{description}</p>
     </div>
   );
 }
@@ -122,7 +122,7 @@ export default function PortfolioHealthPage() {
           <div className="bg-blue-600/60 h-full" style={{ width: `${data.concentration_component}%` }} title={`Konsentrasi: ${data.concentration_component.toFixed(1)}`} />
           <div className="bg-amber-600/60 h-full" style={{ width: `${data.pnl_component}%` }} title={`P/L: ${data.pnl_component.toFixed(1)}`} />
         </div>
-        <div className="flex gap-4 mt-2 text-xs text-gray-600">
+        <div className="flex gap-4 mt-2 text-xs text-gray-500">
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-600/60 inline-block" />Diversifikasi</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-600/60 inline-block" />Konsentrasi</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-600/60 inline-block" />P/L</span>
@@ -235,7 +235,7 @@ export default function PortfolioHealthPage() {
         </div>
       )}
 
-      <p className="text-xs text-gray-700">
+      <p className="text-xs text-gray-500">
         Skor dihitung deterministik dari data posisi. Ini bukan nasihat investasi.
         Keputusan sepenuhnya tanggung jawab pengguna.
       </p>

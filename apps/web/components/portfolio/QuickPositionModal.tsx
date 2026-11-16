@@ -66,7 +66,7 @@ export function QuickPositionModal({ onClose, onSuccess }: Props) {
             <p className="text-xs text-gray-500 mt-1">
               Total modal: {formatCurrency(success.total)}
             </p>
-            <p className="text-xs text-gray-600 mt-0.5">
+            <p className="text-xs text-gray-500 mt-0.5">
               Harga terkini sedang di-refresh di background via yfinance
             </p>
           </div>
@@ -130,7 +130,7 @@ export function QuickPositionModal({ onClose, onSuccess }: Props) {
                 className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-100 placeholder:text-gray-600 focus:outline-none focus:border-gray-500"
               />
               {lotsNum > 0 && (
-                <p className="text-xs text-gray-600 mt-0.5">= {(lotsNum * 100).toLocaleString("id-ID")} saham</p>
+                <p className="text-xs text-gray-500 mt-0.5">= {(lotsNum * 100).toLocaleString("id-ID")} saham</p>
               )}
             </div>
             <div>
@@ -151,7 +151,7 @@ export function QuickPositionModal({ onClose, onSuccess }: Props) {
           {lotsNum > 0 && priceNum > 0 && (
             <div className="bg-gray-800/60 rounded-md px-3 py-2 text-xs text-gray-400">
               Modal: {formatCurrency(totalCost)}
-              <span className="text-gray-600 ml-2">({lotsNum} lot × 100 × {formatCurrency(priceNum)})</span>
+              <span className="text-gray-500 ml-2">({lotsNum} lot × 100 × {formatCurrency(priceNum)})</span>
             </div>
           )}
 
@@ -216,7 +216,7 @@ export function QuickPositionModal({ onClose, onSuccess }: Props) {
             </Button>
           </div>
 
-          <p className="text-xs text-gray-600 text-center">
+          <p className="text-xs text-gray-500 text-center">
             Harga akan diperbarui otomatis via yfinance setelah disimpan.
             Keputusan input sepenuhnya tanggung jawab pengguna.
           </p>

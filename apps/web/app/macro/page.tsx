@@ -66,7 +66,7 @@ function MacroSnapshotTab() {
   );
 
   if (!data || data.observations.length === 0) return (
-    <div className="mt-8 text-center text-gray-600 text-sm">Belum ada data makro — import data terlebih dahulu.</div>
+    <div className="mt-8 text-center text-gray-500 text-sm">Belum ada data makro — import data terlebih dahulu.</div>
   );
 
   return (
@@ -77,7 +77,7 @@ function MacroSnapshotTab() {
           <div key={obs.series_id} className="bg-gray-800/40 border border-gray-700/40 rounded-lg p-3 space-y-0.5">
             <p className="text-[10px] text-gray-500 uppercase tracking-wide">{obs.label}</p>
             <p className="text-xl font-bold text-gray-100">{fmt(obs.value)}</p>
-            <p className="text-[10px] text-gray-600">{fmtDate(obs.observed_date)}</p>
+            <p className="text-[10px] text-gray-500">{fmtDate(obs.observed_date)}</p>
           </div>
         ))}
       </div>
@@ -244,7 +244,7 @@ function PolicyEventsTab() {
       </div>
 
       {(!data || data.events.length === 0) ? (
-        <div className="text-center py-8 text-gray-600 text-sm">Belum ada event kebijakan</div>
+        <div className="text-center py-8 text-gray-500 text-sm">Belum ada event kebijakan</div>
       ) : (
         <div className="space-y-2">
           {data.events.map(ev => (
@@ -288,7 +288,7 @@ function EventCard({
             {ev.affected_sectors.length > 0 && ` · ${ev.affected_sectors.join(", ")}`}
           </p>
         </div>
-        <span className="text-gray-600 text-xs mt-0.5">{expanded ? "▲" : "▼"}</span>
+        <span className="text-gray-500 text-xs mt-0.5">{expanded ? "▲" : "▼"}</span>
       </button>
 
       {expanded && (
@@ -307,7 +307,7 @@ function EventCard({
                     </span>
                     <span className="font-mono text-gray-300">{imp.canonical_symbol}</span>
                     {imp.company_name && <span className="text-gray-500">{imp.company_name}</span>}
-                    {imp.mechanism && <span className="text-gray-600">· {imp.mechanism}</span>}
+                    {imp.mechanism && <span className="text-gray-500">· {imp.mechanism}</span>}
                   </div>
                 ))}
               </div>

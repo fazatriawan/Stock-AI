@@ -15,7 +15,7 @@ const ACTION_COLOR: Record<string, string> = {
   TRIM_CANDIDATE: "text-amber-400",
   SELL: "text-red-400",
   WAIT: "text-gray-500",
-  INSUFFICIENT_DATA: "text-gray-600",
+  INSUFFICIENT_DATA: "text-gray-500",
 };
 
 const ACTION_LABEL: Record<string, string> = {
@@ -49,20 +49,20 @@ function PositionRow({ pos }: { pos: DailyPositionBrief }) {
           <span className="text-sm font-medium text-gray-200">{ticker}</span>
           {pos.data_stale && <Clock size={10} className="text-amber-600" />}
         </div>
-        {pos.company_name && <p className="text-xs text-gray-600 truncate max-w-[130px]">{pos.company_name}</p>}
+        {pos.company_name && <p className="text-xs text-gray-500 truncate max-w-[130px]">{pos.company_name}</p>}
       </td>
       <td className="py-2.5 px-4 text-right text-xs text-gray-400">{pos.lots} lot</td>
       <td className="py-2.5 px-4 text-right text-xs text-gray-400">
-        {pos.current_price ? formatCurrency(pos.current_price) : <span className="text-gray-700">—</span>}
+        {pos.current_price ? formatCurrency(pos.current_price) : <span className="text-gray-500">—</span>}
       </td>
       <td className="py-2.5 px-4 text-right">
         {hasPnl ? (
           <span className={`text-xs font-medium ${pos.unrealized_pnl_pct! >= 0 ? "text-emerald-400" : "text-red-400"}`}>
             {pos.unrealized_pnl_pct! >= 0 ? "+" : ""}{formatPercent(pos.unrealized_pnl_pct!)}
           </span>
-        ) : <span className="text-xs text-gray-700">—</span>}
+        ) : <span className="text-xs text-gray-500">—</span>}
       </td>
-      <td className="py-2.5 px-4 text-right text-xs text-gray-600">
+      <td className="py-2.5 px-4 text-right text-xs text-gray-500">
         {(pos.weight * 100).toFixed(1)}%
       </td>
       <td className="py-2.5 px-4 text-center">
@@ -71,7 +71,7 @@ function PositionRow({ pos }: { pos: DailyPositionBrief }) {
             {ACTION_LABEL[pos.action] ?? pos.action}
             {pos.urgency === "REVIEW_NOW" && " ⚡"}
           </span>
-        ) : <span className="text-xs text-gray-700">—</span>}
+        ) : <span className="text-xs text-gray-500">—</span>}
       </td>
     </tr>
   );
@@ -122,15 +122,15 @@ export default function DailyPage() {
       {/* KPI row */}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-gray-800/50 rounded-lg p-4">
-          <p className="text-xs text-gray-600">Posisi</p>
+          <p className="text-xs text-gray-500">Posisi</p>
           <p className="text-2xl font-bold text-gray-100">{data.total_positions}</p>
         </div>
         <div className="bg-gray-800/50 rounded-lg p-4">
-          <p className="text-xs text-gray-600">Nilai Portofolio</p>
+          <p className="text-xs text-gray-500">Nilai Portofolio</p>
           <p className="text-lg font-bold text-gray-100">{formatCurrency(data.total_market_value)}</p>
         </div>
         <div className={`rounded-lg p-4 ${data.unrealized_pnl_pct >= 0 ? "bg-emerald-900/20" : "bg-red-900/20"}`}>
-          <p className="text-xs text-gray-600">Unrealized P/L</p>
+          <p className="text-xs text-gray-500">Unrealized P/L</p>
           <p className={`text-2xl font-bold ${data.unrealized_pnl_pct >= 0 ? "text-emerald-400" : "text-red-400"}`}>
             {data.unrealized_pnl_pct >= 0 ? "+" : ""}{formatPercent(data.unrealized_pnl_pct)}
           </p>
@@ -184,12 +184,12 @@ export default function DailyPage() {
       )}
 
       {data.total_positions === 0 && (
-        <div className="text-center py-12 text-gray-600 text-sm">
+        <div className="text-center py-12 text-gray-500 text-sm">
           Belum ada posisi — seed portofolio atau tambahkan transaksi manual
         </div>
       )}
 
-      <p className="text-xs text-gray-700">
+      <p className="text-xs text-gray-500">
         Sinyal dari engine rekomendasi deterministik. Bukan nasihat investasi.
         {data.data_freshness !== "FRESH" && " Data harga mungkin tidak terkini."}
       </p>

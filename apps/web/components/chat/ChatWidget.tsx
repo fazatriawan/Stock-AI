@@ -149,7 +149,7 @@ export function ChatWidget() {
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="ml-auto text-gray-600 hover:text-gray-400 transition-colors"
+              className="ml-auto text-gray-500 hover:text-gray-400 transition-colors"
             >
               <X size={15} />
             </button>
@@ -189,7 +189,7 @@ export function ChatWidget() {
                 onKeyDown={handleKey}
                 placeholder="Tanyakan sesuatu..."
                 disabled={loading}
-                className="flex-1 bg-transparent text-sm text-gray-100 placeholder:text-gray-600 focus:outline-none disabled:opacity-50"
+                className="flex-1 bg-transparent text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none disabled:opacity-50"
               />
               <button
                 onClick={() => sendMessage(input)}

@@ -48,17 +48,17 @@ function ScenarioCard({ scenario, isSuggested }: { scenario: LossScenario; isSug
           <div className="grid grid-cols-2 gap-3 text-xs">
             {scenario.projected_loss_idr !== 0 && (
               <div>
-                <p className="text-gray-600">Realisasi kerugian</p>
+                <p className="text-gray-500">Realisasi kerugian</p>
                 <p className="text-red-400 font-medium">{formatCurrency(scenario.projected_loss_idr)}</p>
               </div>
             )}
             <div>
-              <p className="text-gray-600">Sisa eksposur</p>
+              <p className="text-gray-500">Sisa eksposur</p>
               <p className="text-gray-300 font-medium">{formatCurrency(scenario.remaining_exposure_idr)}</p>
             </div>
             {scenario.breakeven_price !== null && (
               <div>
-                <p className="text-gray-600">Harga impas</p>
+                <p className="text-gray-500">Harga impas</p>
                 <p className="text-gray-300 font-medium">{formatCurrency(scenario.breakeven_price)}</p>
               </div>
             )}
@@ -114,27 +114,27 @@ function LossPositionCard({ position }: { position: LossPosition }) {
         {/* Stats grid */}
         <div className="grid grid-cols-3 gap-3 text-xs">
           <div>
-            <p className="text-gray-600">Avg cost</p>
+            <p className="text-gray-500">Avg cost</p>
             <p className="text-gray-300">{formatCurrency(position.avg_cost)}</p>
           </div>
           <div>
-            <p className="text-gray-600">Harga saat ini</p>
+            <p className="text-gray-500">Harga saat ini</p>
             <p className="text-gray-300">{formatCurrency(position.current_price)}</p>
           </div>
           <div>
-            <p className="text-gray-600">Lot / Saham</p>
+            <p className="text-gray-500">Lot / Saham</p>
             <p className="text-gray-300">{position.lots} / {position.shares.toLocaleString()}</p>
           </div>
           <div>
-            <p className="text-gray-600">Modal</p>
+            <p className="text-gray-500">Modal</p>
             <p className="text-gray-300">{formatCurrency(position.total_cost)}</p>
           </div>
           <div>
-            <p className="text-gray-600">Nilai pasar</p>
+            <p className="text-gray-500">Nilai pasar</p>
             <p className="text-gray-300">{formatCurrency(position.market_value)}</p>
           </div>
           <div>
-            <p className="text-gray-600">Rugi (IDR)</p>
+            <p className="text-gray-500">Rugi (IDR)</p>
             <p className="text-red-400">{formatCurrency(position.unrealized_pnl)}</p>
           </div>
         </div>
@@ -232,7 +232,7 @@ export default function LossAnalyzerPage() {
         </div>
       )}
 
-      <p className="text-xs text-gray-700">
+      <p className="text-xs text-gray-500">
         Skenario dihitung dari data posisi saat ini. Ini bukan nasihat investasi.
         Keputusan jual/beli sepenuhnya menjadi tanggung jawab pengguna.
       </p>

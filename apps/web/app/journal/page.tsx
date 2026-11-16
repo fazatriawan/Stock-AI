@@ -61,9 +61,9 @@ function JournalCard({ entry, onReview }: { entry: JournalEntry; onReview: () =>
             )}
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-600">{entry.decision_date}</p>
+            <p className="text-xs text-gray-500">{entry.decision_date}</p>
             {entry.price_at_decision && (
-              <p className="text-xs text-gray-600">{formatCurrency(entry.price_at_decision)}</p>
+              <p className="text-xs text-gray-500">{formatCurrency(entry.price_at_decision)}</p>
             )}
           </div>
         </div>
@@ -73,7 +73,7 @@ function JournalCard({ entry, onReview }: { entry: JournalEntry; onReview: () =>
         {(entry.thesis || entry.invalidation) && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="text-xs text-gray-600 hover:text-gray-400 flex items-center gap-1"
+            className="text-xs text-gray-500 hover:text-gray-400 flex items-center gap-1"
           >
             {expanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
             {expanded ? "Sembunyikan detail" : "Lihat tesis & invalidasi"}
@@ -117,7 +117,7 @@ function JournalCard({ entry, onReview }: { entry: JournalEntry; onReview: () =>
                       ? o === "CORRECT" ? "bg-emerald-900/50 text-emerald-300"
                         : o === "INCORRECT" ? "bg-red-900/50 text-red-300"
                         : "bg-gray-700 text-gray-300"
-                      : "text-gray-600 hover:text-gray-400"
+                      : "text-gray-500 hover:text-gray-400"
                   }`}
                 >
                   {o === "CORRECT" ? "Tepat" : o === "INCORRECT" ? "Salah" : "Masih Pending"}
@@ -143,7 +143,7 @@ function JournalCard({ entry, onReview }: { entry: JournalEntry; onReview: () =>
           !entry.outcome && (
             <button
               onClick={() => setReviewing(true)}
-              className="text-xs text-gray-600 hover:text-blue-400"
+              className="text-xs text-gray-500 hover:text-blue-400"
             >
               + Review keputusan ini
             </button>
@@ -224,7 +224,7 @@ function AddEntryModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
                     ? a === "BUY" ? "bg-emerald-900/50 text-emerald-300 border border-emerald-700/40"
                       : a === "SELL" ? "bg-red-900/50 text-red-300 border border-red-700/40"
                       : "bg-gray-700 text-gray-200 border border-gray-600"
-                    : "text-gray-600 hover:text-gray-400"
+                    : "text-gray-500 hover:text-gray-400"
                 }`}
               >
                 {a}
@@ -325,16 +325,16 @@ export default function JournalPage() {
       {entries.length > 0 && (
         <div className="grid grid-cols-3 gap-3 text-xs">
           <div className="bg-gray-800/50 rounded-lg p-3 text-center">
-            <p className="text-gray-600">Total Catatan</p>
+            <p className="text-gray-500">Total Catatan</p>
             <p className="text-xl font-bold text-gray-200">{entries.length}</p>
           </div>
           <div className="bg-gray-800/50 rounded-lg p-3 text-center">
-            <p className="text-gray-600">Sudah Direview</p>
+            <p className="text-gray-500">Sudah Direview</p>
             <p className="text-xl font-bold text-gray-200">{reviewed}</p>
           </div>
           <div className={`rounded-lg p-3 text-center ${accuracy !== null ? (accuracy >= 60 ? "bg-emerald-900/20" : "bg-amber-900/20") : "bg-gray-800/50"}`}>
-            <p className="text-gray-600">Akurasi</p>
-            <p className={`text-xl font-bold ${accuracy !== null ? (accuracy >= 60 ? "text-emerald-400" : "text-amber-400") : "text-gray-600"}`}>
+            <p className="text-gray-500">Akurasi</p>
+            <p className={`text-xl font-bold ${accuracy !== null ? (accuracy >= 60 ? "text-emerald-400" : "text-amber-400") : "text-gray-500"}`}>
               {accuracy !== null ? `${accuracy}%` : "—"}
             </p>
           </div>
@@ -366,8 +366,8 @@ export default function JournalPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-12">
-          <BookOpen size={32} className="mx-auto text-gray-700 mb-3" />
-          <p className="text-sm text-gray-600">
+          <BookOpen size={32} className="mx-auto text-gray-500 mb-3" />
+          <p className="text-sm text-gray-500">
             {entries.length === 0
               ? "Belum ada catatan — mulai rekam keputusan investasimu"
               : "Tidak ada catatan untuk filter ini"}
@@ -386,7 +386,7 @@ export default function JournalPage() {
       )}
 
       {entries.length > 0 && (
-        <p className="text-xs text-gray-700">
+        <p className="text-xs text-gray-500">
           Jurnal membantu meningkatkan disiplin dan akurasi keputusan investasi dari waktu ke waktu.
         </p>
       )}

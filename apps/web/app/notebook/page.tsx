@@ -245,7 +245,7 @@ function NoteCard({
       {preview && <p className="text-xs text-gray-500 line-clamp-2">{preview}</p>}
       <div className="flex flex-wrap gap-1 items-center">
         {note.tags.map(t => <TagPill key={t} label={t} />)}
-        <span className="text-[10px] text-gray-600 ml-auto">{fmtDate(note.updated_at)}</span>
+        <span className="text-[10px] text-gray-500 ml-auto">{fmtDate(note.updated_at)}</span>
       </div>
     </button>
   );
@@ -363,7 +363,7 @@ export default function NotebookPage() {
           ))}
         </div>
       ) : visible.length === 0 ? (
-        <div className="text-center py-12 text-gray-600 text-sm">
+        <div className="text-center py-12 text-gray-500 text-sm">
           {search || tagFilter ? "Tidak ada catatan yang cocok" : "Belum ada catatan — buat yang pertama!"}
         </div>
       ) : (
@@ -374,7 +374,7 @@ export default function NotebookPage() {
         </div>
       )}
 
-      <p className="text-xs text-gray-600">{notes.length} catatan total</p>
+      <p className="text-xs text-gray-500">{notes.length} catatan total</p>
     </div>
   );
 }

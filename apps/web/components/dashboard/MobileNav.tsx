@@ -123,7 +123,7 @@ export function MobileNav() {
               <div className="mt-2 px-2">
                 <button
                   onClick={() => setAdvancedOpen(o => !o)}
-                  className="w-full flex items-center justify-between px-3 py-1.5 rounded-md text-xs text-gray-600 hover:text-gray-400 hover:bg-gray-800/40 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-1.5 rounded-md text-xs text-gray-500 hover:text-gray-400 hover:bg-gray-800/40 transition-colors"
                 >
                   <span className="uppercase tracking-wider font-semibold">Fitur Lanjutan</span>
                   <ChevronDown size={12} className={cn("transition-transform duration-200", advancedOpen && "rotate-180")} />
@@ -153,7 +153,7 @@ export function MobileNav() {
             </nav>
 
             <div className="px-4 py-3 border-t border-gray-800">
-              <p className="text-xs text-gray-600">Riset pribadi — bukan nasihat investasi</p>
+              <p className="text-xs text-gray-500">Riset pribadi — bukan nasihat investasi</p>
             </div>
           </div>
         </div>

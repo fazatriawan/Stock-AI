@@ -552,7 +552,7 @@ async def quick_add_position(
 
     shares = body.lots * 100
     trade_date = body.trade_date or date.today()
-    fingerprint = f"QUICK-{portfolio.id}-{instrument.id}-{trade_date}-BUY-{shares}-{uuid.uuid4().hex[:8]}"
+    fingerprint = f"QUICK-{portfolio.id[:8]}-{instrument.id[:8]}-{trade_date}-{shares}-{uuid.uuid4().hex[:8]}"
 
     trade = Trade(
         id=str(uuid.uuid4()),

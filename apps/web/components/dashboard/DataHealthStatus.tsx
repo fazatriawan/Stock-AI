@@ -35,7 +35,7 @@ export function DataHealthStatus() {
               <span className="text-xs font-medium text-gray-300 capitalize">{p.provider}</span>
               <span className={`text-xs font-semibold ${statusColor(p.status)}`}>{p.status}</span>
             </div>
-            {p.notes && <p className="text-xs text-gray-600 truncate">{p.notes}</p>}
+            {p.notes && <p className="text-xs text-gray-500 truncate">{p.notes}</p>}
             {p.last_error && <p className="text-xs text-red-500 truncate">{p.last_error}</p>}
           </CardContent>
         </Card>

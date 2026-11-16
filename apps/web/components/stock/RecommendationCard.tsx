@@ -79,7 +79,7 @@ export function RecommendationCard({ recommendation: rec }: Props) {
                       </span>
                     </>
                   ) : (
-                    <span className="text-xs text-gray-600">Data tidak tersedia</span>
+                    <span className="text-xs text-gray-500">Data tidak tersedia</span>
                   )}
                 </div>
               );
@@ -166,7 +166,7 @@ export function RecommendationCard({ recommendation: rec }: Props) {
         )}
 
         {/* Disclaimer */}
-        <p className="text-xs text-gray-600 border-t border-gray-800 pt-2">
+        <p className="text-xs text-gray-500 border-t border-gray-800 pt-2">
           {rec.disclaimer}
         </p>
       </CardContent>

@@ -221,11 +221,11 @@ export default function ExplorerPage() {
                       <span className="text-xs text-gray-500 truncate">{instr.company_name}</span>
                     )}
                   </span>
-                  <span className="text-[10px] text-gray-600 shrink-0 ml-2">{instr.exchange}</span>
+                  <span className="text-[10px] text-gray-500 shrink-0 ml-2">{instr.exchange}</span>
                 </button>
               ))}
               {searching && (
-                <div className="px-3 py-1.5 text-[11px] text-gray-600">Mencari…</div>
+                <div className="px-3 py-1.5 text-[11px] text-gray-500">Mencari…</div>
               )}
             </div>
           )}
@@ -354,7 +354,7 @@ export default function ExplorerPage() {
             </div>
             <PriceChart bars={priceBars} symbol={overview.instrument.canonical_symbol} chartType={chartType} />
             {priceBars.length > 0 && (
-              <p className="text-[10px] text-gray-600">
+              <p className="text-[10px] text-gray-500">
                 {priceBars.length} bar · sumber: {priceBars[0]?.provider ?? "—"} · {priceBars[0]?.session_date} – {priceBars[priceBars.length - 1]?.session_date}
               </p>
             )}
@@ -371,7 +371,7 @@ export default function ExplorerPage() {
 
       {/* Empty state */}
       {!overview && !loading && !error && (
-        <div className="text-center py-20 text-gray-600">
+        <div className="text-center py-20 text-gray-500">
           <Search size={32} className="mx-auto mb-3 opacity-30" />
           <p className="text-sm">Masukkan ticker untuk melihat analisis</p>
           <p className="text-xs mt-1">Contoh: BBCA, BMRI.JK, AAPL</p>

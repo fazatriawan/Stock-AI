@@ -277,10 +277,10 @@ function DataHealthSection() {
 
       {data && (
         <>
-          <p className="text-xs text-gray-600">Dicek pada {fmtDate(data.checked_at)}</p>
+          <p className="text-xs text-gray-500">Dicek pada {fmtDate(data.checked_at)}</p>
           <div className="space-y-1.5">
             {data.providers.length === 0 ? (
-              <p className="text-sm text-gray-600">Tidak ada provider terdaftar</p>
+              <p className="text-sm text-gray-500">Tidak ada provider terdaftar</p>
             ) : (
               data.providers.map(p => (
                 <div
@@ -304,7 +304,7 @@ function DataHealthSection() {
                         ))}
                       </div>
                     )}
-                    <div className="flex gap-3 mt-1 text-[10px] text-gray-600">
+                    <div className="flex gap-3 mt-1 text-[10px] text-gray-500">
                       <span>{p.granularity}</span>
                       <span>·</span>
                       <span>{p.freshness_policy}</span>
@@ -316,7 +316,7 @@ function DataHealthSection() {
                       <p className="text-xs text-red-400/70 mt-0.5 truncate">{p.last_error}</p>
                     )}
                     {p.notes && (
-                      <p className="text-xs text-gray-600 mt-0.5">{p.notes}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{p.notes}</p>
                     )}
                   </div>
                 </div>
@@ -785,7 +785,7 @@ function MarketBootstrapSection() {
         </div>
       )}
 
-      <p className="text-xs text-gray-600">
+      <p className="text-xs text-gray-500">
         Bootstrap berjalan sekali — data yang sudah ada tidak dihapus (upsert idempoten).
         Jalankan ulang kapan saja untuk mengisi gap data.
       </p>
@@ -1031,7 +1031,7 @@ function ProviderQuotaSection() {
                       {p.quota_per_day !== null && (
                         <span className="text-gray-500"> / {p.quota_per_day}</span>
                       )}
-                      <span className="text-gray-600"> panggilan</span>
+                      <span className="text-gray-500"> panggilan</span>
                     </div>
                   </div>
                   {pct !== null && (
@@ -1066,7 +1066,7 @@ function ProviderQuotaSection() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-600">
+      <p className="text-[11px] text-gray-500">
         Counter reset otomatis setiap pergantian hari. Tanggal: {data?.providers[0]?.date_str ?? "—"}
       </p>
     </div>
@@ -1347,7 +1347,7 @@ function SectorCoverageSection() {
       )}
 
       {data && (data.by_exchange.length === 0 && data.by_sector.length === 0) && (
-        <p className="text-xs text-gray-600 px-3 py-4 text-center">Belum ada data harga di database.</p>
+        <p className="text-xs text-gray-500 px-3 py-4 text-center">Belum ada data harga di database.</p>
       )}
     </div>
   );
@@ -1428,18 +1428,18 @@ function ProviderStatsSection() {
                     {row.total_calls === 0 ? "—" : `${row.success_rate}%`}
                   </td>
                   <td className="px-3 py-2 text-right text-gray-500">{row.bars_fetched.toLocaleString()}</td>
-                  <td className="px-3 py-2 text-gray-600 max-w-[180px] truncate" title={row.last_error ?? undefined}>
+                  <td className="px-3 py-2 text-gray-500 max-w-[180px] truncate" title={row.last_error ?? undefined}>
                     {row.last_error ? (
                       <span className="text-red-400/70">{row.last_error}</span>
                     ) : (
-                      <span className="text-gray-700">—</span>
+                      <span className="text-gray-500">—</span>
                     )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <div className="px-3 py-1.5 text-[10px] text-gray-700 border-t border-gray-700/20">
+          <div className="px-3 py-1.5 text-[10px] text-gray-500 border-t border-gray-700/20">
             Reset otomatis setiap tengah malam · hanya exception dihitung sebagai gagal
           </div>
         </div>
@@ -1502,11 +1502,11 @@ function SchedulerJobsSection() {
       )}
 
       {!status && !loading && !error && (
-        <p className="text-xs text-gray-600">Belum ada data. Klik "Muat ulang".</p>
+        <p className="text-xs text-gray-500">Belum ada data. Klik "Muat ulang".</p>
       )}
 
       {status && status.jobs.length === 0 && (
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-gray-500">
           Belum ada job yang berjalan sejak server terakhir start.
         </p>
       )}
@@ -1578,11 +1578,11 @@ function AboutSection() {
           <span>IDX (Indonesia) · US</span>
         </div>
         <hr className="border-gray-700/40 my-1" />
-        <p className="text-gray-600 leading-relaxed">
+        <p className="text-gray-500 leading-relaxed">
           Alat riset ekuitas pribadi. Tidak pernah mengeksekusi transaksi atau terhubung ke broker secara
           otomatis. Semua keputusan beli/jual sepenuhnya ada di tangan pengguna.
         </p>
-        <p className="text-gray-600 leading-relaxed">
+        <p className="text-gray-500 leading-relaxed">
           <strong className="text-gray-500">Bukan nasihat investasi.</strong> Angka yang ditampilkan
           berasal dari provider data pihak ketiga dan mungkin terlambat atau tidak akurat.
           Selalu verifikasi secara independen sebelum mengambil keputusan investasi.

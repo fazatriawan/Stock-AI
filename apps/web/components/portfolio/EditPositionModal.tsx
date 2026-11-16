@@ -114,7 +114,7 @@ export function EditPositionModal({ position, onClose, onSuccess }: Props) {
                   required
                 />
                 {lotsNum > 0 && (
-                  <p className="text-xs text-gray-600 mt-1">{lotsNum} lot = {(lotsNum * 100).toLocaleString("id-ID")} saham</p>
+                  <p className="text-xs text-gray-500 mt-1">{lotsNum} lot = {(lotsNum * 100).toLocaleString("id-ID")} saham</p>
                 )}
               </div>
 

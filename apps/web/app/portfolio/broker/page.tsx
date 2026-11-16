@@ -89,7 +89,7 @@ export default function BrokerConnectionsPage() {
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700 text-gray-400 border border-gray-600/40">{f.format}</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-0.5">{f.fields}</p>
-                <p className="text-xs text-gray-600 mt-0.5 italic">{f.notes}</p>
+                <p className="text-xs text-gray-500 mt-0.5 italic">{f.notes}</p>
               </div>
             </div>
           ))}
@@ -101,31 +101,31 @@ export default function BrokerConnectionsPage() {
         <h2 className="text-sm font-medium text-gray-300">Cara Export dari Broker</h2>
         <div className="bg-gray-800/30 border border-gray-700/40 rounded-xl p-4 space-y-3 text-xs text-gray-400">
           <div className="flex items-start gap-2">
-            <span className="text-gray-600 shrink-0 font-mono">1.</span>
+            <span className="text-gray-500 shrink-0 font-mono">1.</span>
             <p>Masuk ke aplikasi broker Anda (Stockbit, IPOT, Mirae, dll)</p>
           </div>
           <div className="flex items-start gap-2">
-            <span className="text-gray-600 shrink-0 font-mono">2.</span>
+            <span className="text-gray-500 shrink-0 font-mono">2.</span>
             <p>Buka menu <strong className="text-gray-300">Riwayat Transaksi</strong> atau <strong className="text-gray-300">Trade History</strong></p>
           </div>
           <div className="flex items-start gap-2">
-            <span className="text-gray-600 shrink-0 font-mono">3.</span>
+            <span className="text-gray-500 shrink-0 font-mono">3.</span>
             <p>Pilih rentang tanggal yang diinginkan (maks. export sesuai limit broker)</p>
           </div>
           <div className="flex items-start gap-2">
-            <span className="text-gray-600 shrink-0 font-mono">4.</span>
+            <span className="text-gray-500 shrink-0 font-mono">4.</span>
             <p>Klik <strong className="text-gray-300">Export</strong> / <strong className="text-gray-300">Download CSV</strong> atau <strong className="text-gray-300">Download XLSX</strong></p>
           </div>
           <div className="flex items-start gap-2">
-            <span className="text-gray-600 shrink-0 font-mono">5.</span>
+            <span className="text-gray-500 shrink-0 font-mono">5.</span>
             <p>Upload file tersebut di <Link href="/portfolio/import" className="text-blue-400 hover:underline">halaman Import Transaksi</Link></p>
           </div>
         </div>
       </div>
 
       {/* Info */}
-      <div className="flex items-start gap-2 text-xs text-gray-600">
-        <Info size={12} className="shrink-0 mt-0.5 text-gray-600" />
+      <div className="flex items-start gap-2 text-xs text-gray-500">
+        <Info size={12} className="shrink-0 mt-0.5 text-gray-500" />
         <p>
           Duplikat transaksi otomatis terdeteksi berdasarkan fingerprint (tanggal + ticker + aksi + harga).
           Mengimpor file yang sama dua kali aman — data tidak akan terduplikasi.

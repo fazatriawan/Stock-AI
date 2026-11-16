@@ -122,7 +122,7 @@ export function AddTradeModal({ onClose, onSuccess }: Props) {
                 className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-100 placeholder:text-gray-600 focus:outline-none focus:border-gray-500"
               />
               {form.shares > 0 && (
-                <p className="text-xs text-gray-600 mt-0.5">= {(form.shares / 100).toFixed(0)} lot</p>
+                <p className="text-xs text-gray-500 mt-0.5">= {(form.shares / 100).toFixed(0)} lot</p>
               )}
             </div>
             <div>
@@ -202,7 +202,7 @@ export function AddTradeModal({ onClose, onSuccess }: Props) {
             </Button>
           </div>
 
-          <p className="text-xs text-gray-600 text-center">
+          <p className="text-xs text-gray-500 text-center">
             Keputusan transaksi sepenuhnya menjadi tanggung jawab pengguna.
           </p>
         </form>

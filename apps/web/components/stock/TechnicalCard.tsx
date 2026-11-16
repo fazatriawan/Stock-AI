@@ -59,7 +59,7 @@ export function TechnicalCard({ technical: t }: Props) {
         )}
 
         {t.missing_indicators.length > 0 && (
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-gray-500">
             Indikator belum cukup data: {t.missing_indicators.join(", ")}
           </p>
         )}

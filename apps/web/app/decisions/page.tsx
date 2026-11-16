@@ -101,7 +101,7 @@ function DecisionCard({ d }: { d: DecisionSummary }) {
         {(d.bull_thesis.length > 0 || d.bear_case.length > 0) && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="text-xs text-gray-600 hover:text-gray-400 flex items-center gap-1"
+            className="text-xs text-gray-500 hover:text-gray-400 flex items-center gap-1"
           >
             {expanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
             {expanded ? "Tutup" : "Lihat tesis"}
@@ -135,7 +135,7 @@ function DecisionCard({ d }: { d: DecisionSummary }) {
               </div>
             )}
             {d.data_gaps.length > 0 && (
-              <p className="text-xs text-gray-600">Data gap: {d.data_gaps.join(", ")}</p>
+              <p className="text-xs text-gray-500">Data gap: {d.data_gaps.join(", ")}</p>
             )}
           </div>
         )}
@@ -205,7 +205,7 @@ export default function DecisionsPage() {
             { label: "Review Sekarang", val: reviewNow, color: "text-amber-400" },
           ].map(({ label, val, color }) => (
             <div key={label} className="bg-gray-800/50 rounded-lg p-2.5 text-center">
-              <p className="text-gray-600">{label}</p>
+              <p className="text-gray-500">{label}</p>
               <p className={`text-xl font-bold ${color}`}>{val}</p>
             </div>
           ))}
@@ -239,11 +239,11 @@ export default function DecisionsPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-12 space-y-3">
-          <Minus size={28} className="mx-auto text-gray-700" />
+          <Minus size={28} className="mx-auto text-gray-500" />
           {decisions.length === 0 ? (
             <>
               <p className="text-sm text-gray-400 font-medium">Belum ada saham untuk dianalisis</p>
-              <p className="text-xs text-gray-600 max-w-xs mx-auto leading-relaxed">
+              <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed">
                 Decision Center menganalisis saham di portofolio dan watchlist-mu.
                 Tambahkan saham terlebih dahulu.
               </p>
@@ -257,7 +257,7 @@ export default function DecisionsPage() {
               </div>
             </>
           ) : (
-            <p className="text-sm text-gray-600">Tidak ada sinyal untuk filter yang dipilih</p>
+            <p className="text-sm text-gray-500">Tidak ada sinyal untuk filter yang dipilih</p>
           )}
         </div>
       ) : (
@@ -268,7 +268,7 @@ export default function DecisionsPage() {
         </div>
       )}
 
-      <p className="text-xs text-gray-700">
+      <p className="text-xs text-gray-500">
         Sinyal dihitung dari data fundamental & teknikal. Bukan rekomendasi investasi.
         Selalu lakukan riset mandiri sebelum mengambil keputusan.
       </p>

@@ -41,7 +41,7 @@ export function MarketStatusGrid() {
             </div>
             <div className="flex items-center gap-1.5 mt-3">
               <span className="w-1.5 h-1.5 rounded-full bg-gray-600" />
-              <span className="text-xs text-gray-600">Backend tidak terhubung</span>
+              <span className="text-xs text-gray-500">Backend tidak terhubung</span>
             </div>
           </div>
         ))}

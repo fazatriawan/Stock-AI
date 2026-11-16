@@ -157,8 +157,8 @@ export default function ImportPage() {
       <div className="flex items-center gap-3 text-xs">
         {(["upload", "preview", "done"] as Step[]).map((s, i) => (
           <div key={s} className="flex items-center gap-2">
-            {i > 0 && <span className="text-gray-700">→</span>}
-            <span className={step === s ? "text-blue-400 font-medium" : step > s ? "text-gray-500 line-through" : "text-gray-600"}>
+            {i > 0 && <span className="text-gray-500">→</span>}
+            <span className={step === s ? "text-blue-400 font-medium" : step > s ? "text-gray-500 line-through" : "text-gray-500"}>
               {i + 1}. {s === "upload" ? "Upload" : s === "preview" ? "Verifikasi" : "Selesai"}
             </span>
           </div>
@@ -193,10 +193,10 @@ export default function ImportPage() {
                 dragging ? "border-blue-500 bg-blue-950/20" : "border-gray-700 hover:border-gray-500 hover:bg-gray-800/30"
               }`}
             >
-              <Upload size={28} className="mx-auto text-gray-600 mb-3" />
+              <Upload size={28} className="mx-auto text-gray-500 mb-3" />
               <p className="text-sm text-gray-300">Seret & lepas file di sini</p>
-              <p className="text-xs text-gray-600 mt-1">atau klik untuk memilih file</p>
-              <p className="text-xs text-gray-700 mt-3">CSV, XLSX, PDF · Maks 10 MB</p>
+              <p className="text-xs text-gray-500 mt-1">atau klik untuk memilih file</p>
+              <p className="text-xs text-gray-500 mt-3">CSV, XLSX, PDF · Maks 10 MB</p>
               <input
                 ref={fileRef}
                 type="file"
@@ -308,7 +308,7 @@ export default function ImportPage() {
                               className="rounded"
                             />
                           </td>
-                          <td className="py-2 px-3 text-gray-600">{t.row_number}</td>
+                          <td className="py-2 px-3 text-gray-500">{t.row_number}</td>
                           <td className="py-2 px-3">
                             <span className="font-medium text-gray-200">
                               {t.canonical_symbol.split(":")[1] ?? t.canonical_symbol}
@@ -357,7 +357,7 @@ export default function ImportPage() {
             </Button>
           </div>
 
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-gray-500">
             Keputusan import sepenuhnya menjadi tanggung jawab pengguna.
           </p>
         </div>

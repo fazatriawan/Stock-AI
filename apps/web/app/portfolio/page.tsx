@@ -57,19 +57,19 @@ function PositionRow({
       </td>
       <td className="py-3 px-4 text-right text-sm text-gray-300">
         {pos.lots.toFixed(0)} lot
-        <div className="text-xs text-gray-600">{pos.shares.toLocaleString("id-ID")} saham</div>
+        <div className="text-xs text-gray-500">{pos.shares.toLocaleString("id-ID")} saham</div>
       </td>
       <td className="py-3 px-4 text-right text-sm text-gray-300">
         {formatCurrency(pos.avg_cost)}
       </td>
       <td className="py-3 px-4 text-right text-sm text-gray-300">
-        {pos.current_price !== null ? formatCurrency(pos.current_price) : <span className="text-gray-600">—</span>}
+        {pos.current_price !== null ? formatCurrency(pos.current_price) : <span className="text-gray-500">—</span>}
         {pos.current_price_date && (
-          <div className="text-xs text-gray-600">{pos.current_price_date}</div>
+          <div className="text-xs text-gray-500">{pos.current_price_date}</div>
         )}
       </td>
       <td className="py-3 px-4 text-right text-sm">
-        {hasMV ? formatCurrency(pos.market_value) : <span className="text-gray-600">—</span>}
+        {hasMV ? formatCurrency(pos.market_value) : <span className="text-gray-500">—</span>}
       </td>
       <td className="py-3 px-4 text-right text-sm">
         {pos.unrealized_pnl !== null ? (
@@ -79,7 +79,7 @@ function PositionRow({
               {isPos ? "+" : ""}{formatPercent(pos.unrealized_pnl_pct)}
             </div>
           </div>
-        ) : <span className="text-gray-600">—</span>}
+        ) : <span className="text-gray-500">—</span>}
       </td>
       <td className="py-3 px-4 text-right text-xs text-gray-500">
         {pos.weight > 0 ? `${(pos.weight * 100).toFixed(1)}%` : "—"}
@@ -93,7 +93,7 @@ function PositionRow({
             >
               Hapus
             </button>
-            <span className="text-gray-700">·</span>
+            <span className="text-gray-500">·</span>
             <button
               onClick={() => setConfirmDelete(false)}
               className="text-xs text-gray-500 hover:text-gray-300"
@@ -105,14 +105,14 @@ function PositionRow({
           <span className="flex items-center gap-1.5 justify-end opacity-0 group-hover:opacity-100 transition-all">
             <button
               onClick={() => onEdit(pos)}
-              className="text-gray-600 hover:text-blue-400 transition-colors"
+              className="text-gray-500 hover:text-blue-400 transition-colors"
               title="Edit posisi"
             >
               <Pencil size={13} />
             </button>
             <button
               onClick={() => setConfirmDelete(true)}
-              className="text-gray-600 hover:text-red-400 transition-colors"
+              className="text-gray-500 hover:text-red-400 transition-colors"
               title="Hapus posisi"
             >
               <Trash2 size={13} />
@@ -307,7 +307,7 @@ export default function PortfolioPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-sm text-gray-400 mb-2">Portofolio masih kosong.</p>
-            <p className="text-xs text-gray-600 mb-4">
+            <p className="text-xs text-gray-500 mb-4">
               Muat data awal (BMRI, BBRI, BBNI, BBCA) dari CR §10 atau tambah trade manual.
             </p>
             <div className="flex justify-center gap-3">
@@ -381,7 +381,7 @@ export default function PortfolioPage() {
         </>
       )}
 
-      <p className="text-xs text-gray-600">
+      <p className="text-xs text-gray-500">
         Data ini hanya untuk riset pribadi, bukan nasihat investasi.
         Keputusan transaksi sepenuhnya menjadi tanggung jawab pengguna.
       </p>
