@@ -15,15 +15,8 @@ import {
   Filter,
   Bell,
   Upload,
-  Link2,
-  Activity,
-  Layers,
-  TrendingDown,
-  Sliders,
   CalendarDays,
   Globe,
-  BookOpen,
-  BookMarked,
   BarChart2,
 } from "lucide-react";
 
@@ -42,16 +35,8 @@ const ADVANCED_ITEMS = [
   { href: "/screener", label: "Screener", icon: Filter },
   { href: "/alerts", label: "Alert Rules", icon: Bell },
   { href: "/portfolio/import", label: "Import Transaksi", icon: Upload },
-  { href: "/portfolio/broker", label: "Broker Connections", icon: Link2 },
-  { href: "/portfolio/health", label: "Portfolio Health", icon: Activity },
-  { href: "/portfolio/positions", label: "Position Intelligence", icon: Layers },
-  { href: "/portfolio/loss", label: "Loss Analyzer", icon: TrendingDown },
-  { href: "/portfolio/rebalance", label: "Rebalance", icon: Sliders },
   { href: "/daily", label: "Daily Intelligence", icon: CalendarDays },
   { href: "/macro", label: "Macro & Policy", icon: Globe },
-  { href: "/notebook", label: "Research Notebook", icon: BookOpen },
-  { href: "/journal", label: "Decision Journal", icon: BookMarked },
-  { href: "/performance", label: "Performance Lab", icon: BarChart2 },
 ];
 
 const STORAGE_KEY = "si_sidebar_advanced";
