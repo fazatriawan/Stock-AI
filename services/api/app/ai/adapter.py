@@ -15,6 +15,7 @@ Prinsip keamanan:
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 from datetime import datetime, timezone
@@ -397,10 +398,11 @@ async def enrich_with_ai(
     except ImportError:
         return AIEnrichment(skipped=True, skip_reason="Package anthropic tidak terinstall")
 
-    model_id = model or DEFAULT_MODEL
+    model_id = model or os.getenv("ANTHROPIC_MODEL") or DEFAULT_MODEL
+    effective_base_url = base_url or os.getenv("ANTHROPIC_BASE_URL")
     client_kwargs: dict = {"api_key": api_key}
-    if base_url:
-        client_kwargs["base_url"] = base_url
+    if effective_base_url:
+        client_kwargs["base_url"] = effective_base_url
     client = anthropic.AsyncAnthropic(**client_kwargs)
     result = AIEnrichment(model_used=model_id)
     t_start = time.monotonic()
@@ -613,8 +615,12 @@ async def generate_screener_insight(
     except ImportError:
         return {"skipped": True, "reason": "Package anthropic tidak terinstall"}
 
-    model_id = model or DEFAULT_MODEL
-    client = anthropic.AsyncAnthropic(api_key=api_key)
+    model_id = model or os.getenv("ANTHROPIC_MODEL") or DEFAULT_MODEL
+    effective_base_url = os.getenv("ANTHROPIC_BASE_URL")
+    client_kwargs2: dict = {"api_key": api_key}
+    if effective_base_url:
+        client_kwargs2["base_url"] = effective_base_url
+    client = anthropic.AsyncAnthropic(**client_kwargs2)
     t_start = time.monotonic()
 
     try:
