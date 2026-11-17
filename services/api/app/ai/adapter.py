@@ -601,6 +601,7 @@ async def generate_screener_insight(
     sector_return_1m: Optional[float] = None,
     api_key: Optional[str] = None,
     model: Optional[str] = None,
+    base_url: Optional[str] = None,
 ) -> dict:
     """Generate AI insight untuk satu saham dari hasil screener. Single-pass, ringan."""
     block = _check_circuit_breaker()
@@ -615,8 +616,8 @@ async def generate_screener_insight(
     except ImportError:
         return {"skipped": True, "reason": "Package anthropic tidak terinstall"}
 
-    model_id = model or os.getenv("ANTHROPIC_MODEL") or DEFAULT_MODEL
-    effective_base_url = os.getenv("ANTHROPIC_BASE_URL")
+    model_id = model or DEFAULT_MODEL
+    effective_base_url = base_url or os.getenv("ANTHROPIC_BASE_URL")
     client_kwargs2: dict = {"api_key": api_key}
     if effective_base_url:
         client_kwargs2["base_url"] = effective_base_url
@@ -626,7 +627,7 @@ async def generate_screener_insight(
     try:
         resp = await client.messages.create(
             model=model_id,
-            max_tokens=512,
+            max_tokens=1500,
             system=_SCREENER_INSIGHT_SYSTEM,
             messages=[{"role": "user", "content": _build_screener_insight_prompt(
                 symbol=symbol, sector=sector, pipelines=pipelines, tier=tier,

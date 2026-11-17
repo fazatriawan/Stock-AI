@@ -432,6 +432,7 @@ async def get_sector_rotation(
 # ---------------------------------------------------------------------------
 
 from app.ai.adapter import generate_screener_insight  # noqa: E402
+from app.core.config import get_settings  # noqa: E402
 from pydantic import BaseModel as PydanticBase  # noqa: E402
 
 
@@ -458,6 +459,7 @@ async def get_screener_insight(body: ScreenerInsightRequest) -> dict:
     Generate AI insight on-demand untuk satu saham dari hasil screener/multibagger.
     Panggil per saham saat user klik tombol "Analisis AI".
     """
+    cfg = get_settings()
     result = await generate_screener_insight(
         symbol=body.symbol,
         sector=body.sector,
@@ -473,6 +475,8 @@ async def get_screener_insight(body: ScreenerInsightRequest) -> dict:
         debt_to_equity=body.debt_to_equity,
         sector_signal=body.sector_signal,
         sector_return_1m=body.sector_return_1m,
-        api_key=os.getenv("ANTHROPIC_API_KEY"),
+        api_key=cfg.anthropic_api_key or None,
+        base_url=cfg.anthropic_base_url or None,
+        model=cfg.anthropic_model or None,
     )
     return result
