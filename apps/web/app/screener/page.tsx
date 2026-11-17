@@ -162,6 +162,9 @@ export default function ScreenerPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [stdAiInsights, setStdAiInsights] = useState<Record<string, AiInsight>>({});
+  const [stdAiLoading, setStdAiLoading] = useState<Record<string, boolean>>({});
+  const [stdExpanded, setStdExpanded] = useState<string | null>(null);
 
   // Filter state
   const [sector, setSector] = useState("");
@@ -215,6 +218,39 @@ export default function ScreenerPage() {
       setAiInsights(prev => ({ ...prev, [key]: { skipped: true, reason: "Gagal menghubungi AI" } }));
     } finally {
       setAiLoading(prev => ({ ...prev, [key]: false }));
+    }
+  }
+
+  async function fetchStdInsight(r: ScreenerResult) {
+    const key = r.canonical_symbol;
+    if (stdAiInsights[key] || stdAiLoading[key]) {
+      setStdExpanded(prev => prev === key ? null : key);
+      return;
+    }
+    setStdExpanded(key);
+    setStdAiLoading(prev => ({ ...prev, [key]: true }));
+    try {
+      const res = await fetch(`${API_BASE}/screener/insight`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symbol: r.canonical_symbol,
+          sector: r.sector,
+          pipelines: [],
+          tier: r.composite_score >= 70 ? "STRONG" : r.composite_score >= 50 ? "MODERATE" : "WEAK",
+          total_score: r.composite_score,
+          strengths: [],
+          concerns: [],
+          pe_ratio: r.pe_ratio,
+          roe: r.roe ? r.roe * 100 : null,
+        }),
+      });
+      const data: AiInsight = await res.json();
+      setStdAiInsights(prev => ({ ...prev, [key]: data }));
+    } catch {
+      setStdAiInsights(prev => ({ ...prev, [key]: { skipped: true, reason: "Gagal menghubungi AI" } }));
+    } finally {
+      setStdAiLoading(prev => ({ ...prev, [key]: false }));
     }
   }
 
@@ -469,17 +505,19 @@ export default function ScreenerPage() {
                       <th className="text-center py-2 pr-3">SMA200</th>
                       <th className="text-right py-2 pr-3">Skor</th>
                       <th className="text-center py-2 pr-3">Sinyal</th>
-                      <th className="text-center py-2">Data</th>
+                      <th className="text-center py-2 pr-3">Data</th>
+                      <th className="text-center py-2">AI</th>
                     </tr>
                   </thead>
                   <tbody>
                     {results.map(r => {
                       const ticker = r.canonical_symbol.split(":")[1] ?? r.canonical_symbol;
+                      const key = r.canonical_symbol;
+                      const insight = stdAiInsights[key];
+                      const isExpanded = stdExpanded === key;
                       return (
-                        <tr
-                          key={r.instrument_id}
-                          className="border-b border-gray-800/50 hover:bg-gray-800/30"
-                        >
+                        <React.Fragment key={r.instrument_id}>
+                        <tr className="border-b border-gray-800/50 hover:bg-gray-800/30">
                           <td className="py-2 pr-3">
                             <span className="font-medium text-gray-100">{ticker}</span>
                             {r.company_name && (
@@ -518,10 +556,88 @@ export default function ScreenerPage() {
                           <td className="py-2 pr-3 text-center">
                             <Badge variant={ACTION_VARIANT[r.action]}>{r.action}</Badge>
                           </td>
-                          <td className="py-2 text-center">
+                          <td className="py-2 pr-3 text-center">
                             <FreshnessChip freshness={r.data_freshness} />
                           </td>
+                          <td className="py-2 text-center">
+                            <button
+                              onClick={() => fetchStdInsight(r)}
+                              title="Analisis AI"
+                              className={`p-1 rounded transition-colors ${
+                                isExpanded
+                                  ? "text-purple-400 bg-purple-900/30"
+                                  : "text-gray-500 hover:text-purple-400 hover:bg-purple-900/20"
+                              }`}
+                            >
+                              {stdAiLoading[key] ? (
+                                <Loader2 size={12} className="animate-spin" />
+                              ) : (
+                                <Bot size={12} />
+                              )}
+                            </button>
+                          </td>
                         </tr>
+                        {isExpanded && (
+                          <tr className="border-b border-gray-800/50 bg-gray-900/40">
+                            <td colSpan={11} className="px-4 py-3">
+                              {stdAiLoading[key] ? (
+                                <div className="flex items-center gap-2 text-xs text-purple-400">
+                                  <Loader2 size={12} className="animate-spin" /> Meminta analisis AI…
+                                </div>
+                              ) : insight?.skipped ? (
+                                <p className="text-xs text-red-400">{insight.reason ?? "AI tidak tersedia"}</p>
+                              ) : insight ? (
+                                <div className="space-y-2.5">
+                                  <div className="flex items-center gap-1.5 text-xs font-medium text-purple-300">
+                                    <Bot size={12} /> Analisis AI — {ticker}
+                                  </div>
+                                  {insight.investment_thesis && (
+                                    <div>
+                                      <p className="text-[11px] font-semibold text-gray-400 mb-0.5">Tesis Investasi</p>
+                                      <p className="text-xs text-gray-200 leading-relaxed">{insight.investment_thesis}</p>
+                                    </div>
+                                  )}
+                                  {insight.sector_trend && (
+                                    <div>
+                                      <p className="text-[11px] font-semibold text-gray-400 mb-0.5">Tren Sektor</p>
+                                      <p className="text-xs text-gray-300 leading-relaxed">{insight.sector_trend}</p>
+                                    </div>
+                                  )}
+                                  <div className="grid grid-cols-2 gap-3">
+                                    {insight.near_term_catalysts && insight.near_term_catalysts.length > 0 && (
+                                      <div>
+                                        <p className="text-[11px] font-semibold text-emerald-400 mb-1">Katalis Dekat</p>
+                                        <ul className="space-y-0.5">
+                                          {insight.near_term_catalysts.map((c, i) => (
+                                            <li key={i} className="text-xs text-gray-300 flex gap-1.5">
+                                              <span className="text-emerald-500 mt-0.5">▸</span>{c}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    {insight.key_risks && insight.key_risks.length > 0 && (
+                                      <div>
+                                        <p className="text-[11px] font-semibold text-red-400 mb-1">Risiko Utama</p>
+                                        <ul className="space-y-0.5">
+                                          {insight.key_risks.map((r, i) => (
+                                            <li key={i} className="text-xs text-gray-300 flex gap-1.5">
+                                              <span className="text-red-500 mt-0.5">▸</span>{r}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {insight.research_priority && (
+                                    <p className="text-[11px] text-purple-400 italic">{insight.research_priority}</p>
+                                  )}
+                                </div>
+                              ) : null}
+                            </td>
+                          </tr>
+                        )}
+                        </React.Fragment>
                       );
                     })}
                   </tbody>
