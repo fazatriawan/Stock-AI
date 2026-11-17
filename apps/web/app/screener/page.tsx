@@ -134,6 +134,97 @@ const SECTORS = [
 ];
 const EXCHANGES = ["IDX", "NASDAQ", "NYSE"];
 
+interface SectorDefault {
+  roe: string;
+  peMin: string;
+  peMax: string;
+  score: string;
+  rationale: string;
+  roeReason: string;
+  peReason: string;
+  scoreReason: string;
+}
+
+const SECTOR_DEFAULTS: Record<string, SectorDefault> = {
+  "": {
+    roe: "8", peMin: "3", peMax: "25", score: "50",
+    rationale: "Standar universal untuk semua sektor — titik tengah yang tidak memotong saham sehat dari sektor apapun, sambil tetap menyaring perusahaan berkualitas rendah.",
+    roeReason: "8% adalah ROE minimum lintas-sektor: cukup tinggi untuk menyaring perusahaan tidak efisien, cukup rendah untuk tidak membuang sektor property/infrastruktur yang ROE-nya struktural lebih rendah.",
+    peReason: "P/E min 3 memfilter perusahaan rugi atau earnings cyclical puncak yang membuat P/E semu rendah. P/E maks 25 cukup longgar untuk healthcare/tech growth, tapi masih membuang saham yang overvalued tanpa alasan.",
+    scoreReason: "Skor 50 dari 100 berarti 'di atas rata-rata kelengkapan & kualitas data'. Di bawah ini, data terlalu tipis untuk membuat keputusan yang bermakna.",
+  },
+  Finance: {
+    roe: "12", peMin: "5", peMax: "18", score: "50",
+    rationale: "Perbankan & keuangan punya struktur bisnis unik: ROE didorong leverage, bukan efisiensi aset murni. Valuasi berbeda — P/E rendah justru bisa mengindikasikan kualitas.",
+    roeReason: "Bank yang sehat di IDX biasanya ROE 15–20%. Menetapkan minimum 12% menyaring bank yang gagal menghasilkan return memadai di atas cost of equity. Di bawah 12% biasanya ada masalah NPL atau capital adequacy.",
+    peReason: "Sektor keuangan secara historis trade di P/E 8–15x di IDX. P/E di atas 18 untuk bank lokal biasanya berarti premium berlebih atau momentum driven. P/E min 5 membuang perusahaan keuangan dengan earnings tidak stabil.",
+    scoreReason: "Data keuangan bank umumnya lebih lengkap dan terstandarisasi (OJK reporting), sehingga ambang skor 50 cukup untuk seleksi awal.",
+  },
+  Financials: {
+    roe: "12", peMin: "5", peMax: "18", score: "50",
+    rationale: "Sama dengan Finance — mencakup perusahaan asuransi, sekuritas, multifinance yang struktur labanya mirip perbankan.",
+    roeReason: "12% adalah ROE minimum untuk memastikan perusahaan keuangan non-bank menghasilkan return di atas rata-rata cost of capital Indonesia (~10%).",
+    peReason: "Multifinance dan asuransi trade lebih rendah dari bank, namun tetap terbatas di bawah 18x untuk menghindari spekulasi.",
+    scoreReason: "Perusahaan keuangan umumnya memiliki data terstruktur dari laporan OJK, skor 50 sudah representatif.",
+  },
+  Consumer: {
+    roe: "10", peMin: "5", peMax: "25", score: "50",
+    rationale: "Consumer staples & discretionary punya pricing power — brand moat yang kuat membuat P/E premium wajar. Namun ROE harus tetap memadai karena bisnis ini tidak butuh capex besar.",
+    roeReason: "Consumer companies idealnya ROE > 10% karena tidak butuh modal besar untuk tumbuh. ROE di bawah 10% mengindikasikan margin yang tertekan atau manajemen yang tidak efisien dalam mengalokasikan modal.",
+    peReason: "Brand consumer bisa wajar di P/E 20–25x karena stabilitas earnings. Namun di atas 25x di IDX biasanya sudah pricing pertumbuhan yang terlalu optimistis. P/E min 5 membuang consumer company dengan earnings tidak konsisten.",
+    scoreReason: "Consumer sector umumnya data lengkap; skor 50 memastikan kita hanya melihat perusahaan dengan history yang cukup untuk dinilai.",
+  },
+  Telecoms: {
+    roe: "8", peMin: "5", peMax: "20", score: "50",
+    rationale: "Telekomunikasi adalah mature sector dengan capex infrastruktur besar. ROE moderate wajar karena asset-heavy. Pertumbuhan lebih stabil, sehingga valuasi tidak perlu tinggi.",
+    roeReason: "Operator telco harus maintain jaringan yang mahal — ROE 8% sudah mencerminkan bisnis yang wajar. Yang di bawah 8% biasanya sedang fase heavy investment atau kehilangan pangsa pasar.",
+    peReason: "Telco trade di P/E 10–18x secara global. Maks 20 memberi ruang untuk premium digitalisasi. P/E min 5 membuang operator yang earnings-nya sangat tertekan oleh price war.",
+    scoreReason: "3 operator besar IDX (TLKM, EXCL, ISAT) umumnya data lengkap. Skor 50 relevan untuk menyaring emiten telco kecil dengan data tipis.",
+  },
+  Energy: {
+    roe: "8", peMin: "3", peMax: "15", score: "45",
+    rationale: "Energi adalah sektor siklikal — P/E bisa meledak di puncak siklus komoditas. Valuasi yang 'mahal' di P/E sering kali justru tanda earnings sudah di puncak. Gunakan standar yang lebih konservatif.",
+    roeReason: "Di puncak siklus batubara/minyak, ROE bisa mencapai 30–50% — sementara di lembah siklus bisa 2–5%. ROE min 8% memfilter perusahaan energi yang bahkan di kondisi komoditas baik pun tidak efisien.",
+    peReason: "Energy P/E di bawah 10 saat komoditas tinggi = warning sinyal bahwa pasar ekspektasi earnings akan turun. P/E maks 15 menghindari membeli di puncak siklus. P/E min 3 membuang yang sudah di ambang rugi.",
+    scoreReason: "Sektor energi kecil di IDX sering data tidak lengkap; skor 45 lebih realistis untuk mendapatkan kandidat yang layak diriset.",
+  },
+  Materials: {
+    roe: "8", peMin: "3", peMax: "15", score: "45",
+    rationale: "Sama seperti energi, bahan baku sangat siklikal terhadap harga komoditas global (nikel, CPO, batu bara). Standar konservatif untuk menghindari jebakan peak-cycle valuation.",
+    roeReason: "Produsen bahan baku yang tidak mampu ROE 8% bahkan saat harga komoditas tinggi kemungkinan memiliki cost structure yang tidak kompetitif atau sudah di tahap deplesi aset.",
+    peReason: "Materials P/E maks 15 adalah 'rule of thumb' klasik untuk menghindari membeli komoditas saat earnings peak. Kombinasi P/E rendah + ROE tinggi = tanda danger zone, bukan value.",
+    scoreReason: "Banyak emiten materials di IDX adalah perusahaan kecil dengan pelaporan tidak konsisten; skor 45 memberi lebih banyak kandidat tanpa mengorbankan terlalu banyak kualitas.",
+  },
+  Healthcare: {
+    roe: "10", peMin: "8", peMax: "35", score: "50",
+    rationale: "Healthcare adalah growth sector yang undervalued di IDX. P/E premium wajar karena visibilitas pertumbuhan tinggi (JKN, aging population). P/E min lebih tinggi untuk membuang rumah sakit atau farmasi yang earnings-nya tidak stabil.",
+    roeReason: "Perusahaan healthcare dengan ROE di bawah 10% biasanya sangat capex-heavy tanpa pricing power — tidak ideal sebagai investasi jangka menengah. ROE 10%+ menandakan manajemen yang bisa monetize aset medis dengan efisien.",
+    peReason: "P/E min 8 membuang healthcare companies dengan earnings sangat volatile atau one-off. P/E maks 35 memberi ruang untuk growth premium yang wajar di sektor ini — MIKA, HEAL, KLBF secara historis trade 20–35x di fase pertumbuhan.",
+    scoreReason: "Healthcare berkembang pesat tapi banyak emiten baru di IDX dengan data terbatas; skor 50 memastikan hanya perusahaan dengan track record yang masuk.",
+  },
+  Industrial: {
+    roe: "8", peMin: "5", peMax: "20", score: "45",
+    rationale: "Sektor industri di IDX mencakup kontraktor, manufaktur berat, kawasan industri — semua capex-heavy. ROE moderate wajar, pertumbuhan lebih terikat siklus belanja pemerintah.",
+    roeReason: "Kontraktor dan manufaktur yang tidak mencapai ROE 8% biasanya terlalu tergantung utang atau inefficient dalam eksekusi proyek. 8% juga berarti margin EBIT cukup untuk menutup cost of debt rata-rata 7–9% di Indonesia.",
+    peReason: "Industrial tidak tumbuh secepat consumer atau healthcare. P/E maks 20 sudah premium untuk sektor ini. P/E min 5 membuang kontraktor yang earnings-nya semu (proyek satu kali) atau tergantung utang baru.",
+    scoreReason: "Banyak emiten industrial kecil dengan pelaporan tidak teratur. Skor 45 memberikan lebih banyak kandidat untuk riset sambil tetap membuang yang data-nya sangat tipis.",
+  },
+  Technology: {
+    roe: "8", peMin: "8", peMax: "40", score: "50",
+    rationale: "Teknologi di IDX masih tahap awal — valuasi tinggi bisa wajar jika ada revenue growth yang kuat. P/E maks paling longgar di antara semua sektor, tapi ROE dan skor harus tetap terjaga.",
+    roeReason: "Tech companies yang ROE-nya di bawah 8% biasanya masih burning cash atau model bisnisnya belum prove out. Di IDX, tech berkualitas (MTDL, BUKA yang mulai profitable) sudah bisa ROE > 8%.",
+    peReason: "P/E maks 40 adalah batas atas yang wajar untuk tech di IDX — above that, hanya cocok untuk speculative buying bukan value investing. P/E min 8 membuang perusahaan tech yang earnings-nya sangat tidak stabil atau baru satu kuartal profit.",
+    scoreReason: "Perusahaan teknologi di IDX bervariasi — dari yang data lengkap (MTDL, MLPT) hingga startup yang baru listing. Skor 50 memastikan kita hanya melihat yang sudah ada track record.",
+  },
+  Property: {
+    roe: "5", peMin: "5", peMax: "20", score: "45",
+    rationale: "Properti adalah sektor dengan ROE struktural paling rendah karena aset-nya dinilai pada harga perolehan (bukan market value). Jangan pakai standar ROE yang sama dengan sektor lain.",
+    roeReason: "Developer properti di IDX yang ROE-nya di atas 5% sudah termasuk efisien — aset tanah dan bangunan dinilai di buku, bukan market value. Menetapkan ROE min 10% akan membuang hampir semua developer yang sehat.",
+    peReason: "Properti secara global trade di P/E rendah karena earnings cyclical dan sering mengandung unrealized gains. P/E maks 20 sudah cukup generous. P/E min 5 membuang developer yang earnings-nya hampir nol atau sangat tergantung penjualan bulk.",
+    scoreReason: "Banyak developer properti IDX dengan data tidak lengkap karena pendapatan tidak diakui sampai serah terima unit. Skor 45 lebih realistis.",
+  },
+};
+
 function FreshnessChip({ freshness }: { freshness: string }) {
   const color =
     freshness === "FRESH"
@@ -165,6 +256,7 @@ export default function ScreenerPage() {
   const [stdAiInsights, setStdAiInsights] = useState<Record<string, AiInsight>>({});
   const [stdAiLoading, setStdAiLoading] = useState<Record<string, boolean>>({});
   const [stdExpanded, setStdExpanded] = useState<string | null>(null);
+  const [showStandards, setShowStandards] = useState(false);
 
   // Filter state
   const [sector, setSector] = useState("");
@@ -252,6 +344,14 @@ export default function ScreenerPage() {
     } finally {
       setStdAiLoading(prev => ({ ...prev, [key]: false }));
     }
+  }
+
+  function applySectorDefaults(s: string) {
+    const d = SECTOR_DEFAULTS[s] ?? SECTOR_DEFAULTS[""];
+    setMinRoe(d.roe);
+    setMinPe(d.peMin);
+    setMaxPe(d.peMax);
+    setMinScore(d.score);
   }
 
   async function runScreen() {
@@ -375,7 +475,7 @@ export default function ScreenerPage() {
                 <label className="block text-xs text-slate-300 mb-1">Sektor</label>
                 <select
                   value={sector}
-                  onChange={e => setSector(e.target.value)}
+                  onChange={e => { setSector(e.target.value); applySectorDefaults(e.target.value); }}
                   className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-gray-500"
                 >
                   <option value="">Semua</option>
@@ -464,7 +564,7 @@ export default function ScreenerPage() {
               </div>
             </div>
 
-            <div className="flex gap-2 pt-1">
+            <div className="flex gap-2 pt-1 flex-wrap items-center">
               <button
                 onClick={runScreen}
                 disabled={loading}
@@ -479,7 +579,53 @@ export default function ScreenerPage() {
               >
                 Reset
               </button>
+              <button
+                onClick={() => setShowStandards(v => !v)}
+                className="ml-auto flex items-center gap-1 px-2.5 py-1.5 text-xs text-blue-400 hover:text-blue-300 border border-blue-900/50 hover:border-blue-700/50 rounded-lg transition-colors"
+              >
+                {showStandards ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                {showStandards ? "Sembunyikan" : "Lihat dasar penetapan standar"}
+              </button>
             </div>
+
+            {/* Panel penjelasan standar */}
+            {showStandards && (() => {
+              const key = sector || "";
+              const d = SECTOR_DEFAULTS[key] ?? SECTOR_DEFAULTS[""];
+              const label = key
+                ? key
+                : "Semua Sektor";
+              return (
+                <div className="mt-3 rounded-lg border border-blue-900/40 bg-blue-950/20 p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold text-blue-300">Dasar Penetapan Standar — {label}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">{d.rationale}</p>
+                    </div>
+                    <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-blue-900/40 text-blue-400 border border-blue-800/40">
+                      {d.roe}% ROE · P/E {d.peMin}–{d.peMax} · Skor ≥{d.score}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="bg-gray-900/50 rounded-lg p-3">
+                      <p className="text-[11px] font-semibold text-emerald-400 mb-1">ROE min {d.roe}%</p>
+                      <p className="text-[11px] text-gray-300 leading-relaxed">{d.roeReason}</p>
+                    </div>
+                    <div className="bg-gray-900/50 rounded-lg p-3">
+                      <p className="text-[11px] font-semibold text-amber-400 mb-1">P/E {d.peMin}–{d.peMax}</p>
+                      <p className="text-[11px] text-gray-300 leading-relaxed">{d.peReason}</p>
+                    </div>
+                    <div className="bg-gray-900/50 rounded-lg p-3">
+                      <p className="text-[11px] font-semibold text-purple-400 mb-1">Skor komposit ≥{d.score}</p>
+                      <p className="text-[11px] text-gray-300 leading-relaxed">{d.scoreReason}</p>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400 italic">
+                    * Standar ini di-auto-isi saat memilih sektor. Anda tetap bisa mengubah nilai secara manual sebelum menjalankan screener.
+                  </p>
+                </div>
+              );
+            })()}
           </div>
 
           {error && (
