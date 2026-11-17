@@ -498,6 +498,15 @@ def score_multibagger(inp: MultibaggerInput) -> MultibaggerScore:
     else:
         tier = MultibaggerTier.NOT_QUALIFIED
 
+    # Guard: ROE < 3% atau profitabilitas nyaris nol → cap ke NOT_QUALIFIED
+    # (utang rendah tidak cukup jadi kompensasi jika bisnis tidak menghasilkan return)
+    if inp.roe is not None and inp.roe < 3.0 and tier in (MultibaggerTier.STRONG, MultibaggerTier.MODERATE, MultibaggerTier.WEAK):
+        tier = MultibaggerTier.NOT_QUALIFIED
+
+    # Guard: data completeness < 40% → downgrade satu level agar tidak muncul di MODERATE+
+    if completeness < 0.4 and tier in (MultibaggerTier.STRONG, MultibaggerTier.MODERATE):
+        tier = MultibaggerTier.WEAK
+
     # Strengths & concerns
     strengths: list[str] = []
     concerns: list[str] = []

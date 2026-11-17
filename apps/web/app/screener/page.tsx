@@ -177,7 +177,7 @@ export default function ScreenerPage() {
   const [mbLoading, setMbLoading] = useState(false);
   const [mbError, setMbError] = useState<string | null>(null);
   const [mbSearched, setMbSearched] = useState(false);
-  const [mbMinTier, setMbMinTier] = useState("WEAK");
+  const [mbMinTier, setMbMinTier] = useState("MODERATE");
   const [mbPipelineFilter, setMbPipelineFilter] = useState("");
   const [expandedSymbol, setExpandedSymbol] = useState<string | null>(null);
   const [sectorRotation, setSectorRotation] = useState<Record<string, { signal: string; return_1m: number | null; momentum_score: number | null }>>({});
